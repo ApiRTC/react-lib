@@ -8,13 +8,12 @@ const Video = styled.video`
     max-width: 100%;
 `;
 
-interface Props {
+export interface VideoStreamProps {
     stream: Stream;
 }
-
 // VideoStream.defaultProps = {
 // }
-export default function VideoStream(props: Props) {
+export default function VideoStream(props: VideoStreamProps) {
 
     const videoRef = useRef<HTMLVideoElement>(null);
 

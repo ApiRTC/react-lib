@@ -25,18 +25,31 @@ export default function useToggleBlurStream(stream?: Stream) {
         }
 
         return () => {
-            if (outStream && (outStream !== base)) {
-                outStream.release()
+            if (base) {
+                console.log(HOOK_NAME + "|release base", base)
+                base.release()
             }
         }
     }, [base]);
 
+    const doCheckAndReleaseOutStream = useCallback(() => {
+        if (outStream && (outStream !== base)) {
+            console.log(HOOK_NAME + "|release outStream", outStream)
+            outStream.release()
+        }
+    }, [base, outStream]);
 
-    const setStream = useCallback((stream: Stream|undefined) => {
+    useEffect(() => {
+        return () => {
+            doCheckAndReleaseOutStream();
+        }
+    }, [outStream]);
+
+    const setStream = (stream: Stream | undefined) => {
         setBase(stream)
-    }, [])
+    }
 
-    const toggle = () => {
+    const toggle = useCallback(() => {
         if (outStream === base) {
             base?.blur().then(blurredStream => {
                 setOutStream(blurredStream);
@@ -45,11 +58,10 @@ export default function useToggleBlurStream(stream?: Stream) {
                 console.error(HOOK_NAME + "|toggle blur", error)
             })
         } else {
-            outStream?.release()
             setOutStream(base);
             setBlurred(false);
         }
-    };
+    }, [base, outStream]);
 
     return { stream: outStream, setStream, toggle, blurred };
 }

@@ -3,6 +3,16 @@ import { useState, useEffect, useCallback } from "react";
 import { Stream } from '@apirtc/apirtc';
 
 const HOOK_NAME = "useToggleBlurStream"
+/**
+ * This hook takes stream passed as parameter or set with setStream method, and
+ * returns either this stream or a blurred version. This is controlled by the
+ * toggle method. By default the output stream is not blurred.
+ * The hook fully manages the blurred stream (releases it when not blurred).
+ * The hook never releases the input stream.
+ * 
+ * @param stream 
+ * @returns stream blurred or not, setStream and toggle methods, boolean blurred state.
+ */
 export default function useToggleBlurStream(stream?: Stream) {
     const [base, setBase] = useState(stream);
     const [outStream, setOutStream] = useState(stream);
@@ -24,12 +34,8 @@ export default function useToggleBlurStream(stream?: Stream) {
             setOutStream(base)
         }
 
-        return () => {
-            if (base) {
-                console.log(HOOK_NAME + "|release base", base)
-                base.release()
-            }
-        }
+        // Should not release base here as it is NOT created in this hook
+        // we shall not handle its lifecycle
     }, [base]);
 
     const doCheckAndReleaseOutStream = useCallback(() => {

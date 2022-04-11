@@ -2,9 +2,6 @@ import { useState, useEffect } from 'react';
 
 import { Contact, Conversation } from '@apirtc/apirtc';
 
-// TODO? : throw exception if a non moderated conversation is given
-// not sure we can do it anyways, and not even sure this is a good idea...
-
 const HOOK_NAME = "useConversationModeration"
 export default function useConversationModeration(
     conversation: Conversation | undefined,

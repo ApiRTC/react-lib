@@ -20,7 +20,7 @@ export default function useConversationStreams(conversation: Conversation | unde
 
   const publish: (localStream: Stream) => Promise<Stream> = useCallback((localStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
-      //console.log(HOOK_NAME + "|publish", conversation, localStream)
+      console.log(HOOK_NAME + "|publish", conversation, localStream)
       conversation?.publish(localStream).then(stream => {
         console.log(HOOK_NAME + "|stream published", stream);
         publishedStreams.push(stream)

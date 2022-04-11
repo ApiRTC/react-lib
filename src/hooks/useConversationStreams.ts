@@ -17,12 +17,21 @@ import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc';
 
 const HOOK_NAME = "useConversationStreams"
 export default function useConversationStreams(
-  conversation: Conversation | undefined
+  conversation: Conversation | undefined,
+  /** fully managed Stream to published */
+  streamToPublish?: Stream
 ) {
   // , options?:Options
 
+  const [s_streamToPublish, setToPublish] = useState<Stream | undefined>()
+
   const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>())
   const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
+
+  useEffect(() => {
+    doHandlePublication(streamToPublish)
+    setToPublish(streamToPublish)
+  }, [streamToPublish]);
 
   const publish: (localStream: Stream) => Promise<Stream> = useCallback((localStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
@@ -57,6 +66,20 @@ export default function useConversationStreams(
     publishedStreams.splice(publishedStreams.indexOf(localStream), 1)
     setPublishedStreams(Array.from(publishedStreams))
   }, [conversation, publishedStreams])
+
+  const doHandlePublication = useCallback((stream: Stream | undefined) => {
+    if (s_streamToPublish && stream && (s_streamToPublish !== stream)) {
+      console.log(HOOK_NAME + "|replacePublishedStream", s_streamToPublish, stream)
+      replacePublishedStream(s_streamToPublish, stream)
+    }
+    else if (s_streamToPublish && !stream) {
+      console.log(HOOK_NAME + "|unpublish", s_streamToPublish)
+      unpublish(s_streamToPublish);
+    } else if (stream) {
+      console.log(HOOK_NAME + "|publish", stream)
+      publish(stream);
+    }
+  }, [s_streamToPublish, publish, unpublish, replacePublishedStream])
 
   const on_streamAdded = useCallback((remoteStream: Stream) => {
     // display media stream

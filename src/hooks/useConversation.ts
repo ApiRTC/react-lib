@@ -6,21 +6,30 @@ const HOOK_NAME = "useConversation"
 export default function useConversation(
     session: Session | undefined,
     name: string | undefined,
-    options?: GetOrCreateConversationOptions
+    options?: GetOrCreateConversationOptions,
+    autoJoin: boolean = false
 ) {
 
     const [conversation, setConversation] = useState<Conversation>();
     const [joined, setJoined] = useState<boolean>(false);
 
     useEffect(() => {
+        setJoined(false)
         if (session && name) {
             console.log(HOOK_NAME + "|getOrCreateConversation", name, options)
             setConversation(session.getOrCreateConversation(name, options));
-            setJoined(false)
+        } else {
+            setConversation(undefined)
         }
         return () => {
         }
     }, [session, name, JSON.stringify(options)]);
+
+    useEffect(() => {
+        if (autoJoin) {
+            join()
+        }
+    }, [conversation, autoJoin])
 
     const join = useCallback(() => {
         console.log(HOOK_NAME + "|join", conversation)

@@ -2,7 +2,11 @@ import { useState, useEffect, useCallback } from "react";
 
 import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc';
 
-// TODO: think about how to handle errors !  => retun promise as in publish ?
+// TODO?: get a streamsToPublish input array
+// and handle publish/replace/unpublish internally. This would avoid
+// developper to manage this lifecycle (especially for replace...)
+// Not sure because the conversation joined state is handled in another hook...
+
 // TODO: add pagination ?
 // TODO: make thoses hooks open-source
 
@@ -12,7 +16,9 @@ import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc';
 // }
 
 const HOOK_NAME = "useConversationStreams"
-export default function useConversationStreams(conversation: Conversation | undefined) {
+export default function useConversationStreams(
+  conversation: Conversation | undefined
+) {
   // , options?:Options
 
   const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>())

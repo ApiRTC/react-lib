@@ -26,7 +26,7 @@ export default function useConversation(
     }, [session, name, JSON.stringify(options)]);
 
     useEffect(() => {
-        if (autoJoin) {
+        if (conversation && autoJoin) {
             join()
         }
     }, [conversation, autoJoin])

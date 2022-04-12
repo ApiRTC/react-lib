@@ -19,19 +19,19 @@ const HOOK_NAME = "useConversationStreams"
 export default function useConversationStreams(
   conversation: Conversation | undefined,
   /** fully managed Stream to published */
-  streamToPublish?: Stream
+  streamsToPublish: Array<Stream> = []
 ) {
   // , options?:Options
 
-  const [s_streamToPublish, setToPublish] = useState<Stream | undefined>()
+  const [s_streamsToPublish, setToPublish] = useState<Array<Stream>>([])
 
   const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>())
   const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
 
   useEffect(() => {
-    doHandlePublication(streamToPublish)
-    setToPublish(streamToPublish)
-  }, [streamToPublish]);
+    doHandlePublication(streamsToPublish)
+    setToPublish(streamsToPublish)
+  }, [JSON.stringify(streamsToPublish.map(l_s => l_s.getId()))]);
 
   const publish: (localStream: Stream) => Promise<Stream> = useCallback((localStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
@@ -50,6 +50,7 @@ export default function useConversationStreams(
   }, [conversation, publishedStreams])
 
   const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
+    console.log(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
     conversation?.getConversationCall(oldStream).replacePublishedStream(newStream)
       .then((stream: Stream) => {
         console.log(HOOK_NAME + "|stream replaced", oldStream, stream);
@@ -67,24 +68,20 @@ export default function useConversationStreams(
     setPublishedStreams(Array.from(publishedStreams))
   }, [conversation, publishedStreams])
 
-  const doHandlePublication = useCallback((stream: Stream | undefined) => {
-    if (s_streamToPublish && stream && (s_streamToPublish !== stream)) {
-      console.log(HOOK_NAME + "|replacePublishedStream", s_streamToPublish, stream)
-      replacePublishedStream(s_streamToPublish, stream)
+  const doHandlePublication = useCallback((streams: Array<Stream>) => {
+    if (s_streamsToPublish[0] && streams[0] && (s_streamsToPublish[0] !== streams[0])) {
+      replacePublishedStream(s_streamsToPublish[0], streams[0])
     }
-    else if (s_streamToPublish && !stream) {
-      console.log(HOOK_NAME + "|unpublish", s_streamToPublish)
-      unpublish(s_streamToPublish);
-    } else if (stream) {
-      console.log(HOOK_NAME + "|publish", stream)
-      publish(stream);
+    else if (s_streamsToPublish[0] && !streams[0]) {
+      unpublish(s_streamsToPublish[0]);
+    } else if (streams[0]) {
+      publish(streams[0]);
     }
-  }, [s_streamToPublish, publish, unpublish, replacePublishedStream])
+  }, [JSON.stringify(s_streamsToPublish.map(l_s => l_s.getId())), publish, unpublish, replacePublishedStream])
 
   const on_streamAdded = useCallback((remoteStream: Stream) => {
     // display media stream
     console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
-
     // Because on_streamAdded is a library event listener, using useState remoteStreams
     // is bogus (seems an diffrent instance is created in that context)
     // Using useCallback with remoteStreams as dependencies fixes it
@@ -131,9 +128,7 @@ export default function useConversationStreams(
         }
       })
     }
-
-    //console.log(HOOK_NAME + "|conversation changed! ends");
-
+    
     return () => {
       console.log(HOOK_NAME + "|conversation clear", conversation, publishedStreams)
       if (conversation) {

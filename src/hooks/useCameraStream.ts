@@ -19,10 +19,10 @@ export default function useCameraStream(
         if (session) {
             const userAgent: UserAgent = session.getUserAgent();
             userAgent.createStream(options).then((localStream: Stream) => {
-                console.info(HOOK_NAME + "|createStream", localStream)
+                console.info(HOOK_NAME + "|createStream", options, localStream)
                 setStream(localStream);
             }).catch((error: any) => {
-                console.error(HOOK_NAME + "|createStream", error)
+                console.error(HOOK_NAME + "|createStream", options, error)
                 setStream(undefined)
             });
         } else {

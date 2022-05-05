@@ -53,11 +53,12 @@ export default function useConversationModeration(
             console.log(HOOK_NAME + "|conversation clear", conversation)
 
             // remove listeners
-            if (conversation)
+            if (conversation) {
                 conversation
                     .removeListener('contactJoinedWaitingRoom', on_contactJoinedWaitingRoom)
                     .removeListener('contactLeftWaitingRoom', on_contactLeftWaitingRoom)
                     .removeListener('participantEjected', on_participantEjected);
+            }
 
             setCandidates(new Set())
         }

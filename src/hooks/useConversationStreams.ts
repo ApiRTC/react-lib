@@ -25,101 +25,157 @@ export default function useConversationStreams(
 
   const [s_streamsToPublish, setToPublish] = useState<Array<Stream>>([])
 
-  const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>())
-  const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
+  const [publishedStreams] = useState<Array<Stream>>(new Array<Stream>())
+  const [o_publishedStreams, setO_PublishedStreams] = useState<Array<Stream>>(new Array<Stream>())
 
-  useEffect(() => {
-    doHandlePublication(streamsToPublish)
-    setToPublish(streamsToPublish)
-  }, [JSON.stringify(streamsToPublish.map(l_s => l_s.getId()))]);
+  const [subscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
+  const [o_subscribedStreams, setO_SubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
 
   const publish: (localStream: Stream) => Promise<Stream> = useCallback((localStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
       console.log(HOOK_NAME + "|publish", conversation, localStream)
       conversation?.publish(localStream).then(stream => {
         console.log(HOOK_NAME + "|stream published", stream);
+        //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
         publishedStreams.push(stream)
         // Returning a new array makes lets React detect changes
-        setPublishedStreams(Array.from(publishedStreams))
+        setO_PublishedStreams(Array.from(publishedStreams))
         resolve(stream);
       }).catch((error: any) => {
         console.error(HOOK_NAME + "|publish", error)
         reject(error)
       });
     })
-  }, [conversation, publishedStreams])
+  }, [conversation]) //publishedStreams
 
   const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
     console.log(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
     conversation?.getConversationCall(oldStream).replacePublishedStream(newStream)
       .then((stream: Stream) => {
         console.log(HOOK_NAME + "|stream replaced", oldStream, stream);
-        publishedStreams.splice(publishedStreams.indexOf(oldStream), 1, stream);
-        setPublishedStreams(Array.from(publishedStreams))
+        const index = publishedStreams.indexOf(oldStream)
+        if (index >= 0) {
+          publishedStreams.splice(index, 1, stream);
+        } else {
+          console.error(HOOK_NAME + "|cannot splice", publishedStreams, index)
+        }
+        setO_PublishedStreams(Array.from(publishedStreams))
       }).catch(error => {
         console.error(HOOK_NAME + "|replacePublishedStream", error)
       });
-  }, [conversation, publishedStreams])
+  }, [conversation]) //publishedStreams
 
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
     console.log(HOOK_NAME + "|unpublish", conversation, localStream)
     conversation?.unpublish(localStream);
-    publishedStreams.splice(publishedStreams.indexOf(localStream), 1)
-    setPublishedStreams(Array.from(publishedStreams))
-  }, [conversation, publishedStreams])
+    const index = publishedStreams.indexOf(localStream)
+    if (index >= 0) {
+      publishedStreams.splice(index, 1)
+      setO_PublishedStreams(Array.from(publishedStreams))
+    } else {
+      console.error(HOOK_NAME + "|cannot splice", publishedStreams, index)
+    }
+  }, [conversation]) //publishedStreams
 
   const doHandlePublication = useCallback((streams: Array<Stream>) => {
-    if (s_streamsToPublish[0] && streams[0] && (s_streamsToPublish[0] !== streams[0])) {
-      replacePublishedStream(s_streamsToPublish[0], streams[0])
-    }
-    else if (s_streamsToPublish[0] && !streams[0]) {
-      unpublish(s_streamsToPublish[0]);
-    } else if (streams[0]) {
-      publish(streams[0]);
+    const maxLength = Math.max(s_streamsToPublish.length, streams.length);
+    for (let i = 0; i < maxLength; i++) {
+      if (s_streamsToPublish[i] && streams[i] && (s_streamsToPublish[i] !== streams[i])) {
+        replacePublishedStream(s_streamsToPublish[i], streams[i])
+      } else if (s_streamsToPublish[i] && !streams[i]) {
+        unpublish(s_streamsToPublish[i]);
+      } else if (streams[i]) {
+        publish(streams[i]);
+      }
     }
   }, [JSON.stringify(s_streamsToPublish.map(l_s => l_s.getId())), publish, unpublish, replacePublishedStream])
 
-  const on_streamAdded = useCallback((remoteStream: Stream) => {
-    // display media stream
-    console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
-    // Because on_streamAdded is a library event listener, using useState remoteStreams
-    // is bogus (seems an diffrent instance is created in that context)
-    // Using useCallback with remoteStreams as dependencies fixes it
-    // Also, returning a new array makes lets React detect changes
-    // setRemoteStreams(l_remoteStreams => {
-    //   l_remoteStreams.push(remoteStream); return Array.from(l_remoteStreams);
-    // });
-    subscribedStreams.push(remoteStream)
-    setSubscribedStreams(Array.from(subscribedStreams));
-  }, [subscribedStreams])
+  // --------------------------------------------------------------------------
+  // Effects - Order is important
 
-  const on_streamRemoved = useCallback((remoteStream: Stream) => {
-    console.log(HOOK_NAME + "|on_streamRemoved", remoteStream);
-    subscribedStreams.splice(subscribedStreams.indexOf(remoteStream), 1)
-    setSubscribedStreams(Array.from(subscribedStreams));
-  }, [subscribedStreams])
+  useEffect(() => {
 
-  const on_streamListChanged = useCallback((streamInfo: StreamInfo) => {
-    const streamId = String(streamInfo.streamId)
-    //const contactId = String(streamInfo.contact?.getId());
-    if (streamInfo.isRemote === true) {
-      if (streamInfo.listEventType === 'added') {
-        // a remote stream was published
-        conversation?.subscribeToStream(streamId);
-      } else if (streamInfo.listEventType === 'removed') {
-        // a remote stream is not published anymore
-        conversation?.unsubscribeToStream(streamId)
+    //useCallback(
+    const on_streamAdded = (remoteStream: Stream) => {
+      console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
+      //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
+      subscribedStreams.push(remoteStream)
+      setO_SubscribedStreams(Array.from(subscribedStreams));
+    }//, [subscribedStreams])
+
+    // useCallback(
+    const on_streamRemoved = (remoteStream: Stream) => {
+      console.log(HOOK_NAME + "|on_streamRemoved", remoteStream);
+      const index = subscribedStreams.indexOf(remoteStream)
+      //console.log(`TRY SPLICING ${remoteStream.getId()} from subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())), index)
+      if (index >= 0) {
+        subscribedStreams.splice(index, 1)
+        setO_SubscribedStreams(Array.from(subscribedStreams));
+      } else {
+        console.error(HOOK_NAME + "|cannot splice", subscribedStreams, index)
+      }
+    }//, [subscribedStreams])
+
+    // useCallback(
+    const on_streamListChanged = (streamInfo: StreamInfo) => {
+      const streamId = String(streamInfo.streamId)
+      if (streamInfo.isRemote === true) {
+        if (streamInfo.listEventType === 'added') {
+          // a remote stream was published
+          conversation?.subscribeToStream(streamId);
+        } else if (streamInfo.listEventType === 'removed') {
+          // a remote stream is not published anymore
+          conversation?.unsubscribeToStream(streamId)
+        }
+      }
+    }//, [conversation])
+
+    if (conversation) {
+      //console.log(HOOK_NAME + "|ON streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
+      // Subscribe to incoming streams
+      conversation.on('streamAdded', on_streamAdded);
+      conversation.on('streamRemoved', on_streamRemoved);
+      conversation.on('streamListChanged', on_streamListChanged);
+    }
+
+    return () => {
+      if (conversation) {
+        //console.log(HOOK_NAME + "|REMOVE streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
+        // remove listeners
+        conversation.removeListener('streamListChanged', on_streamListChanged);
+        conversation.removeListener('streamRemoved', on_streamRemoved);
+        conversation.removeListener('streamAdded', on_streamAdded);
       }
     }
-  }, [conversation])
+  }, [conversation]);
+
+  const on_joined = useCallback(() => {
+    console.log(HOOK_NAME + "|on_joined", conversation);
+    doHandlePublication(streamsToPublish)
+    setToPublish(streamsToPublish)
+  }, [conversation, doHandlePublication]) //setToPublish
 
   useEffect(() => {
     // Subscribe to incoming streams
     if (conversation) {
-      conversation.on('streamAdded', on_streamAdded);
-      conversation.on('streamRemoved', on_streamRemoved);
-      conversation.on('streamListChanged', on_streamListChanged);
+      //console.log(HOOK_NAME + "|new Conversation on_joined", conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
+      conversation.on('joined', on_joined);
+    }
 
+    return () => {
+      if (conversation) {
+        // remove listeners
+        conversation.removeListener('joined', on_joined);
+      }
+    }
+  }, [conversation, on_joined]);
+
+  // subscribeToStream(s) after having setting listeners
+  //
+  useEffect(() => {
+
+    if (conversation) {
+      //console.log(HOOK_NAME + "|new Conversation (subscribeToStream)", conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
       // Subscribe to existing remote streams
       conversation.getAvailableStreamList().forEach(streamInfo => {
         const streamId = String(streamInfo.streamId)
@@ -128,31 +184,41 @@ export default function useConversationStreams(
         }
       })
     }
-    
+
     return () => {
-      console.log(HOOK_NAME + "|conversation clear", conversation, publishedStreams)
-      if (conversation) {
+      // Get a handle on the conversation because it will be used next in forEach callback
+      // which otherwise using 'conversation' handle may change during the loop.
+      const l_conversation = conversation;
+      //console.log(HOOK_NAME + "|conversation clear", l_conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
+      if (l_conversation) {
         publishedStreams.forEach(stream => {
-          console.log(HOOK_NAME + "|conversation clear, unpublish", conversation, stream)
-          conversation.unpublish(stream);
+          console.log(HOOK_NAME + "|conversation clear, unpublish stream", l_conversation, stream)
+          l_conversation.unpublish(stream);
         });
-        setPublishedStreams(new Array<Stream>());
 
-        // remove listeners
-        conversation.removeListener('streamListChanged', on_streamListChanged);
-        conversation.removeListener('streamAdded', on_streamAdded);
-        conversation.removeListener('streamRemoved', on_streamRemoved);
+        // Clear internal arrays
+        publishedStreams.length = 0;
+        subscribedStreams.length = 0;
 
-        // Clear remote streams with new array so that parent gets notified of a change.
+        // Clear output arrays with new array so that parent gets notified of a change.
         // Simply setting length to 0 is not detected by react.
-        setSubscribedStreams(new Array<Stream>());
+        setO_PublishedStreams(new Array<Stream>());
+        setO_SubscribedStreams(new Array<Stream>());
       }
     }
   }, [conversation]);
 
+  useEffect(() => {
+    if (conversation) {
+      //console.log(HOOK_NAME + "|new streamsToPublish", conversation, JSON.stringify(streamsToPublish.map(l_s => l_s.getId())))
+      doHandlePublication(streamsToPublish)
+      setToPublish(streamsToPublish)
+    }
+  }, [JSON.stringify(streamsToPublish.map(l_s => l_s.getId()))]);
+
   return {
-    publishedStreams,
-    subscribedStreams,
+    publishedStreams: o_publishedStreams,
+    subscribedStreams: o_subscribedStreams,
     publish,
     unpublish,
     replacePublishedStream

@@ -29,6 +29,11 @@ export default function useConversation(
         if (conversation && autoJoin) {
             join()
         }
+        return () => {
+            if (conversation && autoJoin && conversation.isJoined()) {
+                leave()
+            }
+        }
     }, [conversation, autoJoin])
 
     const join = useCallback(() => {

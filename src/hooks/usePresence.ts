@@ -68,31 +68,27 @@ export default function usePresence(session: Session | undefined, groups: Array<
             }
         };
 
-        session?.on('contactListUpdate', onContactListUpdate);
+        console.log(HOOK_NAME + "|useEffect groups", groups);
+        if (session) {
+            session.on('contactListUpdate', onContactListUpdate);
+            const l_session = session;
+            groups.forEach(group => {
+                l_session.subscribeToGroup(group);
+            })
+        }
 
         return () => {
-            session?.removeListener('contactListUpdate', onContactListUpdate)
+            if (session) {
+                session.removeListener('contactListUpdate', onContactListUpdate)
+                const l_session = session;
+                groups.forEach(group => {
+                    l_session.unsubscribeToGroup(group);
+                })
+            }
             setContactsByGroup(new Map())
             setContacts(new Set())
         };
     }, [session, JSON.stringify(groups)]);
-
-    useEffect(() => {
-
-        console.log(HOOK_NAME + "|useEffect groups", groups);
-
-        groups.forEach(group => {
-            session?.subscribeToGroup(group);
-        })
-
-        return () => {
-            groups.forEach(group => {
-                session?.unsubscribeToGroup(group);
-            })
-            setContactsByGroup(new Map())
-            setContacts(new Set())
-        };
-    }, [JSON.stringify(groups)]);
 
     return {
         contactsByGroup

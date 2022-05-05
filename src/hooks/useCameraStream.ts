@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 
 import { CreateStreamOptions, Session, Stream, UserAgent } from '@apirtc/apirtc';
 
@@ -8,12 +8,6 @@ export default function useCameraStream(
     options: CreateStreamOptions = {}
 ) {
     const [stream, setStream] = useState<Stream>();
-
-    const doRelease = useCallback(() => {
-        if (stream) {
-            stream.release();
-        }
-    }, [stream])
 
     useEffect(() => {
         if (session) {
@@ -29,9 +23,20 @@ export default function useCameraStream(
             setStream(undefined)
         }
         return () => {
-            doRelease()
+            if (session) {
+                setStream(undefined)
+            }
         }
     }, [session, JSON.stringify(options)]);
+
+    useEffect(() => {
+        return () => {
+            if (stream) {
+                console.info(HOOK_NAME + "|release stream", stream)
+                stream.release();
+            }
+        }
+    }, [stream]);
 
     return {
         stream

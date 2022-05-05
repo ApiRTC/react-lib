@@ -12,37 +12,40 @@ export default function useConversationMessages(
     conversation: Conversation | undefined,
 ) {
 
-    const [messages, setMessages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
-
-    const onMessage = useCallback((message: ConversationMessage) => {
-        console.log(HOOK_NAME + "|on:message:", message, messages);
-        messages.push(message);
-        setMessages(Array.from(messages));
-    }, [messages])
+    // Use an internal array which will always be the same object as far as React knows
+    // This will avoid the need for adding it as a dependency for each callback
+    const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
+    // And use a copy as output array so that client code will react upon change
+    // (only a new instance of array is detected by React)
+    const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
 
     useEffect(() => {
-        if (conversation)
+
+        const onMessage = (message: ConversationMessage) => {
+            console.log(HOOK_NAME + "|on:message:", message, messages);
+            messages.push(message);
+            setO_Messages(Array.from(messages));
+        }
+
+        if (conversation) {
             conversation.on('message', onMessage);
+        }
         return () => {
-            if (conversation)
+            if (conversation) {
                 conversation.removeListener('message', onMessage);
-            setMessages(new Array<any>());
+                messages.length = 0;
+            }
+            setO_Messages(new Array<any>());
         }
     }, [conversation]);
-
-    // We have to extract the conversation.sendMessage promise callback in a useCallback
-    // because it acts asynchronously on 'messages' which can also be modified in 'onMessage'
-    const onMessageSent = useCallback((uuid: number, msgContent: string, sender: Contact) => {
-        console.log(HOOK_NAME + "|sentMessage", uuid, msgContent, messages);
-        messages.push({ content: msgContent, sender: sender, time: new Date() });
-        setMessages(Array.from(messages));
-    }, [messages])
 
     const sendMessage = useCallback((msgContent: string, sender: Contact) => {
         return new Promise<void>((resolve, reject) => {
             conversation?.sendMessage(msgContent)
                 .then((uuid: number) => {
-                    onMessageSent(uuid, msgContent, sender)
+                    console.log(HOOK_NAME + "|sentMessage", uuid, msgContent, messages);
+                    messages.push({ content: msgContent, sender: sender, time: new Date() });
+                    setO_Messages(Array.from(messages));
                     resolve();
                 })
                 .catch((error: any) => {
@@ -53,7 +56,7 @@ export default function useConversationMessages(
     }, [conversation])
 
     return {
-        messages,
+        messages: o_messages,
         sendMessage
     };
 }

@@ -2,11 +2,6 @@ import { useState, useEffect, useCallback } from "react";
 
 import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc';
 
-// TODO?: get a streamsToPublish input array
-// and handle publish/replace/unpublish internally. This would avoid
-// developper to manage this lifecycle (especially for replace...)
-// Not sure because the conversation joined state is handled in another hook...
-
 // TODO: add pagination ?
 // TODO: make thoses hooks open-source
 
@@ -25,7 +20,11 @@ export default function useConversationStreams(
 
   const [s_streamsToPublish, setToPublish] = useState<Array<Stream>>([])
 
+  // Use an internal array which will always be the same object as far as React knows
+  // This will avoid the need for adding it as a dependency for each callback
   const [publishedStreams] = useState<Array<Stream>>(new Array<Stream>())
+  // And use a copy as output array so that client code will react upon change
+  // (only a new instance of array is detected by React)
   const [o_publishedStreams, setO_PublishedStreams] = useState<Array<Stream>>(new Array<Stream>())
 
   const [subscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
@@ -91,19 +90,17 @@ export default function useConversationStreams(
   }, [JSON.stringify(s_streamsToPublish.map(l_s => l_s.getId())), publish, unpublish, replacePublishedStream])
 
   // --------------------------------------------------------------------------
-  // Effects - Order is important
-
+  // useEffect(s) - Order is important
+  //
   useEffect(() => {
 
-    //useCallback(
     const on_streamAdded = (remoteStream: Stream) => {
       console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
       //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
       subscribedStreams.push(remoteStream)
       setO_SubscribedStreams(Array.from(subscribedStreams));
-    }//, [subscribedStreams])
+    }
 
-    // useCallback(
     const on_streamRemoved = (remoteStream: Stream) => {
       console.log(HOOK_NAME + "|on_streamRemoved", remoteStream);
       const index = subscribedStreams.indexOf(remoteStream)
@@ -114,9 +111,8 @@ export default function useConversationStreams(
       } else {
         console.error(HOOK_NAME + "|cannot splice", subscribedStreams, index)
       }
-    }//, [subscribedStreams])
+    }
 
-    // useCallback(
     const on_streamListChanged = (streamInfo: StreamInfo) => {
       const streamId = String(streamInfo.streamId)
       if (streamInfo.isRemote === true) {
@@ -128,7 +124,7 @@ export default function useConversationStreams(
           conversation?.unsubscribeToStream(streamId)
         }
       }
-    }//, [conversation])
+    }
 
     if (conversation) {
       //console.log(HOOK_NAME + "|ON streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
@@ -149,28 +145,62 @@ export default function useConversationStreams(
     }
   }, [conversation]);
 
-  const on_joined = useCallback(() => {
-    console.log(HOOK_NAME + "|on_joined", conversation);
-    doHandlePublication(streamsToPublish)
-    setToPublish(streamsToPublish)
-  }, [conversation, doHandlePublication]) //setToPublish
+  const unpublishAndUnsubscribeAll = (conversation: Conversation) => {
+    // Get a handle on the conversation because it will be used next in forEach callback
+    // which otherwise using 'conversation' handle may change during the loop.
+    const l_conversation = conversation;
+    publishedStreams.forEach(stream => {
+      console.log(HOOK_NAME + "|unpublish stream", l_conversation, stream)
+      l_conversation.unpublish(stream);
+    });
+    // Clear internal array
+    publishedStreams.length = 0;
+
+    subscribedStreams.forEach(stream => {
+      console.log(HOOK_NAME + "|unsubscribeToStream stream", l_conversation, stream)
+      l_conversation.unsubscribeToStream(stream.getId());
+    });
+    // Clear internal array
+    subscribedStreams.length = 0;
+  }
 
   useEffect(() => {
-    // Subscribe to incoming streams
+
+    const on_joined = conversation ? () => {
+      console.log(HOOK_NAME + "|on_joined", conversation);
+      doHandlePublication(streamsToPublish)
+      setToPublish(streamsToPublish)
+    } : undefined;
+
+    const on_left = conversation ? () => {
+      console.log(HOOK_NAME + "|on_left", conversation);
+      unpublishAndUnsubscribeAll(conversation);
+      // Clear output arrays with new array so that parent gets notified of a change.
+      // Simply setting length to 0 is not detected by react.
+      setO_PublishedStreams(new Array<Stream>());
+      setO_SubscribedStreams(new Array<Stream>());
+    } : undefined;
+
     if (conversation) {
-      //console.log(HOOK_NAME + "|new Conversation on_joined", conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
-      conversation.on('joined', on_joined);
+      console.log(HOOK_NAME + "|new Conversation on_joined", conversation)
+      if (on_joined)
+        conversation.on('joined', on_joined);
+      if (on_left)
+        conversation.on('left', on_left);
     }
 
     return () => {
       if (conversation) {
-        // remove listeners
-        conversation.removeListener('joined', on_joined);
+        if (on_joined)
+          conversation.removeListener('joined', on_joined);
+        if (on_left)
+          conversation.removeListener('left', on_left);
       }
     }
-  }, [conversation, on_joined]);
+  }, [doHandlePublication]); // Don't add 'conversation' in here because
+  // doHandlePublication already changes on conversation change
 
-  // subscribeToStream(s) after having setting listeners
+  // subscribeToStream(s) after having set listeners
   //
   useEffect(() => {
 
@@ -186,20 +216,9 @@ export default function useConversationStreams(
     }
 
     return () => {
-      // Get a handle on the conversation because it will be used next in forEach callback
-      // which otherwise using 'conversation' handle may change during the loop.
-      const l_conversation = conversation;
       //console.log(HOOK_NAME + "|conversation clear", l_conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
-      if (l_conversation) {
-        publishedStreams.forEach(stream => {
-          console.log(HOOK_NAME + "|conversation clear, unpublish stream", l_conversation, stream)
-          l_conversation.unpublish(stream);
-        });
-
-        // Clear internal arrays
-        publishedStreams.length = 0;
-        subscribedStreams.length = 0;
-
+      if (conversation) {
+        unpublishAndUnsubscribeAll(conversation)
         // Clear output arrays with new array so that parent gets notified of a change.
         // Simply setting length to 0 is not detected by react.
         setO_PublishedStreams(new Array<Stream>());
@@ -210,7 +229,7 @@ export default function useConversationStreams(
 
   useEffect(() => {
     if (conversation) {
-      //console.log(HOOK_NAME + "|new streamsToPublish", conversation, JSON.stringify(streamsToPublish.map(l_s => l_s.getId())))
+      //console.log(HOOK_NAME + "|changed streamsToPublish", conversation, JSON.stringify(streamsToPublish.map(l_s => l_s.getId())))
       doHandlePublication(streamsToPublish)
       setToPublish(streamsToPublish)
     }

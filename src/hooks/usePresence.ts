@@ -70,19 +70,33 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
         console.log(HOOK_NAME + "|useEffect groups", groups);
         if (session) {
+            console.log(HOOK_NAME + "|register contactListUpdate");
             session.on('contactListUpdate', onContactListUpdate);
             const l_session = session;
             groups.forEach(group => {
+                console.log(HOOK_NAME + "|subscribeToGroup", group);
                 l_session.subscribeToGroup(group);
             })
         }
 
         return () => {
             if (session) {
+                console.log(HOOK_NAME + "|removeListener contactListUpdate");
                 session.removeListener('contactListUpdate', onContactListUpdate)
                 const l_session = session;
                 groups.forEach(group => {
-                    l_session.unsubscribeToGroup(group);
+                    console.log(HOOK_NAME + "|unsubscribeToGroup", group);
+                    try {
+                        // Had to call unsubscribeToGroup in a try catch because it
+                        // used to crash the whole app when session was disconnected
+                        // useSession|disconnected 
+                        // usePresence|removeListener contactListUpdate modules.js:180764:6999
+                        // usePresence|unsubscribeToGroup 00001 modules.js:180764:7130
+                        // Uncaught TypeError: this.getSubscribedPresenceGroup() is null
+                        l_session.unsubscribeToGroup(group);
+                    } catch (error) {
+                        console.error(HOOK_NAME + "|unsubscribeToGroup", group, error);
+                    }
                 })
             }
             setContactsByGroup(new Map())

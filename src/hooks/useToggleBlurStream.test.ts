@@ -1,0 +1,11 @@
+import { renderHook, act } from '@testing-library/react-hooks';
+
+import useToggleBlurStream from './useToggleBlurStream';
+
+describe('useToggleBlurStream', () => {
+    test(`Default value of stream will be undefined`, () => {
+        const { result } = renderHook(() => useToggleBlurStream());
+
+        expect(result.current.stream).toBe(undefined);
+    });
+});

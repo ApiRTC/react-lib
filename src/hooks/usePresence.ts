@@ -93,6 +93,8 @@ export default function usePresence(session: Session | undefined, groups: Array<
                         // usePresence|removeListener contactListUpdate modules.js:180764:6999
                         // usePresence|unsubscribeToGroup 00001 modules.js:180764:7130
                         // Uncaught TypeError: this.getSubscribedPresenceGroup() is null
+                        // Could be fixed in ApiRTC by making getSubscribedPresenceGroup return empty array instead of null
+                        // Asked Johann and he commited this today (2022/05/09)
                         l_session.unsubscribeToGroup(group);
                     } catch (error) {
                         console.error(HOOK_NAME + "|unsubscribeToGroup", group, error);

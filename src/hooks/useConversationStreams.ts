@@ -162,6 +162,11 @@ export default function useConversationStreams(
     });
     // Clear internal array
     subscribedStreams.length = 0;
+
+    // Clear output arrays with new array so that parent gets notified of a change.
+    // Simply setting length to 0 is not detected by react.
+    setO_PublishedStreams(new Array<Stream>());
+    setO_SubscribedStreams(new Array<Stream>());
   }
 
   useEffect(() => {
@@ -174,11 +179,8 @@ export default function useConversationStreams(
 
     const on_left = conversation ? () => {
       console.log(HOOK_NAME + "|on_left", conversation);
+      // Forcing unpublish will allow to republish if joining again
       unpublishAndUnsubscribeAll(conversation);
-      // Clear output arrays with new array so that parent gets notified of a change.
-      // Simply setting length to 0 is not detected by react.
-      setO_PublishedStreams(new Array<Stream>());
-      setO_SubscribedStreams(new Array<Stream>());
     } : undefined;
 
     if (conversation) {
@@ -219,10 +221,6 @@ export default function useConversationStreams(
       //console.log(HOOK_NAME + "|conversation clear", l_conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
       if (conversation) {
         unpublishAndUnsubscribeAll(conversation)
-        // Clear output arrays with new array so that parent gets notified of a change.
-        // Simply setting length to 0 is not detected by react.
-        setO_PublishedStreams(new Array<Stream>());
-        setO_SubscribedStreams(new Array<Stream>());
       }
     }
   }, [conversation]);

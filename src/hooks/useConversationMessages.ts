@@ -11,7 +11,6 @@ const HOOK_NAME = "useConversationMessages"
 export default function useConversationMessages(
     conversation: Conversation | undefined,
 ) {
-
     // Use an internal array which will always be the same object as far as React knows
     // This will avoid the need for adding it as a dependency for each callback
     const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
@@ -20,22 +19,19 @@ export default function useConversationMessages(
     const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
 
     useEffect(() => {
-
-        const onMessage = (message: ConversationMessage) => {
-            console.log(HOOK_NAME + "|on:message:", message, messages);
-            messages.push(message);
-            setO_Messages(Array.from(messages));
-        }
-
         if (conversation) {
+            const onMessage = (message: ConversationMessage) => {
+                console.log(HOOK_NAME + "|on:message:", message, messages);
+                messages.push(message);
+                setO_Messages(Array.from(messages));
+            }
             conversation.on('message', onMessage);
-        }
-        return () => {
-            if (conversation) {
+
+            return () => {
                 conversation.removeListener('message', onMessage);
                 messages.length = 0;
+                setO_Messages(new Array<any>());
             }
-            setO_Messages(new Array<any>());
         }
     }, [conversation]);
 

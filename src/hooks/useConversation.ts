@@ -21,17 +21,15 @@ export default function useConversation(
         } else {
             setConversation(undefined)
         }
-        return () => {
-        }
     }, [session, name, JSON.stringify(options)]);
 
     useEffect(() => {
         if (conversation && autoJoin) {
             join()
-        }
-        return () => {
-            if (conversation && autoJoin && conversation.isJoined()) {
-                leave()
+            return () => {
+                if (conversation.isJoined()) {
+                    leave()
+                }
             }
         }
     }, [conversation, autoJoin])

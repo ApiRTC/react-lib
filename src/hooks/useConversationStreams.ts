@@ -93,49 +93,42 @@ export default function useConversationStreams(
   // useEffect(s) - Order is important
   //
   useEffect(() => {
-
-    const on_streamAdded = (remoteStream: Stream) => {
-      console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
-      //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
-      subscribedStreams.push(remoteStream)
-      setO_SubscribedStreams(Array.from(subscribedStreams));
-    }
-
-    const on_streamRemoved = (remoteStream: Stream) => {
-      console.log(HOOK_NAME + "|on_streamRemoved", remoteStream);
-      const index = subscribedStreams.indexOf(remoteStream)
-      //console.log(`TRY SPLICING ${remoteStream.getId()} from subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())), index)
-      if (index >= 0) {
-        subscribedStreams.splice(index, 1)
+    if (conversation) {
+      const on_streamAdded = (remoteStream: Stream) => {
+        console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
+        //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
+        subscribedStreams.push(remoteStream)
         setO_SubscribedStreams(Array.from(subscribedStreams));
-      } else {
-        console.error(HOOK_NAME + "|cannot splice", subscribedStreams, index)
       }
-    }
-
-    const on_streamListChanged = (streamInfo: StreamInfo) => {
-      const streamId = String(streamInfo.streamId)
-      if (streamInfo.isRemote === true) {
-        if (streamInfo.listEventType === 'added') {
-          // a remote stream was published
-          conversation?.subscribeToStream(streamId);
-        } else if (streamInfo.listEventType === 'removed') {
-          // a remote stream is not published anymore
-          conversation?.unsubscribeToStream(streamId)
+      const on_streamRemoved = (remoteStream: Stream) => {
+        console.log(HOOK_NAME + "|on_streamRemoved", remoteStream);
+        const index = subscribedStreams.indexOf(remoteStream)
+        //console.log(`TRY SPLICING ${remoteStream.getId()} from subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())), index)
+        if (index >= 0) {
+          subscribedStreams.splice(index, 1)
+          setO_SubscribedStreams(Array.from(subscribedStreams));
+        } else {
+          console.error(HOOK_NAME + "|cannot splice", subscribedStreams, index)
         }
       }
-    }
-
-    if (conversation) {
-      //console.log(HOOK_NAME + "|ON streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
+      const on_streamListChanged = (streamInfo: StreamInfo) => {
+        const streamId = String(streamInfo.streamId)
+        if (streamInfo.isRemote === true) {
+          if (streamInfo.listEventType === 'added') {
+            // a remote stream was published
+            conversation?.subscribeToStream(streamId);
+          } else if (streamInfo.listEventType === 'removed') {
+            // a remote stream is not published anymore
+            conversation?.unsubscribeToStream(streamId)
+          }
+        }
+      }
       // Subscribe to incoming streams
       conversation.on('streamAdded', on_streamAdded);
       conversation.on('streamRemoved', on_streamRemoved);
       conversation.on('streamListChanged', on_streamListChanged);
-    }
 
-    return () => {
-      if (conversation) {
+      return () => {
         //console.log(HOOK_NAME + "|REMOVE streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
         // remove listeners
         conversation.removeListener('streamListChanged', on_streamListChanged);
@@ -170,33 +163,26 @@ export default function useConversationStreams(
   }
 
   useEffect(() => {
-
-    const on_joined = conversation ? () => {
-      console.log(HOOK_NAME + "|on_joined", conversation);
-      doHandlePublication(streamsToPublish)
-      setToPublish(streamsToPublish)
-    } : undefined;
-
-    const on_left = conversation ? () => {
-      console.log(HOOK_NAME + "|on_left", conversation);
-      // Forcing unpublish will allow to republish if joining again
-      unpublishAndUnsubscribeAll(conversation);
-    } : undefined;
-
     if (conversation) {
-      console.log(HOOK_NAME + "|new Conversation on_joined", conversation)
-      if (on_joined)
-        conversation.on('joined', on_joined);
-      if (on_left)
-        conversation.on('left', on_left);
-    }
+      console.log(HOOK_NAME + "|new Conversation", conversation)
 
-    return () => {
-      if (conversation) {
-        if (on_joined)
-          conversation.removeListener('joined', on_joined);
-        if (on_left)
-          conversation.removeListener('left', on_left);
+      const on_joined = () => {
+        console.log(HOOK_NAME + "|on_joined", conversation);
+        doHandlePublication(streamsToPublish)
+        setToPublish(streamsToPublish)
+      };
+      const on_left = () => {
+        console.log(HOOK_NAME + "|on_left", conversation);
+        // Forcing unpublish will allow to republish if joining again
+        unpublishAndUnsubscribeAll(conversation);
+      };
+
+      conversation.on('joined', on_joined);
+      conversation.on('left', on_left);
+
+      return () => {
+        conversation.removeListener('joined', on_joined);
+        conversation.removeListener('left', on_left);
       }
     }
   }, [doHandlePublication]); // Don't add 'conversation' in here because
@@ -205,7 +191,6 @@ export default function useConversationStreams(
   // subscribeToStream(s) after having set listeners
   //
   useEffect(() => {
-
     if (conversation) {
       //console.log(HOOK_NAME + "|new Conversation (subscribeToStream)", conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
       // Subscribe to existing remote streams
@@ -215,11 +200,9 @@ export default function useConversationStreams(
           conversation.subscribeToStream(streamId);
         }
       })
-    }
 
-    return () => {
-      //console.log(HOOK_NAME + "|conversation clear", l_conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
-      if (conversation) {
+      return () => {
+        //console.log(HOOK_NAME + "|conversation clear", l_conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
         unpublishAndUnsubscribeAll(conversation)
       }
     }

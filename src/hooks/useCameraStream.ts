@@ -19,14 +19,13 @@ export default function useCameraStream(
                 console.error(HOOK_NAME + "|createStream", options, error)
                 setStream(undefined)
             });
+            return () => {
+                setStream(undefined)
+            }
         } else {
             setStream(undefined)
         }
-        return () => {
-            if (session) {
-                setStream(undefined)
-            }
-        }
+
     }, [session, JSON.stringify(options)]);
 
     useEffect(() => {

@@ -77,10 +77,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 console.log(HOOK_NAME + "|subscribeToGroup", group);
                 l_session.subscribeToGroup(group);
             })
-        }
-
-        return () => {
-            if (session) {
+            return () => {
                 console.log(HOOK_NAME + "|removeListener contactListUpdate");
                 session.removeListener('contactListUpdate', onContactListUpdate)
                 const l_session = session;
@@ -100,10 +97,10 @@ export default function usePresence(session: Session | undefined, groups: Array<
                         console.error(HOOK_NAME + "|unsubscribeToGroup", group, error);
                     }
                 })
-            }
-            setContactsByGroup(new Map())
-            setContacts(new Set())
-        };
+                setContactsByGroup(new Map())
+                setContacts(new Set())
+            };
+        }
     }, [session, JSON.stringify(groups)]);
 
     return {

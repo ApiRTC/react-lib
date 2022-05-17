@@ -6,7 +6,7 @@ const HOOK_NAME = "useToggleBlurStream"
 /**
  * This hook takes stream passed as parameter or set with setStream method, and
  * returns either this stream or a blurred version. This is controlled by the
- * blur input attribute.
+ * blur input attribute or toggle function.
  * By default the output stream is not blurred.
  * The hook fully manages the blurred stream (releases it when not blurred).
  * The hook never releases the input stream.

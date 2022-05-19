@@ -4,17 +4,17 @@ import { Stream } from '@apirtc/apirtc';
 
 const HOOK_NAME = "useToggleBlurStream"
 /**
- * This hook takes stream passed as parameter or set with setStream method, and
- * returns either this stream or a blurred version. This is controlled by the
- * blur input attribute or toggle function.
+ * This hook takes stream passed as parameter, and
+ * returns either this stream or a blurred version.
+ * This is controlled by the blur input attribute or toggle function.
  * By default the output stream is not blurred.
  * The hook fully manages the blurred stream (releases it when not blurred).
  * The hook never releases the input stream.
  * 
  * @param stream 
- * @returns stream blurred or not, setStream and toggle methods, boolean blurred state.
+ * @returns stream blurred or not, toggle method, boolean blurred state.
  */
-export default function useToggleBlurStream(stream?: Stream, blur?: boolean) {
+export default function useToggleBlurStream(stream: Stream | undefined, blur?: boolean) {
     const [base, setBase] = useState(stream);
     const [outStream, setOutStream] = useState(stream);
     const [_blur, setBlur] = useState(blur)
@@ -47,7 +47,6 @@ export default function useToggleBlurStream(stream?: Stream, blur?: boolean) {
 
     const doCheckAndReleaseOutStream = useCallback(() => {
         if (outStream && (outStream !== base)) {
-            //console.log(HOOK_NAME + "|release outStream", outStream)
             outStream.release()
         }
     }, [base, outStream]);
@@ -58,16 +57,12 @@ export default function useToggleBlurStream(stream?: Stream, blur?: boolean) {
         }
     }, [outStream]);
 
-    const setStream = (stream: Stream | undefined) => {
-        setBase(stream)
-    }
-
     const toggle = useCallback(() => {
         setBlur(!blurred)
     }, [blurred]);
 
     return {
-        stream: outStream, setStream,
+        stream: outStream,
         toggle,
         blurred
     };

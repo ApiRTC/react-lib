@@ -22,4 +22,6 @@
 .env.test.local
 .env.production.local
 
+.scannerwork/
+
 npm-debug.log*

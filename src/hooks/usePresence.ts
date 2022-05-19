@@ -70,17 +70,18 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
         console.log(HOOK_NAME + "|useEffect groups", groups);
         if (session) {
-            console.log(HOOK_NAME + "|register contactListUpdate");
-            session.on('contactListUpdate', onContactListUpdate);
+            // had to go through a copy of the session handle to make sure this session
+            // is used in further callback blocks
             const l_session = session;
+            console.log(HOOK_NAME + "|register contactListUpdate");
+            l_session.on('contactListUpdate', onContactListUpdate);
             groups.forEach(group => {
                 console.log(HOOK_NAME + "|subscribeToGroup", group);
                 l_session.subscribeToGroup(group);
             })
             return () => {
                 console.log(HOOK_NAME + "|removeListener contactListUpdate");
-                session.removeListener('contactListUpdate', onContactListUpdate)
-                const l_session = session;
+                l_session.removeListener('contactListUpdate', onContactListUpdate)
                 groups.forEach(group => {
                     console.log(HOOK_NAME + "|unsubscribeToGroup", group);
                     try {

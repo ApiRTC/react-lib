@@ -3,10 +3,7 @@ import { useState, useEffect, useCallback } from "react";
 import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc';
 
 // TODO: add pagination ?
-// TODO: make thoses hooks open-source
-
 // interface Options {
-//   // TODO: implement pagination ?
 //   remoteStreamsPageSize: number
 // }
 
@@ -16,7 +13,6 @@ export default function useConversationStreams(
   /** fully managed Stream to published */
   streamsToPublish: Array<Stream> = []
 ) {
-  // , options?:Options
 
   const [s_streamsToPublish, setToPublish] = useState<Array<Stream>>([])
 
@@ -45,7 +41,7 @@ export default function useConversationStreams(
         reject(error)
       });
     })
-  }, [conversation]) //publishedStreams
+  }, [conversation])
 
   const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
     console.log(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
@@ -62,7 +58,7 @@ export default function useConversationStreams(
       }).catch(error => {
         console.error(HOOK_NAME + "|replacePublishedStream", error)
       });
-  }, [conversation]) //publishedStreams
+  }, [conversation])
 
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
     console.log(HOOK_NAME + "|unpublish", conversation, localStream)
@@ -74,7 +70,7 @@ export default function useConversationStreams(
     } else {
       console.error(HOOK_NAME + "|cannot splice", publishedStreams, index)
     }
-  }, [conversation]) //publishedStreams
+  }, [conversation])
 
   const doHandlePublication = useCallback((streams: Array<Stream>) => {
     const maxLength = Math.max(s_streamsToPublish.length, streams.length);
@@ -138,20 +134,17 @@ export default function useConversationStreams(
     }
   }, [conversation]);
 
-  const unpublishAndUnsubscribeAll = (conversation: Conversation) => {
-    // Get a handle on the conversation because it will be used next in forEach callback
-    // which otherwise using 'conversation' handle may change during the loop.
-    const l_conversation = conversation;
+  const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
     publishedStreams.forEach(stream => {
-      console.log(HOOK_NAME + "|unpublish stream", l_conversation, stream)
-      l_conversation.unpublish(stream);
+      console.log(HOOK_NAME + "|unpublish stream", i_conversation, stream)
+      i_conversation.unpublish(stream);
     });
     // Clear internal array
     publishedStreams.length = 0;
 
     subscribedStreams.forEach(stream => {
-      console.log(HOOK_NAME + "|unsubscribeToStream stream", l_conversation, stream)
-      l_conversation.unsubscribeToStream(stream.getId());
+      console.log(HOOK_NAME + "|unsubscribeToStream stream", i_conversation, stream)
+      i_conversation.unsubscribeToStream(stream.getId());
     });
     // Clear internal array
     subscribedStreams.length = 0;
@@ -202,7 +195,6 @@ export default function useConversationStreams(
       })
 
       return () => {
-        //console.log(HOOK_NAME + "|conversation clear", l_conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
         unpublishAndUnsubscribeAll(conversation)
       }
     }
@@ -210,7 +202,6 @@ export default function useConversationStreams(
 
   useEffect(() => {
     if (conversation) {
-      //console.log(HOOK_NAME + "|changed streamsToPublish", conversation, JSON.stringify(streamsToPublish.map(l_s => l_s.getId())))
       doHandlePublication(streamsToPublish)
       setToPublish(streamsToPublish)
     }

@@ -1,21 +1,19 @@
-import React, { useEffect, useRef } from 'react';
-
-import { Stream } from '@apirtc/apirtc';
-
-import styled from 'styled-components';
+import React, { useEffect, useRef } from 'react'
+import { Stream } from '@apirtc/apirtc'
+import styled from 'styled-components'
 
 const Video = styled.video`
     max-width: 100%;
-`;
+`
 
 export interface VideoStreamProps {
-    stream: Stream;
+    stream: Stream
 }
 // VideoStream.defaultProps = {
 // }
 export default function VideoStream(props: VideoStreamProps) {
 
-    const videoRef = useRef<HTMLVideoElement>(null);
+    const videoRef = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
         if (videoRef.current) {
@@ -32,5 +30,5 @@ export default function VideoStream(props: VideoStreamProps) {
 
     return (
         <Video id={props.stream.getId()} ref={videoRef}></Video>
-    );
+    )
 }

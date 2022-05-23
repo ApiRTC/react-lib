@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-
-import { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc';
+import { useState, useEffect, useCallback } from 'react'
+import { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc'
 
 const HOOK_NAME = "useConversation"
 export default function useConversation(
@@ -78,5 +77,5 @@ export default function useConversation(
         joined,
         join,
         leave
-    };
+    }
 }

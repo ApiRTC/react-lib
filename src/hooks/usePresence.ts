@@ -1,6 +1,5 @@
-import { useState, useEffect } from "react";
-
-import { Session, Contact } from '@apirtc/apirtc';
+import { useState, useEffect } from 'react'
+import { Session, Contact } from '@apirtc/apirtc'
 
 /**
  * Subscribe to groups and returns contactsByGroup (of theses groups only) when updated

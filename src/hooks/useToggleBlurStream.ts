@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-
-import { Stream } from '@apirtc/apirtc';
+import { useState, useEffect, useCallback } from 'react'
+import { Stream } from '@apirtc/apirtc'
 
 const HOOK_NAME = "useToggleBlurStream"
 /**
@@ -15,55 +14,57 @@ const HOOK_NAME = "useToggleBlurStream"
  * @returns stream blurred or not, toggle method, boolean blurred state.
  */
 export default function useToggleBlurStream(stream: Stream | undefined, blur?: boolean) {
-    const [base, setBase] = useState(stream);
-    const [outStream, setOutStream] = useState(stream);
+    const [base, setBase] = useState(stream)
+    const [outStream, setOutStream] = useState(stream)
     const [_blur, setBlur] = useState(blur)
     const [blurred, setBlurred] = useState<boolean>()
 
     useEffect(() => {
         setBase(stream)
-    }, [stream]);
+    }, [stream])
 
     useEffect(() => {
         setBlur(blur)
-    }, [blur]);
+    }, [blur])
 
     useEffect(() => {
         if (base && _blur) {
             base.blur().then(blurredStream => {
-                setOutStream(blurredStream);
-                setBlurred(true);
+                setOutStream(blurredStream)
+                setBlurred(true)
             }).catch(error => {
                 console.error(HOOK_NAME + "|useEffect base blur", error)
+                setOutStream(base)
+                setBlurred(false)
             })
         } else {
-            setBlurred(false);
             setOutStream(base)
+            setBlurred(false)
         }
 
         // Should not release base here as it is NOT created in this hook
         // we shall not handle its lifecycle
-    }, [base, _blur]);
+    }, [base, _blur])
 
     const doCheckAndReleaseOutStream = useCallback(() => {
         if (outStream && (outStream !== base)) {
             outStream.release()
         }
-    }, [base, outStream]);
+    }, [base, outStream])
 
     useEffect(() => {
         return () => {
-            doCheckAndReleaseOutStream();
+            doCheckAndReleaseOutStream()
         }
-    }, [outStream]);
+    }, [outStream])
 
     const toggle = useCallback(() => {
         setBlur(!blurred)
-    }, [blurred]);
+    }, [blurred])
 
     return {
         stream: outStream,
         toggle,
         blurred
-    };
+    }
 }

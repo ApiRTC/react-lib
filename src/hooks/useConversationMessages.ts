@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-
-import { Contact, Conversation, ConversationMessage } from '@apirtc/apirtc';
+import { useState, useEffect, useCallback } from 'react'
+import { Contact, Conversation, ConversationMessage } from '@apirtc/apirtc'
 
 // TODO : get and handle with pagination messages history
 // TODO : ask apirtc to include the uuid in ConversationMessage so that we can store it
@@ -33,7 +32,7 @@ export default function useConversationMessages(
                 setO_Messages(new Array<any>());
             }
         }
-    }, [conversation]);
+    }, [conversation])
 
     const sendMessage = useCallback((msgContent: string, sender: Contact) => {
         return new Promise<void>((resolve, reject) => {
@@ -54,5 +53,5 @@ export default function useConversationMessages(
     return {
         messages: o_messages,
         sendMessage
-    };
+    }
 }

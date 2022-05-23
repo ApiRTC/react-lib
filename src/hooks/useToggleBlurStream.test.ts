@@ -1,6 +1,6 @@
-import { renderHook } from '@testing-library/react-hooks';
+import { renderHook } from '@testing-library/react-hooks'
 
-import useToggleBlurStream from './useToggleBlurStream';
+import useToggleBlurStream from './useToggleBlurStream'
 
 describe('useToggleBlurStream', () => {
     test(`Default value of stream will be undefined`, () => {

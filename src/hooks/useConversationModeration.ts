@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-
-import { Contact, Conversation } from '@apirtc/apirtc';
+import { useState, useEffect } from 'react'
+import { Contact, Conversation } from '@apirtc/apirtc'
 
 const HOOK_NAME = "useConversationModeration"
 export default function useConversationModeration(
@@ -54,9 +53,9 @@ export default function useConversationModeration(
                 setCandidates(new Set())
             }
         }
-    }, [conversation]);
+    }, [conversation])
 
     return {
         candidates
-    };
+    }
 }

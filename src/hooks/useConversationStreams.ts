@@ -1,6 +1,5 @@
-import { useState, useEffect, useCallback } from "react";
-
-import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc';
+import { useState, useEffect, useCallback } from "react"
+import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc'
 
 // TODO: add pagination ?
 // interface Options {
@@ -132,7 +131,7 @@ export default function useConversationStreams(
         conversation.removeListener('streamAdded', on_streamAdded);
       }
     }
-  }, [conversation]);
+  }, [conversation])
 
   const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
     publishedStreams.forEach(stream => {
@@ -178,7 +177,7 @@ export default function useConversationStreams(
         conversation.removeListener('left', on_left);
       }
     }
-  }, [doHandlePublication]); // Don't add 'conversation' in here because
+  }, [doHandlePublication]) // Don't add 'conversation' in here because
   // doHandlePublication already changes on conversation change
 
   // subscribeToStream(s) after having set listeners
@@ -198,14 +197,14 @@ export default function useConversationStreams(
         unpublishAndUnsubscribeAll(conversation)
       }
     }
-  }, [conversation]);
+  }, [conversation])
 
   useEffect(() => {
     if (conversation) {
       doHandlePublication(streamsToPublish)
       setToPublish(streamsToPublish)
     }
-  }, [JSON.stringify(streamsToPublish.map(l_s => l_s.getId()))]);
+  }, [JSON.stringify(streamsToPublish.map(l_s => l_s.getId()))])
 
   return {
     publishedStreams: o_publishedStreams,
@@ -213,5 +212,5 @@ export default function useConversationStreams(
     publish,
     unpublish,
     replacePublishedStream
-  };
+  }
 }

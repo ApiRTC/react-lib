@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
-
-import { MediaDeviceList, Session, UserAgent } from '@apirtc/apirtc';
+import { useState, useEffect } from 'react'
+import { MediaDeviceList, Session, UserAgent } from '@apirtc/apirtc'
 
 const EMPTY_LIST: MediaDeviceList = { audioinput: {}, audiooutput: {}, videoinput: {} }
 
@@ -26,7 +25,6 @@ export default function useUserMediaDevices(
                 setUserMediaDevices(EMPTY_LIST);
             }
         }
-
     }, [session]);
 
     return {

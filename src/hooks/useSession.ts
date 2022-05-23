@@ -1,11 +1,11 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react'
 
-import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc';
+import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc'
 
 type LoginPassword = {
     username: string;
     password: string;
-};
+}
 function isInstanceOfLoginPassword(object: any): object is LoginPassword {
     if (!object) return false;
     return 'username' in object;

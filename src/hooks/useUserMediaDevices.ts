@@ -14,20 +14,20 @@ export default function useUserMediaDevices(
             const userAgent: UserAgent = session.getUserAgent();
 
             const on_mediaDeviceChanged = () => {
-                const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices();
+                const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices()
                 console.info(HOOK_NAME + "|mediaDeviceChanged", mediaDevices)
                 setUserMediaDevices(mediaDevices);
             }
-            userAgent.on("mediaDeviceChanged", on_mediaDeviceChanged);
+            userAgent.on("mediaDeviceChanged", on_mediaDeviceChanged)
 
             return () => {
-                userAgent.removeListener('mediaDeviceChanged', on_mediaDeviceChanged);
-                setUserMediaDevices(EMPTY_LIST);
+                userAgent.removeListener('mediaDeviceChanged', on_mediaDeviceChanged)
+                setUserMediaDevices(EMPTY_LIST)
             }
         }
-    }, [session]);
+    }, [session])
 
     return {
         userMediaDevices
-    };
+    }
 }

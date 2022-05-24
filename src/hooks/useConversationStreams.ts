@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback } from 'react'
 import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc'
 
 // TODO: add pagination ?
@@ -10,10 +10,10 @@ const HOOK_NAME = "useConversationStreams"
 export default function useConversationStreams(
   conversation: Conversation | undefined,
   /** fully managed Stream to published */
-  streamsToPublish: Array<Stream> = []
+  streamsToPublish: Array<Stream | undefined | null> = []
 ) {
 
-  const [s_streamsToPublish, setToPublish] = useState<Array<Stream>>([])
+  const [s_streamsToPublish, setToPublish] = useState<Array<Stream | undefined | null>>([])
 
   // Use an internal array which will always be the same object as far as React knows
   // This will avoid the need for adding it as a dependency for each callback
@@ -22,19 +22,19 @@ export default function useConversationStreams(
   // (only a new instance of array is detected by React)
   const [o_publishedStreams, setO_PublishedStreams] = useState<Array<Stream>>(new Array<Stream>())
 
-  const [subscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
-  const [o_subscribedStreams, setO_SubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
+  const [subscribedStreams] = useState<Array<Stream>>(new Array<Stream>())
+  const [o_subscribedStreams, setO_SubscribedStreams] = useState<Array<Stream>>(new Array<Stream>())
 
   const publish: (localStream: Stream) => Promise<Stream> = useCallback((localStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
       console.log(HOOK_NAME + "|publish", conversation, localStream)
       conversation?.publish(localStream).then(stream => {
-        console.log(HOOK_NAME + "|stream published", stream);
+        console.log(HOOK_NAME + "|stream published", stream)
         //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
         publishedStreams.push(stream)
         // Returning a new array makes lets React detect changes
         setO_PublishedStreams(Array.from(publishedStreams))
-        resolve(stream);
+        resolve(stream)
       }).catch((error: any) => {
         console.error(HOOK_NAME + "|publish", error)
         reject(error)
@@ -46,22 +46,22 @@ export default function useConversationStreams(
     console.log(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
     conversation?.getConversationCall(oldStream).replacePublishedStream(newStream)
       .then((stream: Stream) => {
-        console.log(HOOK_NAME + "|stream replaced", oldStream, stream);
+        console.log(HOOK_NAME + "|stream replaced", oldStream, stream)
         const index = publishedStreams.indexOf(oldStream)
         if (index >= 0) {
-          publishedStreams.splice(index, 1, stream);
+          publishedStreams.splice(index, 1, stream)
         } else {
           console.error(HOOK_NAME + "|cannot splice", publishedStreams, index)
         }
         setO_PublishedStreams(Array.from(publishedStreams))
       }).catch(error => {
         console.error(HOOK_NAME + "|replacePublishedStream", error)
-      });
+      })
   }, [conversation])
 
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
     console.log(HOOK_NAME + "|unpublish", conversation, localStream)
-    conversation?.unpublish(localStream);
+    conversation?.unpublish(localStream)
     const index = publishedStreams.indexOf(localStream)
     if (index >= 0) {
       publishedStreams.splice(index, 1)
@@ -71,18 +71,20 @@ export default function useConversationStreams(
     }
   }, [conversation])
 
-  const doHandlePublication = useCallback((streams: Array<Stream>) => {
-    const maxLength = Math.max(s_streamsToPublish.length, streams.length);
+  const doHandlePublication = useCallback((streams: Array<Stream | undefined | null>) => {
+    const maxLength = Math.max(s_streamsToPublish.length, streams.length)
     for (let i = 0; i < maxLength; i++) {
-      if (s_streamsToPublish[i] && streams[i] && (s_streamsToPublish[i] !== streams[i])) {
-        replacePublishedStream(s_streamsToPublish[i], streams[i])
-      } else if (s_streamsToPublish[i] && !streams[i]) {
-        unpublish(s_streamsToPublish[i]);
-      } else if (streams[i]) {
-        publish(streams[i]);
+      const streamToPublish = s_streamsToPublish[i];
+      const stream = streams[i];
+      if (streamToPublish && stream && (streamToPublish !== stream)) {
+        replacePublishedStream(streamToPublish, stream)
+      } else if (streamToPublish && !stream) {
+        unpublish(streamToPublish)
+      } else if (stream) {
+        publish(stream)
       }
     }
-  }, [JSON.stringify(s_streamsToPublish.map(l_s => l_s.getId())), publish, unpublish, replacePublishedStream])
+  }, [JSON.stringify(s_streamsToPublish.map(l_s => l_s?.getId())), publish, unpublish, replacePublishedStream])
 
   // --------------------------------------------------------------------------
   // useEffect(s) - Order is important
@@ -93,15 +95,15 @@ export default function useConversationStreams(
         console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
         //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
         subscribedStreams.push(remoteStream)
-        setO_SubscribedStreams(Array.from(subscribedStreams));
+        setO_SubscribedStreams(Array.from(subscribedStreams))
       }
       const on_streamRemoved = (remoteStream: Stream) => {
-        console.log(HOOK_NAME + "|on_streamRemoved", remoteStream);
+        console.log(HOOK_NAME + "|on_streamRemoved", remoteStream)
         const index = subscribedStreams.indexOf(remoteStream)
         //console.log(`TRY SPLICING ${remoteStream.getId()} from subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())), index)
         if (index >= 0) {
           subscribedStreams.splice(index, 1)
-          setO_SubscribedStreams(Array.from(subscribedStreams));
+          setO_SubscribedStreams(Array.from(subscribedStreams))
         } else {
           console.error(HOOK_NAME + "|cannot splice", subscribedStreams, index)
         }
@@ -111,7 +113,7 @@ export default function useConversationStreams(
         if (streamInfo.isRemote === true) {
           if (streamInfo.listEventType === 'added') {
             // a remote stream was published
-            conversation?.subscribeToStream(streamId);
+            conversation?.subscribeToStream(streamId)
           } else if (streamInfo.listEventType === 'removed') {
             // a remote stream is not published anymore
             conversation?.unsubscribeToStream(streamId)
@@ -119,16 +121,16 @@ export default function useConversationStreams(
         }
       }
       // Subscribe to incoming streams
-      conversation.on('streamAdded', on_streamAdded);
-      conversation.on('streamRemoved', on_streamRemoved);
-      conversation.on('streamListChanged', on_streamListChanged);
+      conversation.on('streamAdded', on_streamAdded)
+      conversation.on('streamRemoved', on_streamRemoved)
+      conversation.on('streamListChanged', on_streamListChanged)
 
       return () => {
         //console.log(HOOK_NAME + "|REMOVE streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
         // remove listeners
-        conversation.removeListener('streamListChanged', on_streamListChanged);
-        conversation.removeListener('streamRemoved', on_streamRemoved);
-        conversation.removeListener('streamAdded', on_streamAdded);
+        conversation.removeListener('streamListChanged', on_streamListChanged)
+        conversation.removeListener('streamRemoved', on_streamRemoved)
+        conversation.removeListener('streamAdded', on_streamAdded)
       }
     }
   }, [conversation])
@@ -143,15 +145,15 @@ export default function useConversationStreams(
 
     subscribedStreams.forEach(stream => {
       console.log(HOOK_NAME + "|unsubscribeToStream stream", i_conversation, stream)
-      i_conversation.unsubscribeToStream(stream.getId());
+      i_conversation.unsubscribeToStream(stream.getId())
     });
     // Clear internal array
     subscribedStreams.length = 0;
 
     // Clear output arrays with new array so that parent gets notified of a change.
     // Simply setting length to 0 is not detected by react.
-    setO_PublishedStreams(new Array<Stream>());
-    setO_SubscribedStreams(new Array<Stream>());
+    setO_PublishedStreams(new Array<Stream>())
+    setO_SubscribedStreams(new Array<Stream>())
   }
 
   useEffect(() => {
@@ -159,22 +161,22 @@ export default function useConversationStreams(
       console.log(HOOK_NAME + "|new Conversation", conversation)
 
       const on_joined = () => {
-        console.log(HOOK_NAME + "|on_joined", conversation);
+        console.log(HOOK_NAME + "|on_joined", conversation)
         doHandlePublication(streamsToPublish)
         setToPublish(streamsToPublish)
       };
       const on_left = () => {
-        console.log(HOOK_NAME + "|on_left", conversation);
+        console.log(HOOK_NAME + "|on_left", conversation)
         // Forcing unpublish will allow to republish if joining again
         unpublishAndUnsubscribeAll(conversation);
       };
 
-      conversation.on('joined', on_joined);
-      conversation.on('left', on_left);
+      conversation.on('joined', on_joined)
+      conversation.on('left', on_left)
 
       return () => {
-        conversation.removeListener('joined', on_joined);
-        conversation.removeListener('left', on_left);
+        conversation.removeListener('joined', on_joined)
+        conversation.removeListener('left', on_left)
       }
     }
   }, [doHandlePublication]) // Don't add 'conversation' in here because
@@ -189,7 +191,7 @@ export default function useConversationStreams(
       conversation.getAvailableStreamList().forEach(streamInfo => {
         const streamId = String(streamInfo.streamId)
         if (streamInfo.isRemote === true) {
-          conversation.subscribeToStream(streamId);
+          conversation.subscribeToStream(streamId)
         }
       })
 
@@ -200,11 +202,12 @@ export default function useConversationStreams(
   }, [conversation])
 
   useEffect(() => {
+    //console.log(HOOK_NAME + "|useEffect streamsToPublish", JSON.stringify(streamsToPublish.map(l_s => l_s?.getId())))
     if (conversation) {
       doHandlePublication(streamsToPublish)
       setToPublish(streamsToPublish)
     }
-  }, [JSON.stringify(streamsToPublish.map(l_s => l_s.getId()))])
+  }, [JSON.stringify(streamsToPublish.map(l_s => l_s?.getId()))])
 
   return {
     publishedStreams: o_publishedStreams,

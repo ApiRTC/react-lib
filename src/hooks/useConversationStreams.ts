@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc'
+import { Conversation, PublishOptions, Stream, StreamInfo } from '@apirtc/apirtc'
 
 // TODO: add pagination ?
 // interface Options {
@@ -9,10 +9,11 @@ import { Conversation, Stream, StreamInfo } from '@apirtc/apirtc'
 const HOOK_NAME = "useConversationStreams"
 export default function useConversationStreams(
   conversation: Conversation | undefined,
-  /** fully managed Stream to published */
+  /** fully managed list of Stream(s) to publish */
   streamsToPublish: Array<Stream | undefined | null> = []
 ) {
 
+  // A cache to handle pubication differences
   const [s_streamsToPublish, setToPublish] = useState<Array<Stream | undefined | null>>([])
 
   // Use an internal array which will always be the same object as far as React knows
@@ -25,26 +26,27 @@ export default function useConversationStreams(
   const [subscribedStreams] = useState<Array<Stream>>(new Array<Stream>())
   const [o_subscribedStreams, setO_SubscribedStreams] = useState<Array<Stream>>(new Array<Stream>())
 
-  const publish: (localStream: Stream) => Promise<Stream> = useCallback((localStream: Stream) => {
-    return new Promise<Stream>((resolve, reject) => {
-      console.log(HOOK_NAME + "|publish", conversation, localStream)
-      conversation?.publish(localStream).then(stream => {
-        console.log(HOOK_NAME + "|stream published", stream)
-        //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
-        publishedStreams.push(stream)
-        // Returning a new array makes lets React detect changes
-        setO_PublishedStreams(Array.from(publishedStreams))
-        resolve(stream)
-      }).catch((error: any) => {
-        console.error(HOOK_NAME + "|publish", error)
-        reject(error)
-      });
-    })
-  }, [conversation])
+  const publish: (localStream: Stream, options?: PublishOptions) => Promise<Stream> =
+    useCallback((localStream: Stream, options?: PublishOptions) => {
+      return new Promise<Stream>((resolve, reject) => {
+        console.log(HOOK_NAME + "|publish", conversation, localStream, options, localStream instanceof Stream)
+        conversation?.publish(localStream, options).then(stream => {
+          console.log(HOOK_NAME + "|stream published", stream)
+          //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
+          publishedStreams.push(stream)
+          // Returning a new array makes lets React detect changes
+          setO_PublishedStreams(Array.from(publishedStreams))
+          resolve(stream)
+        }).catch((error: any) => {
+          console.error(HOOK_NAME + "|publish", error)
+          reject(error)
+        });
+      })
+    }, [conversation])
 
   const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
     console.log(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
-    conversation?.getConversationCall(oldStream).replacePublishedStream(newStream)
+    conversation?.getConversationCall(oldStream)?.replacePublishedStream(newStream)
       .then((stream: Stream) => {
         console.log(HOOK_NAME + "|stream replaced", oldStream, stream)
         const index = publishedStreams.indexOf(oldStream)
@@ -74,13 +76,19 @@ export default function useConversationStreams(
   const doHandlePublication = useCallback((streams: Array<Stream | undefined | null>) => {
     const maxLength = Math.max(s_streamsToPublish.length, streams.length)
     for (let i = 0; i < maxLength; i++) {
-      const streamToPublish = s_streamsToPublish[i];
       const stream = streams[i];
+      const streamToPublish = s_streamsToPublish[i];
       if (streamToPublish && stream && (streamToPublish !== stream)) {
+        // If position in both new and cached list are vald but are different : replace
         replacePublishedStream(streamToPublish, stream)
       } else if (streamToPublish && !stream) {
+        // If position in new list is now undefined(or null) while it was in cache : unpublish
         unpublish(streamToPublish)
       } else if (stream) {
+        // If position in new list is valid : publish it whatever the position in cache.
+        // Depending on the case the stream might be already published (Conversation will reject the
+        // publish but this is fine), or it might be not (can happen if the cache was set while
+        // Conversation was not joined yet).
         publish(stream)
       }
     }

@@ -34,7 +34,6 @@ const HOOK_NAME = "useSession"
 export default function useSession(): SessionOutput {
     const [session, setSession] = useState<Session | undefined>();
 
-    // useCallback(
     const connect = (credentials: Credentials | undefined, options?: RegisterInformation) => {
         return new Promise<void>((resolve, reject) => {
             const registerInformation: RegisterInformation = options ? options : {
@@ -70,7 +69,7 @@ export default function useSession(): SessionOutput {
                 });
             } else { reject("credentials not recognized") }
         });
-    }//, [])
+    }
 
     const disconnect = useCallback(() => {
         return new Promise<void>((resolve, reject) => {

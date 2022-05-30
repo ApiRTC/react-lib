@@ -9,8 +9,6 @@ const Video = styled.video`
 export interface VideoStreamProps {
     stream: Stream
 }
-// VideoStream.defaultProps = {
-// }
 export default function VideoStream(props: VideoStreamProps) {
 
     const videoRef = useRef<HTMLVideoElement>(null)
@@ -28,7 +26,5 @@ export default function VideoStream(props: VideoStreamProps) {
         }
     }, [props.stream]);
 
-    return (
-        <Video id={props.stream.getId()} ref={videoRef}></Video>
-    )
+    return <Video id={props.stream.getId()} ref={videoRef}></Video>
 }

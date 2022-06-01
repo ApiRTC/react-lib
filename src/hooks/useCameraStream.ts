@@ -18,9 +18,11 @@ export default function useCameraStream(
                 console.error(HOOK_NAME + "|createStream", options, error)
                 setStream(undefined)
             })
-            return () => {
-                setStream(undefined)
-            }
+
+            // DO NOT set out stream to undefined in the return, to prevent unnecessary refreshs
+            // of other components with undefined stream, whereas we are expecting to change it
+            // to another instance..
+            // return () => { setStream(undefined) } // DON'T
         } else {
             setStream(undefined)
         }

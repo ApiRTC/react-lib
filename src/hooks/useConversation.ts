@@ -9,18 +9,18 @@ export default function useConversation(
     autoJoin: boolean = false
 ) {
 
-    const [conversation, setConversation] = useState<Conversation>();
-    const [joined, setJoined] = useState<boolean>(false);
+    const [conversation, setConversation] = useState<Conversation>()
+    const [joined, setJoined] = useState<boolean>(false)
 
     useEffect(() => {
         setJoined(false)
         if (session && name) {
             console.log(HOOK_NAME + "|getOrCreateConversation", name, options)
-            setConversation(session.getOrCreateConversation(name, options));
+            setConversation(session.getOrCreateConversation(name, options))
         } else {
             setConversation(undefined)
         }
-    }, [session, name, JSON.stringify(options)]);
+    }, [session, name, JSON.stringify(options)])
 
     useEffect(() => {
         if (conversation && autoJoin) {
@@ -40,17 +40,17 @@ export default function useConversation(
                 conversation.join().then(() => {
                     // local user successfully joined the conversation.
                     console.log(HOOK_NAME + "|joined")
-                    setJoined(true);
+                    setJoined(true)
                     resolve()
                 }).catch((error: any) => {
                     // local user could not join the conversation.
                     reject(error)
-                });
+                })
             }
             else {
                 reject(HOOK_NAME + "|conversation is not defined")
             }
-        });
+        })
     }, [conversation])
 
     const leave = useCallback(() => {
@@ -60,16 +60,16 @@ export default function useConversation(
                 conversation.leave().then(() => {
                     // local user successfully left the conversation.
                     console.log(HOOK_NAME + "|left", conversation.getName())
-                    setJoined(false);
+                    setJoined(false)
                     resolve()
                 }).catch((error: any) => {
                     reject(error)
-                });
+                })
             }
             else {
                 reject(HOOK_NAME + "|conversation is not defined")
             }
-        });
+        })
     }, [conversation])
 
     return {

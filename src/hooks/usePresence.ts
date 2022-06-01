@@ -8,14 +8,14 @@ import { Session, Contact } from '@apirtc/apirtc'
 const HOOK_NAME = "usePresence"
 export default function usePresence(session: Session | undefined, groups: Array<string>) {
 
-    const [contacts, setContacts] = useState<Set<Contact>>(new Set());
-    const [contactsByGroup, setContactsByGroup] = useState<Map<string, Set<Contact>>>(new Map());
+    const [contacts, setContacts] = useState<Set<Contact>>(new Set())
+    const [contactsByGroup, setContactsByGroup] = useState<Map<string, Set<Contact>>>(new Map())
 
     useEffect(() => {
         const onContactListUpdate = (updatedContacts: any) => {
-            console.log(HOOK_NAME + "|contactListUpdate", updatedContacts);
+            console.log(HOOK_NAME + "|contactListUpdate", updatedContacts)
 
-            const l_groups = new Set(groups);
+            const l_groups = new Set(groups)
 
             var needsRefresh = false;
 
@@ -24,11 +24,11 @@ export default function usePresence(session: Session | undefined, groups: Array<
             for (const group of Object.keys(updatedContacts.joinedGroup)) {
                 if (l_groups.has(group)) {
                     if (!contactsByGroup.has(group)) {
-                        contactsByGroup.set(group, new Set());
+                        contactsByGroup.set(group, new Set())
                     }
                     for (const contact of updatedContacts.joinedGroup[group]) {
-                        contacts.add(contact);
-                        contactsByGroup.get(group)?.add(contact);
+                        contacts.add(contact)
+                        contactsByGroup.get(group)?.add(contact)
                         needsRefresh = true;
                     }
                 }
@@ -36,10 +36,10 @@ export default function usePresence(session: Session | undefined, groups: Array<
             for (const group of Object.keys(updatedContacts.leftGroup)) {
                 if (l_groups.has(group)) {
                     if (!contactsByGroup.has(group)) {
-                        contactsByGroup.set(group, new Set());
+                        contactsByGroup.set(group, new Set())
                     }
                     for (const contact of updatedContacts.leftGroup[group]) {
-                        contactsByGroup.get(group)?.delete(contact);
+                        contactsByGroup.get(group)?.delete(contact)
                         needsRefresh = true;
 
                         // Delete from contacts is contact is not in any managed groups
@@ -65,24 +65,24 @@ export default function usePresence(session: Session | undefined, groups: Array<
             if (needsRefresh) {
                 setContactsByGroup(new Map(contactsByGroup))
             }
-        };
+        }
 
-        console.log(HOOK_NAME + "|useEffect groups", groups);
+        console.log(HOOK_NAME + "|useEffect groups", groups)
         if (session) {
             // had to go through a copy of the session handle to make sure this session
             // is used in further callback blocks
             const l_session = session;
-            console.log(HOOK_NAME + "|register contactListUpdate");
-            l_session.on('contactListUpdate', onContactListUpdate);
+            console.log(HOOK_NAME + "|register contactListUpdate")
+            l_session.on('contactListUpdate', onContactListUpdate)
             groups.forEach(group => {
-                console.log(HOOK_NAME + "|subscribeToGroup", group);
-                l_session.subscribeToGroup(group);
+                console.log(HOOK_NAME + "|subscribeToGroup", group)
+                l_session.subscribeToGroup(group)
             })
             return () => {
-                console.log(HOOK_NAME + "|removeListener contactListUpdate");
+                console.log(HOOK_NAME + "|removeListener contactListUpdate")
                 l_session.removeListener('contactListUpdate', onContactListUpdate)
                 groups.forEach(group => {
-                    console.log(HOOK_NAME + "|unsubscribeToGroup", group);
+                    console.log(HOOK_NAME + "|unsubscribeToGroup", group)
                     try {
                         // Had to call unsubscribeToGroup in a try catch because it
                         // used to crash the whole app when session was disconnected
@@ -92,18 +92,18 @@ export default function usePresence(session: Session | undefined, groups: Array<
                         // Uncaught TypeError: this.getSubscribedPresenceGroup() is null
                         // Could be fixed in ApiRTC by making getSubscribedPresenceGroup return empty array instead of null
                         // Asked Johann and he commited this today (2022/05/09)
-                        l_session.unsubscribeToGroup(group);
+                        l_session.unsubscribeToGroup(group)
                     } catch (error) {
-                        console.error(HOOK_NAME + "|unsubscribeToGroup", group, error);
+                        console.error(HOOK_NAME + "|unsubscribeToGroup", group, error)
                     }
                 })
                 setContactsByGroup(new Map())
                 setContacts(new Set())
-            };
+            }
         }
-    }, [session, JSON.stringify(groups)]);
+    }, [session, JSON.stringify(groups)])
 
     return {
         contactsByGroup
-    };
+    }
 }

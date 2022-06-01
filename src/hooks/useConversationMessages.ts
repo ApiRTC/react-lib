@@ -12,24 +12,24 @@ export default function useConversationMessages(
 ) {
     // Use an internal array which will always be the same object as far as React knows
     // This will avoid the need for adding it as a dependency for each callback
-    const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
+    const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>())
     // And use a copy as output array so that client code will react upon change
     // (only a new instance of array is detected by React)
-    const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
+    const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>())
 
     useEffect(() => {
         if (conversation) {
             const onMessage = (message: ConversationMessage) => {
-                console.log(HOOK_NAME + "|on:message:", message, messages);
-                messages.push(message);
-                setO_Messages(Array.from(messages));
+                console.log(HOOK_NAME + "|on:message:", message, messages)
+                messages.push(message)
+                setO_Messages(Array.from(messages))
             }
-            conversation.on('message', onMessage);
+            conversation.on('message', onMessage)
 
             return () => {
-                conversation.removeListener('message', onMessage);
+                conversation.removeListener('message', onMessage)
                 messages.length = 0;
-                setO_Messages(new Array<any>());
+                setO_Messages(new Array<any>())
             }
         }
     }, [conversation])
@@ -38,16 +38,16 @@ export default function useConversationMessages(
         return new Promise<void>((resolve, reject) => {
             conversation?.sendMessage(msgContent)
                 .then((uuid: number) => {
-                    console.log(HOOK_NAME + "|sentMessage", uuid, msgContent, messages);
-                    messages.push({ content: msgContent, sender: sender, time: new Date() });
-                    setO_Messages(Array.from(messages));
-                    resolve();
+                    console.log(HOOK_NAME + "|sentMessage", uuid, msgContent, messages)
+                    messages.push({ content: msgContent, sender: sender, time: new Date() })
+                    setO_Messages(Array.from(messages))
+                    resolve()
                 })
                 .catch((error: any) => {
-                    console.error(HOOK_NAME + "|sendMessage error", error);
+                    console.error(HOOK_NAME + "|sendMessage error", error)
                     reject(error)
-                });
-        });
+                })
+        })
     }, [conversation])
 
     return {

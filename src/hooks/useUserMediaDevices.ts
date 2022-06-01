@@ -7,16 +7,16 @@ const HOOK_NAME = "useUserMediaDevices"
 export default function useUserMediaDevices(
     session: Session | undefined
 ) {
-    const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>(EMPTY_LIST);
+    const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>(EMPTY_LIST)
 
     useEffect(() => {
         if (session) {
-            const userAgent: UserAgent = session.getUserAgent();
+            const userAgent: UserAgent = session.getUserAgent()
 
             const on_mediaDeviceChanged = () => {
                 const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices()
                 console.info(HOOK_NAME + "|mediaDeviceChanged", mediaDevices)
-                setUserMediaDevices(mediaDevices);
+                setUserMediaDevices(mediaDevices)
             }
             userAgent.on("mediaDeviceChanged", on_mediaDeviceChanged)
 

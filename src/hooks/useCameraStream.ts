@@ -10,14 +10,14 @@ export default function useCameraStream(
 
     useEffect(() => {
         if (session) {
-            const userAgent: UserAgent = session.getUserAgent();
+            const userAgent: UserAgent = session.getUserAgent()
             userAgent.createStream(options).then((localStream: Stream) => {
                 console.info(HOOK_NAME + "|createStream", options, localStream)
                 setStream(localStream)
             }).catch((error: any) => {
                 console.error(HOOK_NAME + "|createStream", options, error)
                 setStream(undefined)
-            });
+            })
             return () => {
                 setStream(undefined)
             }

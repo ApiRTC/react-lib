@@ -1,1 +1,1 @@
-export { default } from "./VideoStream";
+export { default } from "./VideoStream"

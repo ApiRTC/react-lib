@@ -40,7 +40,7 @@ export default function useConversationStreams(
         }).catch((error: any) => {
           console.error(HOOK_NAME + "|publish", error)
           reject(error)
-        });
+        })
       })
     }, [conversation])
 
@@ -146,15 +146,15 @@ export default function useConversationStreams(
   const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
     publishedStreams.forEach(stream => {
       console.log(HOOK_NAME + "|unpublish stream", i_conversation, stream)
-      i_conversation.unpublish(stream);
-    });
+      i_conversation.unpublish(stream)
+    })
     // Clear internal array
     publishedStreams.length = 0;
 
     subscribedStreams.forEach(stream => {
       console.log(HOOK_NAME + "|unsubscribeToStream stream", i_conversation, stream)
       i_conversation.unsubscribeToStream(stream.getId())
-    });
+    })
     // Clear internal array
     subscribedStreams.length = 0;
 
@@ -172,12 +172,12 @@ export default function useConversationStreams(
         console.log(HOOK_NAME + "|on_joined", conversation)
         doHandlePublication(streamsToPublish)
         setToPublish(streamsToPublish)
-      };
+      }
       const on_left = () => {
         console.log(HOOK_NAME + "|on_left", conversation)
         // Forcing unpublish will allow to republish if joining again
-        unpublishAndUnsubscribeAll(conversation);
-      };
+        unpublishAndUnsubscribeAll(conversation)
+      }
 
       conversation.on('joined', on_joined)
       conversation.on('left', on_left)

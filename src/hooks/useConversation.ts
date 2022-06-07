@@ -11,6 +11,7 @@ export default function useConversation(
 
     const [conversation, setConversation] = useState<Conversation>()
     const [joined, setJoined] = useState<boolean>(false)
+    const [joining, setJoining] = useState<boolean>(false)
 
     useEffect(() => {
         setJoined(false)
@@ -37,13 +38,16 @@ export default function useConversation(
         console.log(HOOK_NAME + "|join", conversation)
         return new Promise<void>((resolve, reject) => {
             if (conversation) {
+                setJoining(true)
                 conversation.join().then(() => {
-                    // local user successfully joined the conversation.
+                    // successfully joined the conversation.
                     console.log(HOOK_NAME + "|joined")
                     setJoined(true)
+                    setJoining(false)
                     resolve()
                 }).catch((error: any) => {
-                    // local user could not join the conversation.
+                    // could not join the conversation.
+                    setJoining(false)
                     reject(error)
                 })
             }
@@ -74,6 +78,7 @@ export default function useConversation(
 
     return {
         conversation,
+        joining,
         joined,
         join,
         leave

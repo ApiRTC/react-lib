@@ -13,27 +13,8 @@ export default function useConversation(
     const [joined, setJoined] = useState<boolean>(false)
     const [joining, setJoining] = useState<boolean>(false)
 
-    useEffect(() => {
-        setJoined(false)
-        if (session && name) {
-            console.log(HOOK_NAME + "|getOrCreateConversation", name, options)
-            setConversation(session.getOrCreateConversation(name, options))
-        } else {
-            setConversation(undefined)
-        }
-    }, [session, name, JSON.stringify(options)])
-
-    useEffect(() => {
-        if (conversation && autoJoin) {
-            join()
-            return () => {
-                if (conversation.isJoined()) {
-                    leave()
-                }
-            }
-        }
-    }, [conversation, autoJoin])
-
+    // Callbacks
+    //
     const join = useCallback(() => {
         console.log(HOOK_NAME + "|join", conversation)
         return new Promise<void>((resolve, reject) => {
@@ -75,6 +56,35 @@ export default function useConversation(
             }
         })
     }, [conversation])
+
+    // Effects
+    //
+    useEffect(() => {
+        if (session && name) {
+            console.log(HOOK_NAME + "|getOrCreateConversation", name, options)
+            const l_conversation = session.getOrCreateConversation(name, options)
+            setConversation(l_conversation)
+            return () => {
+                // It is important to destroy the conversation.
+                // Otherwise subsequent getOrCreateConversation with same name would get
+                // previous handle, regardless of the potentially new options.
+                // This also allows to cleanup memory
+                l_conversation.destroy()
+            }
+        }
+    }, [session, name, JSON.stringify(options)])
+
+    useEffect(() => {
+        //console.log(HOOK_NAME + "|useEffect", conversation, autoJoin)
+        if (conversation && autoJoin) {
+            join()
+            return () => {
+                if (conversation.isJoined()) {
+                    leave()
+                }
+            }
+        }
+    }, [conversation, autoJoin])
 
     return {
         conversation,

@@ -1,10 +1,10 @@
 import React, { useEffect, useRef } from 'react'
 import { Stream } from '@apirtc/apirtc'
-//import styled from 'styled-components'
+import styled from 'styled-components'
 
-// const Video = styled.video`
-//     max-width: 100%;
-// `
+const Video = styled.video`
+    max-width: 100%;
+`
 // or
 // /* override other styles to make responsive */
 // width: 100%    !important;
@@ -34,5 +34,5 @@ export default function VideoStream(props: VideoStreamProps) {
         }
     }, [props.stream])
 
-    return <video id={props.stream.getId()} ref={videoRef}></video>
+    return <Video id={props.stream.getId()} ref={videoRef}></Video>
 }

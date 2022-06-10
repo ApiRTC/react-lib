@@ -166,7 +166,7 @@ export default function useConversationStreams(
 
   useEffect(() => {
     if (conversation) {
-      console.log(HOOK_NAME + "|new Conversation", conversation)
+      console.log(HOOK_NAME + "|useEffect doHandlePublication", conversation)
 
       const on_joined = () => {
         console.log(HOOK_NAME + "|on_joined", conversation)

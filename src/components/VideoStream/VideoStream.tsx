@@ -16,23 +16,22 @@ const Video = styled.video`
 
 export interface VideoStreamProps {
     stream: Stream
+    muted?: boolean
 }
 export default function VideoStream(props: VideoStreamProps) {
 
     const videoRef = useRef<HTMLVideoElement>(null)
 
     useEffect(() => {
-        if (videoRef.current) {
+        const ref = videoRef.current;
+        if (ref && props.stream) {
             props.stream.attachToElement(videoRef.current)
-            videoRef.current.autoplay = true;
-        }
-
-        return () => {
-            if (videoRef.current)
-                // (videoRef.current as HTMLVideoElement).src = "";
-                videoRef.current.src = "";
+            ref.autoplay = true;
+            return () => {
+                ref.src = "";
+            }
         }
     }, [props.stream])
 
-    return <Video id={props.stream.getId()} ref={videoRef}></Video>
+    return <Video id={props.stream.getId()} ref={videoRef} muted={props.muted}></Video>
 }

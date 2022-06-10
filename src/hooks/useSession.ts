@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc'
 
 type LoginPassword = {
@@ -31,8 +31,67 @@ interface SessionOutput {
 }
 
 const HOOK_NAME = "useSession"
+// credentials?: Credentials, options?: RegisterInformation
 export default function useSession(): SessionOutput {
+
     const [session, setSession] = useState<Session | undefined>()
+
+    // https://devtrium.com/posts/async-functions-useeffect
+    // Effects
+    //
+    // useEffect(() => {
+
+    //     let isSubscribed = true;
+
+    //     const doConnect = async () => {
+    //         const registerInformation: RegisterInformation = options ? options : {
+    //             cloudUrl: 'https://cloud.apirtc.com',
+    //         }
+    //         let l_userAgent;
+    //         if (isInstanceOfLoginPassword(credentials)) {
+    //             l_userAgent = new UserAgent({
+    //                 uri: 'apirtc:' + credentials.username
+    //             })
+    //             registerInformation.password = credentials.password
+    //         } else if (isInstanceOfApiKey(credentials)) {
+    //             l_userAgent = new UserAgent({
+    //                 uri: `apiKey:${credentials.apiKey}`
+    //             })
+    //         } else if (isInstanceOfToken(credentials)) {
+    //             l_userAgent = new UserAgent({
+    //                 uri: `token:${credentials.token}`,
+    //             })
+    //         } else {
+    //             console.error(HOOK_NAME + "|credentials not recognized")
+    //             return
+    //         }
+    //         if (isSubscribed) {
+    //             setSession(await l_userAgent.register(registerInformation))
+    //         }
+    //     }
+
+    //     doConnect()
+    //         // make sure to catch any error
+    //         .catch(error => {
+    //             console.error(HOOK_NAME + "|doConnect", error)
+    //         });
+
+    //     return () => { isSubscribed = false };
+    // }, [JSON.stringify(credentials), JSON.stringify(options)])
+
+    // useEffect(() => {
+    //     if (session) {
+    //         return () => {
+    //             const l_session = session;
+    //             l_session.disconnect().then(() => {
+    //                 console.log(HOOK_NAME + "|disconnected", l_session)
+    //                 setSession(undefined)
+    //             }).catch((error: any) => {
+    //                 console.error(HOOK_NAME + "|disconnect", error)
+    //             })
+    //         }
+    //     }
+    // }, [session])
 
     const connect = (credentials: Credentials | undefined, options?: RegisterInformation) => {
         return new Promise<void>((resolve, reject) => {
@@ -40,34 +99,30 @@ export default function useSession(): SessionOutput {
                 cloudUrl: 'https://cloud.apirtc.com',
             }
 
+            let l_userAgent;
+            
             if (isInstanceOfLoginPassword(credentials)) {
-                const l_userAgent = new UserAgent({
+                l_userAgent = new UserAgent({
                     uri: 'apirtc:' + credentials.username
                 })
-                registerInformation.password = credentials.password
-                l_userAgent.register(registerInformation).then(l_session => {
-                    setSession(l_session)
-                    resolve()
-                }).catch((error: any) => { reject(error) })
+                registerInformation.password = credentials.password;
             } else if (isInstanceOfApiKey(credentials)) {
-                const l_userAgent = new UserAgent({
+                l_userAgent = new UserAgent({
                     uri: `apiKey:${credentials.apiKey}`
                 })
-                l_userAgent.register(registerInformation).then(l_session => {
-                    setSession(l_session)
-                    resolve()
-                }).catch((error: any) => { reject(error) })
             } else if (isInstanceOfToken(credentials)) {
-                const l_userAgent = new UserAgent({
-                    uri: `token:${credentials.token}`,
+                l_userAgent = new UserAgent({
+                    uri: `token:${credentials.token}`
                 })
-                l_userAgent.register(registerInformation).then(l_session => {
-                    setSession(l_session)
-                    resolve()
-                }).catch((error: any) => {
-                    reject(error)
-                })
-            } else { reject("credentials not recognized") }
+            } else {
+                reject("credentials not recognized")
+                return
+            }
+
+            l_userAgent.register(registerInformation).then(l_session => {
+                setSession(l_session)
+                resolve()
+            }).catch((error: any) => { reject(error) })
         })
     }
 

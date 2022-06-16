@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState } from 'react'
 import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc'
 
 type LoginPassword = {
@@ -24,74 +24,35 @@ function isInstanceOfToken(object: any): object is Token {
 
 export type Credentials = LoginPassword | ApiKey | Token
 
-interface SessionOutput {
-    session?: Session
-    connect: (credentials: Credentials | undefined, options?: RegisterInformation) => Promise<void>
-    disconnect: () => void
-}
-
 const HOOK_NAME = "useSession"
-// credentials?: Credentials, options?: RegisterInformation
-export default function useSession(): SessionOutput {
+export default function useSession(credentials?: Credentials, options?: RegisterInformation) {
 
     const [session, setSession] = useState<Session | undefined>()
+    const [connecting, setConnecting] = useState<boolean>(false)
 
-    // https://devtrium.com/posts/async-functions-useeffect
-    // Effects
-    //
-    // useEffect(() => {
+    useEffect(() => {
+        if (credentials) {
+            connect(credentials, options).catch((error: any) => {
+                setSession(undefined)
+            })
+            return () => {
+                setSession(undefined)
+            }
+        }
+    }, [JSON.stringify(credentials), JSON.stringify(options)])
 
-    //     let isSubscribed = true;
-
-    //     const doConnect = async () => {
-    //         const registerInformation: RegisterInformation = options ? options : {
-    //             cloudUrl: 'https://cloud.apirtc.com',
-    //         }
-    //         let l_userAgent;
-    //         if (isInstanceOfLoginPassword(credentials)) {
-    //             l_userAgent = new UserAgent({
-    //                 uri: 'apirtc:' + credentials.username
-    //             })
-    //             registerInformation.password = credentials.password
-    //         } else if (isInstanceOfApiKey(credentials)) {
-    //             l_userAgent = new UserAgent({
-    //                 uri: `apiKey:${credentials.apiKey}`
-    //             })
-    //         } else if (isInstanceOfToken(credentials)) {
-    //             l_userAgent = new UserAgent({
-    //                 uri: `token:${credentials.token}`,
-    //             })
-    //         } else {
-    //             console.error(HOOK_NAME + "|credentials not recognized")
-    //             return
-    //         }
-    //         if (isSubscribed) {
-    //             setSession(await l_userAgent.register(registerInformation))
-    //         }
-    //     }
-
-    //     doConnect()
-    //         // make sure to catch any error
-    //         .catch(error => {
-    //             console.error(HOOK_NAME + "|doConnect", error)
-    //         });
-
-    //     return () => { isSubscribed = false };
-    // }, [JSON.stringify(credentials), JSON.stringify(options)])
-
-    // useEffect(() => {
-    //     if (session) {
-    //         return () => {
-    //             const l_session = session;
-    //             l_session.disconnect().then(() => {
-    //                 console.log(HOOK_NAME + "|disconnected", l_session)
-    //                 setSession(undefined)
-    //             }).catch((error: any) => {
-    //                 console.error(HOOK_NAME + "|disconnect", error)
-    //             })
-    //         }
-    //     }
-    // }, [session])
+    useEffect(() => {
+        if (session) {
+            const l_session = session;
+            return () => {
+                l_session.disconnect().then(() => {
+                    console.log(HOOK_NAME + "|disconnected", l_session)
+                }).catch((error: any) => {
+                    console.error(HOOK_NAME + "|disconnect", error)
+                })
+            }
+        }
+    }, [session])
 
     const connect = (credentials: Credentials | undefined, options?: RegisterInformation) => {
         return new Promise<void>((resolve, reject) => {
@@ -100,12 +61,12 @@ export default function useSession(): SessionOutput {
             }
 
             let l_userAgent;
-            
+
             if (isInstanceOfLoginPassword(credentials)) {
+                registerInformation.password = credentials.password;
                 l_userAgent = new UserAgent({
                     uri: 'apirtc:' + credentials.username
                 })
-                registerInformation.password = credentials.password;
             } else if (isInstanceOfApiKey(credentials)) {
                 l_userAgent = new UserAgent({
                     uri: `apiKey:${credentials.apiKey}`
@@ -119,34 +80,44 @@ export default function useSession(): SessionOutput {
                 return
             }
 
+            setConnecting(true)
             l_userAgent.register(registerInformation).then(l_session => {
                 setSession(l_session)
+                setConnecting(false)
                 resolve()
-            }).catch((error: any) => { reject(error) })
+            }).catch((error: any) => {
+                setConnecting(false)
+                reject(error)
+            })
         })
     }
 
-    const disconnect = useCallback(() => {
-        return new Promise<void>((resolve, reject) => {
-            if (session) {
-                const l_session = session;
-                l_session.disconnect().then(() => {
-                    console.log(HOOK_NAME + "|disconnected", l_session)
-                    setSession(undefined)
-                    resolve()
-                }).catch((error: any) => {
-                    console.error(HOOK_NAME + "|disconnect", error)
-                    reject(error)
-                })
-            } else {
-                resolve()
-            }
-        })
-    }, [session])
+    // const disconnect = useCallback(() => {
+    //     return new Promise<void>((resolve, reject) => {
+    //         if (session) {
+    //             const l_session = session;
+    //             l_session.disconnect().then(() => {
+    //                 console.log(HOOK_NAME + "|disconnected", l_session)
+    //                 setSession(undefined)
+    //                 resolve()
+    //             }).catch((error: any) => {
+    //                 console.error(HOOK_NAME + "|disconnect", error)
+    //                 reject(error)
+    //             })
+    //         } else {
+    //             resolve()
+    //         }
+    //     })
+    // }, [session])
+
+    const disconnect = () => {
+        setSession(undefined)
+    }
 
     return {
         //userAgent: userAgent, // can get it from session
         session: session,
+        connecting,
         connect,
         disconnect
     }

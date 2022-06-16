@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Stream } from '@apirtc/apirtc'
 
-const HOOK_NAME = "useToggleBlurStream"
+const HOOK_NAME = "useStreamBlur"
 /**
  * This hook takes stream passed as parameter, and
  * returns either this stream or a blurred version.
@@ -13,7 +13,7 @@ const HOOK_NAME = "useToggleBlurStream"
  * @param stream 
  * @returns stream blurred or not, toggle method, boolean blurred state.
  */
-export default function useToggleBlurStream(stream: Stream | undefined, blur?: boolean) {
+export default function useStreamBlur(stream: Stream | undefined, blur?: boolean) {
     const [base, setBase] = useState(stream)
     const [outStream, setOutStream] = useState(stream)
     const [_blur, setBlur] = useState(blur)

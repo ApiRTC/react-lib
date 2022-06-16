@@ -32,8 +32,7 @@ export default function useConversationModeration(
                     if (onEjectedSelf) {
                         onEjectedSelf()
                     }
-                }
-                else {
+                } else {
                     if (onEjected) {
                         onEjected(data.contact)
                     }

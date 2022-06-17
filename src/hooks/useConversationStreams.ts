@@ -3,7 +3,7 @@ import { Conversation, PublishOptions, Stream, StreamInfo } from '@apirtc/apirtc
 
 // TODO: add pagination ?
 // interface Options {
-//   remoteStreamsPageSize: number
+//   streamsSubscribePageSize: number
 // }
 
 const HOOK_NAME = "useConversationStreams"
@@ -86,13 +86,16 @@ export default function useConversationStreams(
         unpublish(streamToPublish)
       } else if (stream) {
         // If position in new list is valid : publish it whatever the position in cache.
-        // Depending on the case the stream might be already published (Conversation will reject the
-        // publish but this is fine), or it might be not (can happen if the cache was set while
-        // Conversation was not joined yet).
-        publish(stream)
+        // Depending on the case the stream might be already published, or it might be not
+        // (can happen if the cache was set while Conversation was not joined yet).
+        // Note that we could try to publish without checking isPublishedStream, the call would
+        // reject with a console error but this would not affect the behaviour.
+        if (conversation && !conversation.isPublishedStream(stream)) {
+          publish(stream)
+        }
       }
     }
-  }, [JSON.stringify(s_streamsToPublish.map(l_s => l_s?.getId())), publish, unpublish, replacePublishedStream])
+  }, [conversation, JSON.stringify(s_streamsToPublish.map(l_s => l_s?.getId())), publish, unpublish, replacePublishedStream])
 
   // --------------------------------------------------------------------------
   // useEffect(s) - Order is important
@@ -134,7 +137,6 @@ export default function useConversationStreams(
       conversation.on('streamListChanged', on_streamListChanged)
 
       return () => {
-        //console.log(HOOK_NAME + "|REMOVE streamAdded/streamRemoved subscribedStreams", conversation, JSON.stringify(subscribedStreams.map(l_s => l_s.getId())))
         // remove listeners
         conversation.removeListener('streamListChanged', on_streamListChanged)
         conversation.removeListener('streamRemoved', on_streamRemoved)

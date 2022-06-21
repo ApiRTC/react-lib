@@ -6,19 +6,19 @@ type LoginPassword = {
     password: string
 }
 function isInstanceOfLoginPassword(object: any): object is LoginPassword {
-    if (!object) return false;
+    if (typeof object !== 'object') return false;
     return 'username' in object;
 }
 
 type ApiKey = { apiKey: string }
 function isInstanceOfApiKey(object: any): object is ApiKey {
-    if (!object) return false;
+    if (typeof object !== 'object') return false;
     return 'apiKey' in object;
 }
 
 type Token = { token: string }
 function isInstanceOfToken(object: any): object is Token {
-    if (!object) return false;
+    if (typeof object !== 'object') return false;
     return 'token' in object;
 }
 
@@ -82,6 +82,7 @@ export default function useSession(credentials?: Credentials, options?: Register
 
             setConnecting(true)
             l_userAgent.register(registerInformation).then(l_session => {
+                //console.log("GOOOOT SESSION",l_session )
                 setSession(l_session)
                 setConnecting(false)
                 resolve()

@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react-hooks'
 
 import './getDisplayMedia.mock'
 
-import { RegisterInformation } from '@apirtc/apirtc'
+import { RegisterInformation, UserAgentOptions } from '@apirtc/apirtc'
 
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
@@ -12,23 +12,20 @@ jest.mock('@apirtc/apirtc', () => {
     return {
         __esModule: true,
         ...originalModule,
-        UserAgent: jest.fn().mockImplementation((opts) => {
+        UserAgent: jest.fn().mockImplementation((options: UserAgentOptions) => {
             return {
-                register: (options: RegisterInformation) => {
+                register: (registerInfo: RegisterInformation) => {
                     return new Promise<any>((resolve, reject) => {
-                        // act(() => {
-                            if (opts.uri && opts.uri === 'apiKey:FAIL') {
-                                console.log("REJECT!!")
-                                reject('Fail')
-                            } else {
-                                resolve({
-                                    getId: () => { return JSON.stringify(opts) + JSON.stringify(options) },
-                                    disconnect: () => {
-                                        return new Promise<void>((resolve, reject) => { resolve() })
-                                    }
-                                })
-                            }
-                        // })
+                        if (options.uri && options.uri === 'apiKey:fail') {
+                            reject('fail')
+                        } else {
+                            resolve({
+                                getId: () => { return JSON.stringify(options) + JSON.stringify(registerInfo) },
+                                disconnect: () => {
+                                    return new Promise<void>((resolve, reject) => { resolve() })
+                                }
+                            })
+                        }
                     })
                 }
             }
@@ -81,8 +78,8 @@ describe('useSession', () => {
         expect(result.current.session?.getId()).toBe("{\"uri\":\"apiKey:foo\"}{\"cloudUrl\":\"https://cloud.apirtc.com\"}")
     })
 
-    test(`ApiKey credentials FAIL`, async () => {
-        const { result, waitForNextUpdate } = renderHook(() => useSession({ apiKey: 'FAIL' }))
+    test(`ApiKey credentials fail`, async () => {
+        const { result, waitForNextUpdate } = renderHook(() => useSession({ apiKey: 'fail' }))
         expect(result.current.connecting).toBe(true)
         await waitForNextUpdate()
         console.log('connecting', result.current.connecting)

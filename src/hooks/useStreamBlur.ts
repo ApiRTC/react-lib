@@ -48,6 +48,7 @@ export default function useStreamBlur(stream: Stream | undefined, blur?: boolean
 
     const doCheckAndReleaseOutStream = useCallback(() => {
         if (outStream && (outStream !== base)) {
+            console.debug(HOOK_NAME + "|releasing outStream", outStream)
             outStream.release()
         }
     }, [base, outStream])

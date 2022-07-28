@@ -4,13 +4,14 @@ This library offers React ApiRTC high order components. Theses are mostly hooks 
 
 ## Install
 
-`npm install @apirtc/react-lib
+`npm install @apirtc/react-lib`
 
 ## Use Hooks
 
 ### useSession
 
 ```
+import { useSession } from '@apirtc/react-lib'
 const { session: apirtcSession, connecting: apiRTCLoading } = useSession(
    { apiKey: apirtcConfig.apiKey },
    { cloudUrl: 'https://cloud.apirtc.com'});
@@ -18,15 +19,18 @@ const { session: apirtcSession, connecting: apiRTCLoading } = useSession(
 
 ### useConversation
 
+```
+import { useConversation } from '@apirtc/react-lib'
+...
+```
 
 
 ## Configure log level
 
-In console, or from web app code :
+In console, or from web app code:
 
 ```
 globalThis.apirtcReactLibLogLevel.isDebugEnabled=true
-globalThis.apirtcReactLibLogLevel.isInfoEnabled=true
 ```
 
 Available LogLevels : isDebugEnabled, isInfoEnabled, isWarnEnabled

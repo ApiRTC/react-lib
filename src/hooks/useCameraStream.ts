@@ -12,7 +12,9 @@ export default function useCameraStream(
         if (session) {
             const userAgent: UserAgent = session.getUserAgent()
             userAgent.createStream(options).then((localStream: Stream) => {
-                console.info(HOOK_NAME + "|createStream", options, localStream)
+                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    console.info(HOOK_NAME + "|createStream", options, localStream)
+                }
                 setStream(localStream)
             }).catch((error: any) => {
                 console.error(HOOK_NAME + "|createStream", options, error)
@@ -32,7 +34,9 @@ export default function useCameraStream(
     useEffect(() => {
         return () => {
             if (stream) {
-                console.info(HOOK_NAME + "|release stream", stream)
+                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    console.info(HOOK_NAME + "|release stream", stream)
+                }
                 stream.release()
             }
         }

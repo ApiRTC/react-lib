@@ -31,6 +31,9 @@ export default function useSession(credentials?: Credentials, options?: Register
     const [connecting, setConnecting] = useState<boolean>(false)
 
     useEffect(() => {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect", credentials, options)
+        }
         if (credentials) {
             connect(credentials, options).catch((error: any) => {
                 setSession(undefined)
@@ -42,11 +45,16 @@ export default function useSession(credentials?: Credentials, options?: Register
     }, [JSON.stringify(credentials), JSON.stringify(options)])
 
     useEffect(() => {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect session", session)
+        }
         if (session) {
             const l_session = session;
             return () => {
                 l_session.disconnect().then(() => {
-                    console.log(HOOK_NAME + "|disconnected", l_session)
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|disconnected", l_session)
+                    }
                 }).catch((error: any) => {
                     console.error(HOOK_NAME + "|disconnect", error)
                 })
@@ -82,7 +90,9 @@ export default function useSession(credentials?: Credentials, options?: Register
 
             setConnecting(true)
             l_userAgent.register(registerInformation).then(l_session => {
-                //console.log("GOOOOT SESSION",l_session )
+                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    console.info(HOOK_NAME + "|connected", l_session)
+                }
                 setSession(l_session)
                 setConnecting(false)
                 resolve()

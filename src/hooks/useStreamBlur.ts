@@ -33,7 +33,9 @@ export default function useStreamBlur(stream: Stream | undefined, blur?: boolean
                 setOutStream(blurredStream)
                 setBlurred(true)
             }).catch(error => {
-                console.error(HOOK_NAME + "|useEffect base blur", error)
+                if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                    console.warn(HOOK_NAME + "|useEffect base blur", error)
+                }
                 setOutStream(base)
                 setBlurred(false)
             })
@@ -48,7 +50,9 @@ export default function useStreamBlur(stream: Stream | undefined, blur?: boolean
 
     const doCheckAndReleaseOutStream = useCallback(() => {
         if (outStream && (outStream !== base)) {
-            console.debug(HOOK_NAME + "|releasing outStream", outStream)
+            if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                console.debug(HOOK_NAME + "|releasing outStream", outStream)
+            }
             outStream.release()
         }
     }, [base, outStream])

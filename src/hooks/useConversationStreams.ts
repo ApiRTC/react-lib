@@ -29,26 +29,36 @@ export default function useConversationStreams(
   const publish: (localStream: Stream, options?: PublishOptions) => Promise<Stream> =
     useCallback((localStream: Stream, options?: PublishOptions) => {
       return new Promise<Stream>((resolve, reject) => {
-        console.log(HOOK_NAME + "|publish", conversation, localStream, options, localStream instanceof Stream)
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+          console.debug(HOOK_NAME + "|publish", conversation, localStream, options, localStream instanceof Stream)
+        }
         conversation?.publish(localStream, options).then(stream => {
-          console.log(HOOK_NAME + "|stream published", stream)
+          if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+            console.info(HOOK_NAME + "|stream published", stream)
+          }
           //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
           publishedStreams.push(stream)
           // Returning a new array makes lets React detect changes
           setO_PublishedStreams(Array.from(publishedStreams))
           resolve(stream)
         }).catch((error: any) => {
-          console.error(HOOK_NAME + "|publish", error)
+          if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+            console.warn(HOOK_NAME + "|publish", error)
+          }
           reject(error)
         })
       })
     }, [conversation])
 
   const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
-    console.log(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
+    if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+      console.debug(HOOK_NAME + "|replacePublishedStream", oldStream, newStream)
+    }
     conversation?.getConversationCall(oldStream)?.replacePublishedStream(newStream)
       .then((stream: Stream) => {
-        console.log(HOOK_NAME + "|stream replaced", oldStream, stream)
+        if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+          console.info(HOOK_NAME + "|stream replaced", oldStream, stream)
+        }
         const index = publishedStreams.indexOf(oldStream)
         if (index >= 0) {
           publishedStreams.splice(index, 1, stream)
@@ -57,12 +67,16 @@ export default function useConversationStreams(
         }
         setO_PublishedStreams(Array.from(publishedStreams))
       }).catch(error => {
-        console.error(HOOK_NAME + "|replacePublishedStream", error)
+        if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+          console.warn(HOOK_NAME + "|replacePublishedStream", error)
+        }
       })
   }, [conversation])
 
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
-    console.log(HOOK_NAME + "|unpublish", conversation, localStream)
+    if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+      console.debug(HOOK_NAME + "|unpublish", conversation, localStream)
+    }
     conversation?.unpublish(localStream)
     const index = publishedStreams.indexOf(localStream)
     if (index >= 0) {
@@ -103,13 +117,17 @@ export default function useConversationStreams(
   useEffect(() => {
     if (conversation) {
       const on_streamAdded = (remoteStream: Stream) => {
-        console.log(HOOK_NAME + "|on_streamAdded", remoteStream)
+        if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+          console.info(HOOK_NAME + "|on_streamAdded", remoteStream)
+        }
         //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
         subscribedStreams.push(remoteStream)
         setO_SubscribedStreams(Array.from(subscribedStreams))
       }
       const on_streamRemoved = (remoteStream: Stream) => {
-        console.log(HOOK_NAME + "|on_streamRemoved", remoteStream)
+        if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+          console.info(HOOK_NAME + "|on_streamRemoved", remoteStream)
+        }
         const index = subscribedStreams.indexOf(remoteStream)
         //console.log(`TRY SPLICING ${remoteStream.getId()} from subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())), index)
         if (index >= 0) {
@@ -147,14 +165,15 @@ export default function useConversationStreams(
 
   const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
     publishedStreams.forEach(stream => {
-      console.log(HOOK_NAME + "|unpublish stream", i_conversation, stream)
       i_conversation.unpublish(stream)
     })
     // Clear internal array
     publishedStreams.length = 0;
 
     subscribedStreams.forEach(stream => {
-      console.log(HOOK_NAME + "|unsubscribeToStream stream", i_conversation, stream)
+      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        console.debug(HOOK_NAME + "|unsubscribeToStream stream", i_conversation, stream)
+      }
       i_conversation.unsubscribeToStream(stream.getId())
     })
     // Clear internal array
@@ -168,15 +187,21 @@ export default function useConversationStreams(
 
   useEffect(() => {
     if (conversation) {
-      console.log(HOOK_NAME + "|useEffect doHandlePublication", conversation)
+      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        console.debug(HOOK_NAME + "|useEffect doHandlePublication", conversation)
+      }
 
       const on_joined = () => {
-        console.log(HOOK_NAME + "|on_joined", conversation)
+        if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+          console.info(HOOK_NAME + "|on_joined", conversation)
+        }
         doHandlePublication(streamsToPublish)
         setToPublish(streamsToPublish)
       }
       const on_left = () => {
-        console.log(HOOK_NAME + "|on_left", conversation)
+        if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+          console.info(HOOK_NAME + "|on_left", conversation)
+        }
         // Forcing unpublish will allow to republish if joining again
         unpublishAndUnsubscribeAll(conversation)
       }
@@ -196,7 +221,9 @@ export default function useConversationStreams(
   //
   useEffect(() => {
     if (conversation) {
-      //console.log(HOOK_NAME + "|new Conversation (subscribeToStream)", conversation, JSON.stringify(publishedStreams.map(l_s => l_s.getId())))
+      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        console.debug(HOOK_NAME + "|conversation", conversation)
+      }
       // Subscribe to existing remote streams
       conversation.getAvailableStreamList().forEach(streamInfo => {
         const streamId = String(streamInfo.streamId)
@@ -212,7 +239,9 @@ export default function useConversationStreams(
   }, [conversation])
 
   useEffect(() => {
-    //console.log(HOOK_NAME + "|useEffect streamsToPublish", JSON.stringify(streamsToPublish.map(l_s => l_s?.getId())))
+    if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+      console.debug(HOOK_NAME + "|useEffect streamsToPublish", JSON.stringify(streamsToPublish.map(l_s => l_s?.getId())))
+    }
     if (conversation) {
       doHandlePublication(streamsToPublish)
       setToPublish(streamsToPublish)

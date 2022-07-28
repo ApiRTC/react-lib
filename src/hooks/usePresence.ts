@@ -13,7 +13,9 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
     useEffect(() => {
         const onContactListUpdate = (updatedContacts: any) => {
-            console.log(HOOK_NAME + "|contactListUpdate", updatedContacts)
+            if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
+            }
 
             const l_groups = new Set(groups)
 
@@ -66,23 +68,26 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 setContactsByGroup(new Map(contactsByGroup))
             }
         }
-
-        console.log(HOOK_NAME + "|useEffect groups", groups)
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect groups", groups)
+        }
         if (session) {
             // had to go through a copy of the session handle to make sure this session
             // is used in further callback blocks
             const l_session = session;
-            console.log(HOOK_NAME + "|register contactListUpdate")
             l_session.on('contactListUpdate', onContactListUpdate)
             groups.forEach(group => {
-                console.log(HOOK_NAME + "|subscribeToGroup", group)
+                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    console.info(HOOK_NAME + "|subscribeToGroup", group)
+                }
                 l_session.subscribeToGroup(group)
             })
             return () => {
-                console.log(HOOK_NAME + "|removeListener contactListUpdate")
                 l_session.removeListener('contactListUpdate', onContactListUpdate)
                 groups.forEach(group => {
-                    console.log(HOOK_NAME + "|unsubscribeToGroup", group)
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|unsubscribeToGroup", group)
+                    }
                     try {
                         // Had to call unsubscribeToGroup in a try catch because it
                         // used to crash the whole app when session was disconnected

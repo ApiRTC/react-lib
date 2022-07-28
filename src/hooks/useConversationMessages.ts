@@ -20,7 +20,9 @@ export default function useConversationMessages(
     useEffect(() => {
         if (conversation) {
             const onMessage = (message: ConversationMessage) => {
-                console.log(HOOK_NAME + "|on:message:", message, messages)
+                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    console.info(HOOK_NAME + "|on:message:", message, messages)
+                }
                 messages.push(message)
                 setO_Messages(Array.from(messages))
             }
@@ -38,13 +40,17 @@ export default function useConversationMessages(
         return new Promise<void>((resolve, reject) => {
             conversation?.sendMessage(msgContent)
                 .then((uuid: number) => {
-                    console.log(HOOK_NAME + "|sentMessage", uuid, msgContent, messages)
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|sentMessage", uuid, msgContent, messages)
+                    }
                     messages.push({ content: msgContent, sender: sender, time: new Date() })
                     setO_Messages(Array.from(messages))
                     resolve()
                 })
                 .catch((error: any) => {
-                    console.error(HOOK_NAME + "|sendMessage error", error)
+                    if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                        console.warn(HOOK_NAME + "|sendMessage error", error)
+                    }
                     reject(error)
                 })
         })

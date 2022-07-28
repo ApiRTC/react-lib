@@ -16,13 +16,17 @@ export default function useConversation(
     // Callbacks
     //
     const join = useCallback(() => {
-        console.log(HOOK_NAME + "|join", conversation)
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|join", conversation)
+        }
         return new Promise<void>((resolve, reject) => {
             if (conversation) {
                 setJoining(true)
                 conversation.join().then(() => {
                     // successfully joined the conversation.
-                    console.log(HOOK_NAME + "|joined")
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|joined")
+                    }
                     setJoined(true)
                     setJoining(false)
                     resolve()
@@ -39,12 +43,16 @@ export default function useConversation(
     }, [conversation])
 
     const leave = useCallback(() => {
-        console.log(HOOK_NAME + "|leave", conversation)
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|leave", conversation)
+        }
         return new Promise<void>((resolve, reject) => {
             if (conversation) {
                 conversation.leave().then(() => {
                     // local user successfully left the conversation.
-                    console.log(HOOK_NAME + "|left", conversation.getName())
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|left", conversation.getName())
+                    }
                     setJoined(false)
                     resolve()
                 }).catch((error: any) => {
@@ -61,7 +69,9 @@ export default function useConversation(
     //
     useEffect(() => {
         if (session && name) {
-            console.log(HOOK_NAME + "|getOrCreateConversation", name, options)
+            if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                console.debug(HOOK_NAME + "|getOrCreateConversation", name, options)
+            }
             const l_conversation = session.getOrCreateConversation(name, options)
             setConversation(l_conversation)
             return () => {
@@ -75,7 +85,9 @@ export default function useConversation(
     }, [session, name, JSON.stringify(options)])
 
     useEffect(() => {
-        //console.log(HOOK_NAME + "|useEffect", conversation, autoJoin)
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect", conversation, autoJoin)
+        }
         if (conversation && autoJoin) {
             join()
             return () => {

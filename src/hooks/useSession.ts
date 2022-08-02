@@ -29,17 +29,27 @@ export default function useSession(credentials?: Credentials, options?: Register
 
     const [session, setSession] = useState<Session | undefined>()
     const [connecting, setConnecting] = useState<boolean>(false)
+    const [error, setError] = useState<any>()
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(HOOK_NAME + "|useEffect", credentials, options)
         }
         if (credentials) {
+            // To fix errors like "Warning: Can't perform a React state update on an unmounted component"
+            // https://stackoverflow.com/questions/53949393/cant-perform-a-react-state-update-on-an-unmounted-component
+            let isMounted = true;
             connect(credentials, options).catch((error: any) => {
+                console.error(HOOK_NAME + "|connection failed", error)
                 setSession(undefined)
+                if (isMounted) {
+                    setError(error)
+                }
             })
             return () => {
+                isMounted = false;
                 setSession(undefined)
+                setError(undefined)
             }
         }
     }, [JSON.stringify(credentials), JSON.stringify(options)])
@@ -130,6 +140,7 @@ export default function useSession(credentials?: Credentials, options?: Register
         session: session,
         connecting,
         connect,
-        disconnect
+        disconnect,
+        error
     }
 }

@@ -49,6 +49,12 @@ export default function useSession(credentials?: Credentials, options?: Register
             return () => {
                 isMounted = false;
                 setSession(undefined)
+                // Even though connecting is managed in connect(),
+                // mark connecting to false when credentials are changed
+                // as this shall be way to connect elsewhere or connect to
+                // with other credentials. Note that to be perfect we should
+                // cancel the potentially running connect : Is that possible with ApiRTC ?
+                setConnecting(false)
                 setError(undefined)
             }
         }

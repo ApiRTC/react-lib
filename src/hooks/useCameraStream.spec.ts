@@ -9,6 +9,9 @@ import { Session, Stream, UserAgent, CreateStreamOptions, UserAgentOptions } fro
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
 
+    // Set log level to max to maximize code coverage
+    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
+
     return {
         __esModule: true,
         ...originalModule,

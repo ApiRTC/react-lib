@@ -9,6 +9,9 @@ import { RegisterInformation, UserAgentOptions } from '@apirtc/apirtc'
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
 
+    // Set log level to max to maximize code coverage
+    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
+
     return {
         __esModule: true,
         ...originalModule,
@@ -22,7 +25,13 @@ jest.mock('@apirtc/apirtc', () => {
                             resolve({
                                 getId: () => { return JSON.stringify(options) + JSON.stringify(registerInfo) },
                                 disconnect: () => {
-                                    return new Promise<void>((resolve, reject) => { resolve() })
+                                    return new Promise<void>((resolve, reject) => {
+                                        if (options.uri && options.uri === 'apiKey:disconnect-fail') {
+                                            reject('disconnect-fail')
+                                        } else {
+                                            resolve()
+                                        }
+                                    })
                                 }
                             })
                         }
@@ -35,6 +44,9 @@ jest.mock('@apirtc/apirtc', () => {
 
 import useSession, { Credentials } from './useSession'
 
+// Testing guide
+// https://www.toptal.com/react/testing-react-hooks-tutorial
+
 describe('useSession', () => {
     test(`Default value of session will be undefined`, () => {
         const { result } = renderHook(() => useSession())
@@ -46,18 +58,31 @@ describe('useSession', () => {
         })
 
         expect(result.current.session).toBe(undefined)
+        expect(result.current.error).toBe(undefined)
     })
 
-    test(`Unrecognized credentials`, () => {
-        const { result } = renderHook(() => useSession({ foo: 'bar' } as unknown as Credentials))
+    test(`Unrecognized credentials`, async () => {
+        const { result, waitForNextUpdate } = renderHook(() => useSession({ foo: 'bar' } as unknown as Credentials))
         expect(result.current.session).toBe(undefined)
         expect(result.current.connecting).toBe(false)
+        expect(result.current.error).toBe(undefined)
+
+        await waitForNextUpdate()
+        expect(result.current.session).toBe(undefined)
+        expect(result.current.connecting).toBe(false)
+        expect(result.current.error).toBe("credentials not recognized")
     })
 
-    test(`Unrecognized credentials (not an object)`, () => {
-        const { result } = renderHook(() => useSession('foo' as unknown as Credentials))
+    test(`Unrecognized credentials (not an object)`, async () => {
+        const { result, waitForNextUpdate } = renderHook(() => useSession('foo' as unknown as Credentials))
         expect(result.current.session).toBe(undefined)
         expect(result.current.connecting).toBe(false)
+        expect(result.current.error).toBe(undefined)
+
+        await waitForNextUpdate()
+        expect(result.current.session).toBe(undefined)
+        expect(result.current.connecting).toBe(false)
+        expect(result.current.error).toBe("credentials not recognized")
     })
 
     test(`LoginPassword credentials`, async () => {
@@ -92,6 +117,21 @@ describe('useSession', () => {
         await waitForNextUpdate()
         console.log('SESSION', result.current.session)
         expect(result.current.session?.getId()).toBe("{\"uri\":\"token:foo\"}{\"cloudUrl\":\"https://cloud.apirtc.com\"}")
+    })
+
+    test(`ApiKey credentials disconnect-fail`, async () => {
+        const { result, waitForNextUpdate, rerender } = renderHook(() => useSession({ apiKey: 'disconnect-fail' }))
+        expect(result.current.connecting).toBe(true)
+        await waitForNextUpdate()
+        console.log('SESSION', result.current.session)
+        expect(result.current.connecting).toBe(false)
+        expect(result.current.session?.getId()).toBe("{\"uri\":\"apiKey:disconnect-fail\"}{\"cloudUrl\":\"https://cloud.apirtc.com\"}")
+
+        rerender({ credentials: undefined });
+
+        await waitForNextUpdate()
+
+        expect(result.current.session?.getId()).toBe("{\"uri\":\"apiKey:disconnect-fail\"}{\"cloudUrl\":\"https://cloud.apirtc.com\"}")
     })
 
 })

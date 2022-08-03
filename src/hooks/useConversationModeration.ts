@@ -10,13 +10,13 @@ export default function useConversationModeration(
     const [candidates, setCandidates] = useState<Set<Contact>>(new Set<Contact>())
 
     useEffect(() => {
-        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
             console.debug(HOOK_NAME + "|useEffect conversation", conversation)
         }
 
         if (conversation) {
             const on_contactJoinedWaitingRoom = (contact: Contact) => {
-                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                     console.info(HOOK_NAME + "|on:contactJoinedWaitingRoom", contact)
                 }
                 // A candidate joined the waiting room.
@@ -24,7 +24,7 @@ export default function useConversationModeration(
                 setCandidates(new Set(candidates))
             }
             const on_contactLeftWaitingRoom = (contact: Contact) => {
-                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                     console.info(HOOK_NAME + "|on:contactLeftWaitingRoom", contact)
                 }
                 // A candidate left the waiting room.
@@ -33,11 +33,11 @@ export default function useConversationModeration(
             }
             // TODO make apirtc.d.ts update to replace 'any'
             const on_participantEjected = (data: any) => {
-                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                     console.info(HOOK_NAME + "|on:participantEjected", data)
                 }
                 if (data.self === true) {
-                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                         console.info(HOOK_NAME + "|Self participant was ejected")
                     }
                     if (onEjectedSelf) {
@@ -56,7 +56,7 @@ export default function useConversationModeration(
                 .on('participantEjected', on_participantEjected)
 
             return () => {
-                if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
                     console.debug(HOOK_NAME + "|conversation clear", conversation)
                 }
                 // remove listeners

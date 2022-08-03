@@ -9,6 +9,9 @@ import { Stream } from '@apirtc/apirtc'
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
 
+    // Set log level to max to maximize code coverage
+    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
+
     return {
         __esModule: true,
         ...originalModule,
@@ -60,12 +63,10 @@ describe('useStreamBlur', () => {
         expect(result.current.blurred).toBe(false)
     })
 
-
-    test(`With a Stream, no blur by default`, async () => {
+    test(`With a Stream, no blur by default`, () => {
         let initialBlur: boolean = false
         const initStream = new Stream(null, {})
-        const { result, waitForNextUpdate } = renderHook(() => useStreamBlur(initStream, initialBlur))
-        //await waitForNextUpdate()
+        const { result } = renderHook(() => useStreamBlur(initStream, initialBlur))
         expect(result.current.stream?.getId()).toBe('Mock')
         expect(result.current.blurred).toBe(false)
     })

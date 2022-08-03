@@ -13,7 +13,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
     useEffect(() => {
         const onContactListUpdate = (updatedContacts: any) => {
-            if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+            if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                 console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
             }
 
@@ -68,7 +68,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 setContactsByGroup(new Map(contactsByGroup))
             }
         }
-        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
             console.debug(HOOK_NAME + "|useEffect groups", groups)
         }
         if (session) {
@@ -77,7 +77,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
             const l_session = session;
             l_session.on('contactListUpdate', onContactListUpdate)
             groups.forEach(group => {
-                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                     console.info(HOOK_NAME + "|subscribeToGroup", group)
                 }
                 l_session.subscribeToGroup(group)
@@ -85,7 +85,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
             return () => {
                 l_session.removeListener('contactListUpdate', onContactListUpdate)
                 groups.forEach(group => {
-                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                         console.info(HOOK_NAME + "|unsubscribeToGroup", group)
                     }
                     try {

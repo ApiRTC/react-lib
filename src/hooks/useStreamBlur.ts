@@ -14,48 +14,43 @@ const HOOK_NAME = "useStreamBlur"
  * @returns stream blurred or not, toggle method, boolean blurred state.
  */
 export default function useStreamBlur(stream: Stream | undefined, blur?: boolean) {
-    const [base, setBase] = useState(stream)
     const [outStream, setOutStream] = useState(stream)
     const [_blur, setBlur] = useState(blur)
     const [blurred, setBlurred] = useState<boolean>()
-
-    useEffect(() => {
-        setBase(stream)
-    }, [stream])
 
     useEffect(() => {
         setBlur(blur)
     }, [blur])
 
     useEffect(() => {
-        if (base && _blur) {
-            base.blur().then(blurredStream => {
+        if (stream && _blur) {
+            stream.blur().then(blurredStream => {
                 setOutStream(blurredStream)
                 setBlurred(true)
             }).catch(error => {
                 if (globalThis.apirtcReactLibLogLevel?.isWarnEnabled) {
-                    console.warn(HOOK_NAME + "|useEffect base blur", error)
+                    console.warn(HOOK_NAME + "|useEffect stream blur", error)
                 }
-                setOutStream(base)
+                setOutStream(stream)
                 setBlurred(false)
             })
         } else {
-            setOutStream(base)
+            setOutStream(stream)
             setBlurred(false)
         }
 
-        // Should not release base here as it is NOT created in this hook
-        // we shall not handle its lifecycle
-    }, [base, _blur])
+        // Should not release stream here as it is NOT created in this hook
+        // thus we shall not handle its lifecycle
+    }, [stream, _blur])
 
     const doCheckAndReleaseOutStream = useCallback(() => {
-        if (outStream && (outStream !== base)) {
+        if (outStream && (outStream !== stream)) {
             if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
                 console.debug(HOOK_NAME + "|releasing outStream", outStream)
             }
             outStream.release()
         }
-    }, [base, outStream])
+    }, [stream, outStream])
 
     useEffect(() => {
         return () => {

@@ -127,9 +127,10 @@ describe('useSession', () => {
         expect(result.current.connecting).toBe(false)
         expect(result.current.session?.getId()).toBe("{\"uri\":\"apiKey:disconnect-fail\"}{\"cloudUrl\":\"https://cloud.apirtc.com\"}")
 
+        // trigger disconnect by setting credentials to undefined
         rerender({ credentials: undefined });
 
-        await waitForNextUpdate()
+        //await waitForNextUpdate()
 
         expect(result.current.session?.getId()).toBe("{\"uri\":\"apiKey:disconnect-fail\"}{\"cloudUrl\":\"https://cloud.apirtc.com\"}")
     })

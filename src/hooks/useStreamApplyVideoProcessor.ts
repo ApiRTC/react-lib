@@ -4,10 +4,10 @@ import { Stream, VideoProcessorOptions } from '@apirtc/apirtc'
 const HOOK_NAME = "useStreamApplyVideoProcessor"
 /**
  * This hook takes stream passed as parameter, and
- * returns either this stream or a blurred version.
- * This is controlled by the blur input attribute or toggle function.
- * By default the output stream is not blurred.
- * The hook fully manages the blurred stream (releases it when not blurred).
+ * returns either this stream or a stream with video processor applied.
+ * This is controlled by the videoProcessorType input attribute.
+ * By default the output stream is the input stream.
+ * The hook fully manages the output stream (applies 'none' if input stream is set to undefined).
  * The hook never releases the input stream.
  * 
  * @param stream 
@@ -17,46 +17,50 @@ export default function useStreamApplyVideoProcessor(
     stream: Stream | undefined,
     videoProcessorType: 'none' | 'blur' | 'backgroundImage', options?: VideoProcessorOptions) {
     //
-    //const [base, setBase] = useState(stream)
     const [outStream, setOutStream] = useState(stream)
-    // const [_videoProcessorType, setVideoProcessorType] = useState(videoProcessorType)
-    // const [_options, setOptions] = useState(options)
     const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>('none')
     const [error, setError] = useState()
 
-    const doIt = useCallback((type, opts?) => {
-        if (stream && type !== applied) {
-            stream.applyVideoProcessor(type, opts).then(l_stream => {
+    useEffect(() => {
+        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
+        }
+        if (stream && videoProcessorType !== 'none') {
+            stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {
                 setOutStream(l_stream)
-                setApplied(type)
+                setApplied(videoProcessorType)
             }).catch(error => {
                 if (globalThis.apirtcReactLibLogLevel?.isWarnEnabled) {
-                    console.warn(HOOK_NAME + "|useEffect base type options", stream, type, opts, error)
+                    console.warn(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, error)
                 }
                 setOutStream(stream)
                 setError(error)
             })
         } else {
             setOutStream(stream)
+            setApplied('none')
         }
-
-    }, [stream, applied])
-
-    useEffect(() => {
-        if (stream) {
-            return () => {
-                setOutStream(undefined)
-                doIt('none')
-            }
-        }
-    }, [stream])
-
-    useEffect(() => {
-        doIt(videoProcessorType, options)
-
-        // Should not release base here as it is NOT created in this hook
-        // we shall not handle its lifecycle
     }, [stream, videoProcessorType, options])
+
+    const doCheckAndReleaseOutStream = useCallback(() => {
+        if (outStream && (outStream !== stream)) {
+            if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+                console.debug(HOOK_NAME + "|releasing outStream", outStream)
+            }
+            // stream?.applyVideoProcessor('none').catch(error => {
+            //     if (globalThis.apirtcReactLibLogLevel?.isWarnEnabled) {
+            //         console.warn(HOOK_NAME + "|doCheckAndReleaseOutStream", stream, outStream)
+            //     }
+            // })
+            outStream.release()
+        }
+    }, [stream, outStream])
+
+    useEffect(() => {
+        return () => {
+            doCheckAndReleaseOutStream()
+        }
+    }, [outStream])
 
     return {
         stream: outStream,

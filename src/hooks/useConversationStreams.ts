@@ -86,21 +86,21 @@ export default function useConversationStreams(
     }
   }, [conversation])
 
-  const doHandlePublication = useCallback((streams: Array<Stream | undefined | null>) => {
-    const maxLength = Math.max(publishedStreamsCache.length, streams.length)
+  const doHandlePublication = useCallback(() => {
+    const maxLength = Math.max(publishedStreamsCache.length, streamsToPublish.length)
     if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
-      console.debug(HOOK_NAME + "|doHandlePublication", streams, publishedStreamsCache, maxLength)
+      console.debug(HOOK_NAME + "|doHandlePublication", streamsToPublish, publishedStreamsCache, maxLength)
     }
     const newPublishedStreamsCache = new Array<Stream>()
     // Loop on arrays index to publish new streams, or replace if necessary
     for (let i = 0; i < maxLength; i++) {
-      const stream = streams[i];
+      const stream = streamsToPublish[i];
       const streamToPublish = publishedStreamsCache[i];
       if (streamToPublish && stream) {
         if (streamToPublish !== stream) {
           // If position in both new and cached list are valid but are different : replace
           replacePublishedStream(streamToPublish, stream).then((l_stream: Stream) => {
-            newPublishedStreamsCache.push(l_stream)
+            newPublishedStreamsCache.splice(i, 0, l_stream);
           }).catch((error: Error) => {
             if (errorCallback) {
               errorCallback(error)
@@ -110,7 +110,7 @@ export default function useConversationStreams(
           })
         }
         else {
-          newPublishedStreamsCache.push(stream)
+          newPublishedStreamsCache.splice(i, 0, stream);
         }
       } else if (streamToPublish && !stream) {
         // If position in new list is now undefined(or null) while it was in cache : unpublish
@@ -123,7 +123,7 @@ export default function useConversationStreams(
         // reject with a console error but this would not affect the behaviour.
         if (conversation && !conversation.isPublishedStream(stream)) {
           publish(stream).then((l_stream: Stream) => {
-            newPublishedStreamsCache.push(l_stream)
+            newPublishedStreamsCache.splice(i, 0, l_stream);
           }).catch((error: Error) => {
             if (errorCallback) {
               errorCallback(error)
@@ -135,7 +135,9 @@ export default function useConversationStreams(
       }
     }
     setPublishedStreamsCache(newPublishedStreamsCache)
-  }, [conversation, JSON.stringify(publishedStreamsCache.map(l_s => l_s?.getId())), publish, unpublish, replacePublishedStream])
+  }, [conversation, streamsToPublish,
+    JSON.stringify(publishedStreamsCache.map(l_s => l_s?.getId())),
+    publish, unpublish, replacePublishedStream])
 
   // --------------------------------------------------------------------------
   // useEffect(s) - Order is important
@@ -196,6 +198,9 @@ export default function useConversationStreams(
     // Clear internal array
     publishedStreams.length = 0;
 
+    // Clear cache
+    setPublishedStreamsCache([])
+
     subscribedStreams.forEach(stream => {
       if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
         console.debug(HOOK_NAME + "|unsubscribeToStream stream", i_conversation, stream)
@@ -219,9 +224,9 @@ export default function useConversationStreams(
 
       const on_joined = () => {
         if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
-          console.info(HOOK_NAME + "|on_joined", conversation)
+          console.info(HOOK_NAME + "|on_joined", conversation, streamsToPublish)
         }
-        doHandlePublication(streamsToPublish)
+        doHandlePublication()
       }
       const on_left = () => {
         if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
@@ -268,7 +273,7 @@ export default function useConversationStreams(
       console.debug(HOOK_NAME + "|useEffect streamsToPublish", JSON.stringify(streamsToPublish.map(l_s => l_s?.getId())))
     }
     if (conversation) {
-      doHandlePublication(streamsToPublish)
+      doHandlePublication()
     }
   }, [JSON.stringify(streamsToPublish.map(l_s => l_s?.getId()))])
 

@@ -33,7 +33,7 @@ export default function useSession(credentials?: Credentials, options?: Register
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect", credentials, options)
+            console.debug(HOOK_NAME + "|useEffect credentials, options", credentials, options)
         }
         if (credentials) {
             // To fix errors like "Warning: Can't perform a React state update on an unmounted component"

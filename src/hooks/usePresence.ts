@@ -8,103 +8,123 @@ import { Session, Contact } from '@apirtc/apirtc'
 const HOOK_NAME = "usePresence"
 export default function usePresence(session: Session | undefined, groups: Array<string>) {
 
-    const [contacts, setContacts] = useState<Set<Contact>>(new Set())
+    const [groupsCache] = useState<Set<string>>(new Set())
+
+    const [m_contacts] = useState<Set<Contact>>(new Set())
+    const [m_contactsByGroup] = useState<Map<string, Set<Contact>>>(new Map())
+
     const [contactsByGroup, setContactsByGroup] = useState<Map<string, Set<Contact>>>(new Map())
 
     useEffect(() => {
-        const onContactListUpdate = (updatedContacts: any) => {
-            if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
-                console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
+        if (session) {
+            return () => {
+                m_contactsByGroup.clear()
+                setContactsByGroup(new Map(m_contactsByGroup))
+                m_contacts.clear()
+                groupsCache.clear()
             }
+        }
+    }, [session])
 
-            const l_groups = new Set(groups)
+    useEffect(() => {
+        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect session, groups", groups)
+        }
+        if (session) {
+            const l_session = session;
+            const l_groupsSet = new Set(groups);
 
-            var needsRefresh = false;
-
-            // Maintain Map of Contacts per Group
-            //
-            for (const group of Object.keys(updatedContacts.joinedGroup)) {
-                if (l_groups.has(group)) {
-                    if (!contactsByGroup.has(group)) {
-                        contactsByGroup.set(group, new Set())
-                    }
-                    for (const contact of updatedContacts.joinedGroup[group]) {
-                        contacts.add(contact)
-                        contactsByGroup.get(group)?.add(contact)
-                        needsRefresh = true;
-                    }
+            const onContactListUpdate = (updatedContacts: any) => {
+                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                    console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
                 }
-            }
-            for (const group of Object.keys(updatedContacts.leftGroup)) {
-                if (l_groups.has(group)) {
-                    if (!contactsByGroup.has(group)) {
-                        contactsByGroup.set(group, new Set())
-                    }
-                    for (const contact of updatedContacts.leftGroup[group]) {
-                        contactsByGroup.get(group)?.delete(contact)
-                        needsRefresh = true;
 
-                        // Delete from contacts is contact is not in any managed groups
-                        let deleteFromContacts = false;
-                        contactsByGroup.forEach((l_contacts: Set<Contact>) => {
-                            if (l_contacts.has(contact)) {
-                                deleteFromContacts = true;
-                            }
-                        })
-                        if (deleteFromContacts) {
-                            contacts.delete(contact)
+                var needsRefresh = false;
+
+                // Maintain Map of Contacts per Group
+                //
+                for (const group of Object.keys(updatedContacts.joinedGroup)) {
+                    if (l_groupsSet.has(group)) {
+                        if (!m_contactsByGroup.has(group)) {
+                            m_contactsByGroup.set(group, new Set())
+                        }
+                        for (const contact of updatedContacts.joinedGroup[group]) {
+                            m_contacts.add(contact)
+                            m_contactsByGroup.get(group)?.add(contact)
+                            needsRefresh = true;
                         }
                     }
                 }
-            }
-            // trigger a refresh if and only if contact is part of managed groups
-            for (const contact of updatedContacts.userDataChanged) {
-                if (contacts.has(contact)) {
-                    needsRefresh = true;
-                }
-            }
+                for (const group of Object.keys(updatedContacts.leftGroup)) {
+                    if (l_groupsSet.has(group)) {
+                        if (!m_contactsByGroup.has(group)) {
+                            m_contactsByGroup.set(group, new Set())
+                        }
+                        for (const contact of updatedContacts.leftGroup[group]) {
+                            m_contactsByGroup.get(group)?.delete(contact)
+                            needsRefresh = true;
 
-            if (needsRefresh) {
-                setContactsByGroup(new Map(contactsByGroup))
-            }
-        }
-        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect groups", groups)
-        }
-        if (session) {
-            // had to go through a copy of the session handle to make sure this session
-            // is used in further callback blocks
-            const l_session = session;
-            l_session.on('contactListUpdate', onContactListUpdate)
-            groups.forEach(group => {
-                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|subscribeToGroup", group)
+                            // Delete from contacts is contact is not in any managed groups
+                            let deleteFromContacts = false;
+                            m_contactsByGroup.forEach((l_contacts: Set<Contact>) => {
+                                if (l_contacts.has(contact)) {
+                                    deleteFromContacts = true;
+                                }
+                            })
+                            if (deleteFromContacts) {
+                                m_contacts.delete(contact)
+                            }
+                        }
+                    }
                 }
-                l_session.subscribeToGroup(group)
+                // trigger a refresh if and only if contact is part of managed groups
+                for (const contact of updatedContacts.userDataChanged) {
+                    if (m_contacts.has(contact)) {
+                        needsRefresh = true;
+                    }
+                }
+
+                if (needsRefresh) {
+                    // contactsByGroup is exposed, so change the Map object to let client code detect a change.
+                    setContactsByGroup(new Map(m_contactsByGroup))
+                }
+            }
+            l_session.on('contactListUpdate', onContactListUpdate)
+
+            // Diff update subscription to groups
+            //
+            l_groupsSet.forEach(group => {
+                if (!groupsCache.has(group)) {
+                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|subscribeToGroup", group)
+                    }
+                    groupsCache.add(group)
+                    l_session.subscribeToGroup(group)
+                }
             })
-            return () => {
-                l_session.removeListener('contactListUpdate', onContactListUpdate)
-                groups.forEach(group => {
+
+            var needsRefresh = false;
+            groupsCache.forEach(group => {
+                if (!l_groupsSet.has(group)) {
                     if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                         console.info(HOOK_NAME + "|unsubscribeToGroup", group)
                     }
-                    try {
-                        // Had to call unsubscribeToGroup in a try catch because it
-                        // used to crash the whole app when session was disconnected
-                        // useSession|disconnected 
-                        // usePresence|removeListener contactListUpdate modules.js:180764:6999
-                        // usePresence|unsubscribeToGroup 00001 modules.js:180764:7130
-                        // Uncaught TypeError: this.getSubscribedPresenceGroup() is null
-                        // Could be fixed in ApiRTC by making getSubscribedPresenceGroup return empty array instead of null
-                        // Asked Johann and he commited this today (2022/05/09)
-                        l_session.unsubscribeToGroup(group)
-                    } catch (error) {
-                        console.error(HOOK_NAME + "|unsubscribeToGroup", group, error)
-                    }
-                })
-                setContactsByGroup(new Map())
-                setContacts(new Set())
+                    l_session.unsubscribeToGroup(group)
+                    groupsCache.delete(group)
+                    m_contactsByGroup.delete(group)
+                    needsRefresh = true;
+                }
+            })
+
+            if (needsRefresh) {
+                // contactsByGroup is exposed, so change the Map object to let client code detect a change.
+                setContactsByGroup(new Map(m_contactsByGroup))
             }
+
+            return () => {
+                l_session.removeListener('contactListUpdate', onContactListUpdate)
+            }
+
         }
     }, [session, JSON.stringify(groups)])
 

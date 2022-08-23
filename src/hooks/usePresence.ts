@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react'
 import { Session, Contact } from '@apirtc/apirtc'
 
 /**
- * Subscribe to groups and returns contactsByGroup (of theses groups only) when updated
+ * Subscribe to groups and returns contactsByGroup (of theses groups only) when updated.
+ * If input groups list is updated, this hooks works diff with the previous set in order
+ * to make as little as possible unsubcribe/subscribe calls.
  */
 
 const HOOK_NAME = "usePresence"
@@ -35,6 +37,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
             const l_groupsSet = new Set(groups);
 
             const onContactListUpdate = (updatedContacts: any) => {
+                
                 if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
                     console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
                 }
@@ -64,7 +67,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                             m_contactsByGroup.get(group)?.delete(contact)
                             needsRefresh = true;
 
-                            // Delete from contacts is contact is not in any managed groups
+                            // Delete from contacts if contact is not in any managed groups
                             let deleteFromContacts = false;
                             m_contactsByGroup.forEach((l_contacts: Set<Contact>) => {
                                 if (l_contacts.has(contact)) {

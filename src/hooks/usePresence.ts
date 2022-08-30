@@ -42,7 +42,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                     console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
                 }
 
-                var needsRefresh = false;
+                let needsRefresh = false;
 
                 // Maintain Map of Contacts per Group
                 //
@@ -106,7 +106,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 }
             })
 
-            var needsRefresh = false;
+            let needsRefresh = false;
             groupsCache.forEach(group => {
                 if (!l_groupsSet.has(group)) {
                     if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {

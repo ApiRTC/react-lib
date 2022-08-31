@@ -4,7 +4,7 @@ import { Session, Contact } from '@apirtc/apirtc'
 /**
  * Subscribe to groups and returns contactsByGroup (of theses groups only) when updated.
  * If input groups list is updated, this hooks works diff with the previous set in order
- * to make as little as possible unsubcribe/subscribe calls.
+ * to make as little as possible unsubscribe/subscribe calls.
  */
 
 const HOOK_NAME = "usePresence"

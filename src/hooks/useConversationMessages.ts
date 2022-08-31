@@ -3,7 +3,7 @@ import { Contact, Conversation, ConversationMessage } from '@apirtc/apirtc'
 
 // TODO : get and handle with pagination messages history
 // TODO : ask apirtc to include the uuid in ConversationMessage so that we can store it
-// into ConversationMessage when creating the local one, and we get it from converation on:message
+// into ConversationMessage when creating the local one, and we get it from conversation on:message
 // the uuid shall be the value used as a react child key when displaying list of messages
 
 const HOOK_NAME = "useConversationMessages"

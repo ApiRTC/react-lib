@@ -120,7 +120,7 @@ export default function useConversationStreams(
         // Depending on the case the stream might be already published, or it might be not
         // (can happen if the cache was set while Conversation was not joined yet).
         // Note that we could try to publish without checking isPublishedStream, the call would
-        // reject with a console error but this would not affect the behaviour.
+        // reject with a console error but this would not affect the behavior.
         if (conversation && !conversation.isPublishedStream(stream)) {
           publish(stream).then((l_stream: Stream) => {
             newPublishedStreamsCache.splice(i, 0, l_stream);

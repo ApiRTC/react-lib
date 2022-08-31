@@ -21,7 +21,7 @@ export default function useCameraStream(
                 setStream(undefined)
             })
 
-            // DO NOT set out stream to undefined in the return, to prevent unnecessary refreshs
+            // DO NOT set out stream to undefined in the return, to prevent unnecessary refreshes
             // of other components with undefined stream, whereas we are expecting to change it
             // to another instance..
             // return () => { setStream(undefined) } // DON'T

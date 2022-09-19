@@ -38,8 +38,8 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
             const onContactListUpdate = (updatedContacts: any) => {
                 
-                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|contactListUpdate", updatedContacts)
+                if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+                    console.debug(HOOK_NAME + "|contactListUpdate", updatedContacts)
                 }
 
                 let needsRefresh = false;

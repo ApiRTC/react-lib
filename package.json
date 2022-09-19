@@ -19,7 +19,7 @@
   "author": "kmoyse ApiRTC",
   "license": "ISC",
   "peerDependencies": {
-    "@apirtc/apirtc": "^4.7.6",
+    "@apirtc/apirtc": "^4.7.8-rc.2",
     "react": "^17",
     "react-dom": "^17",
     "styled-components": "^5.3.5"

@@ -95,11 +95,14 @@ export default function useConversationStreams(
     // Loop on arrays index to publish new streams, or replace if necessary
     for (let i = 0; i < maxLength; i++) {
       const stream = streamsToPublish[i];
-      const streamToPublish = publishedStreamsCache[i];
-      if (streamToPublish && stream) {
-        if (streamToPublish !== stream) {
+      const cachedStreamToPublish = publishedStreamsCache[i];
+      if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+        console.debug(HOOK_NAME + "|doHandlePublication index", i)
+      }
+      if (cachedStreamToPublish && stream) {
+        if (cachedStreamToPublish !== stream) {
           // If position in both new and cached list are valid but are different : replace
-          replacePublishedStream(streamToPublish, stream).then((l_stream: Stream) => {
+          replacePublishedStream(cachedStreamToPublish, stream).then((l_stream: Stream) => {
             newPublishedStreamsCache.splice(i, 0, l_stream);
           }).catch((error: Error) => {
             if (errorCallback) {
@@ -108,13 +111,12 @@ export default function useConversationStreams(
               console.warn(HOOK_NAME + "|replacePublishedStream", error)
             }
           })
-        }
-        else {
+        } else {
           newPublishedStreamsCache.splice(i, 0, stream);
         }
-      } else if (streamToPublish && !stream) {
+      } else if (cachedStreamToPublish && !stream) {
         // If position in new list is now undefined(or null) while it was in cache : unpublish
-        unpublish(streamToPublish)
+        unpublish(cachedStreamToPublish)
       } else if (stream) {
         // If position in new list is valid : publish it whatever the position in cache.
         // Depending on the case the stream might be already published, or it might be not
@@ -131,6 +133,10 @@ export default function useConversationStreams(
               console.warn(HOOK_NAME + "|publish", error)
             }
           })
+        } else {
+          if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|doHandlePublication stream already published", stream)
+          }
         }
       }
     }

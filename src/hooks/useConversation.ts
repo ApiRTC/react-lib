@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc'
+import apiRTC, { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc'
 
 const HOOK_NAME = "useConversation"
 export default function useConversation(
@@ -8,7 +8,6 @@ export default function useConversation(
     options?: GetOrCreateConversationOptions,
     autoJoin: boolean = false
 ) {
-
     const [conversation, setConversation] = useState<Conversation>()
     const [joined, setJoined] = useState<boolean>(false)
     const [joining, setJoining] = useState<boolean>(false)
@@ -16,16 +15,21 @@ export default function useConversation(
     // Callbacks
     //
     const join = useCallback(() => {
+        if (!conversation) {
+            console.error(HOOK_NAME + "|join|conversation is not defined")
+            return
+        }
         if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|join", conversation)
+            console.debug(HOOK_NAME + "|" + new Date + "|join", conversation,
+                JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
         }
         return new Promise<void>((resolve, reject) => {
-            if (conversation) {
+            if (!conversation.isJoined()) {
                 setJoining(true)
                 conversation.join().then(() => {
                     // successfully joined the conversation.
                     if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|joined")
+                        console.info(HOOK_NAME + "|joined", conversation)
                     }
                     setJoined(true)
                     setJoining(false)
@@ -35,19 +39,22 @@ export default function useConversation(
                     setJoining(false)
                     reject(error)
                 })
-            }
-            else {
-                reject(HOOK_NAME + "|conversation is not defined")
+            } else {
+                reject(HOOK_NAME + "|conversation already joined")
             }
         })
     }, [conversation])
 
     const leave = useCallback(() => {
+        if (!conversation) {
+            console.error(HOOK_NAME + "|leave|conversation is not defined")
+            return
+        }
         if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
             console.debug(HOOK_NAME + "|leave", conversation)
         }
         return new Promise<void>((resolve, reject) => {
-            if (conversation) {
+            if (conversation.isJoined()) {
                 conversation.leave().then(() => {
                     // local user successfully left the conversation.
                     if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
@@ -58,9 +65,8 @@ export default function useConversation(
                 }).catch((error: any) => {
                     reject(error)
                 })
-            }
-            else {
-                reject(HOOK_NAME + "|conversation is not defined")
+            } else {
+                reject(HOOK_NAME + "|conversation is not joined")
             }
         })
     }, [conversation])
@@ -72,31 +78,39 @@ export default function useConversation(
             if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
                 console.debug(HOOK_NAME + "|getOrCreateConversation", name, options)
             }
-            const l_conversation = session.getOrCreateConversation(name, options)
+            const l_conversation = session.getOrCreateConversation(name, options);
             setConversation(l_conversation)
-            return () => {
-                // It is important to destroy the conversation.
-                // Otherwise subsequent getOrCreateConversation with same name would get
-                // previous handle, regardless of the potentially new options.
-                // This also allows to cleanup memory
-                l_conversation.destroy()
+            const l_autoJoin = autoJoin;
+            if (l_autoJoin) {
+                setJoining(true)
+                l_conversation.join().then(() => {
+                    // successfully joined the conversation.
+                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                        console.info(HOOK_NAME + "|joined", l_conversation)
+                        //,JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
+                    }
+                    setJoined(true)
+                    setJoining(false)
+                }).catch((error: any) => {
+                    // could not join the conversation.
+                    setJoining(false)
+                })
             }
-        }
-    }, [session, name, JSON.stringify(options)])
-
-    useEffect(() => {
-        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect", conversation, autoJoin)
-        }
-        if (conversation && autoJoin) {
-            join()
             return () => {
-                if (conversation.isJoined()) {
-                    leave()
+                if (l_conversation.isJoined()) {
+                    l_conversation.leave().then(() => {
+                        l_conversation.destroy()
+                    })
+                } else {
+                    // It is important to destroy the conversation.
+                    // Otherwise subsequent getOrCreateConversation with same name would get
+                    // previous handle, regardless of the potentially new options.
+                    // This also allows to cleanup memory
+                    l_conversation.destroy()
                 }
             }
         }
-    }, [conversation, autoJoin])
+    }, [session, name, JSON.stringify(options), autoJoin])
 
     return {
         conversation,

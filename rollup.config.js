@@ -21,6 +21,12 @@ export default [
                 format: "esm",
                 sourcemap: true,
             },
+            {
+                file: 'dist/react-lib.production.min.js',
+                format: "umd",
+                sourcemap: true,
+                name: 'ReactLib'
+            },
         ],
         plugins: [
             peerDepsExternal(),

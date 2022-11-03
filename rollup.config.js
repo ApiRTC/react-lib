@@ -35,7 +35,7 @@ export default [
             typescript({ tsconfig: "./tsconfig.json" }),
             terser()
         ],
-        external: ["react", "styled-components"]
+        external: ["react", "@apirtc/apirtc"]
     },
     {
         input: "dist/esm/index.d.ts",

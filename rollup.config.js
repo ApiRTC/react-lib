@@ -35,7 +35,7 @@ export default [
             typescript({ tsconfig: "./tsconfig.json" }),
             terser()
         ],
-        external: ["react", "@apirtc/apirtc"]
+        //external: ["react", "@apirtc/apirtc"] // peerDepsExternal already sets this ?
     },
     {
         input: "dist/esm/index.d.ts",

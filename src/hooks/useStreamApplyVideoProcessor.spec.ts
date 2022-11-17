@@ -78,7 +78,9 @@ describe('useStreamApplyVideoProcessor', () => {
 
     test(`With a Stream, to be blurred`, async () => {
         const initStream = new Stream(null, {})
-        const { result, waitForNextUpdate, rerender } = renderHook((type: 'none' | 'blur') => useStreamApplyVideoProcessor(initStream, type), { initialProps: 'blur' });
+        const { result, waitForNextUpdate, rerender } = renderHook(
+            (type: 'none' | 'blur') => useStreamApplyVideoProcessor(initStream, type),
+            { initialProps: 'blur' });
         await waitForNextUpdate()
 
         expect(result.current.stream).toBeDefined()

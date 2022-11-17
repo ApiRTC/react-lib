@@ -15,7 +15,7 @@ export default function useUserMediaDevices(
 
             const on_mediaDeviceChanged = () => {
                 const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices()
-                if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                     console.info(HOOK_NAME + "|mediaDeviceChanged", mediaDevices)
                 }
                 setUserMediaDevices(mediaDevices)

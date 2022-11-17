@@ -19,7 +19,7 @@ export default function useConversation(
             console.error(HOOK_NAME + "|join|conversation is not defined")
             return
         }
-        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(HOOK_NAME + "|" + new Date + "|join", conversation,
                 JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
         }
@@ -28,7 +28,7 @@ export default function useConversation(
                 setJoining(true)
                 conversation.join().then(() => {
                     // successfully joined the conversation.
-                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|joined", conversation)
                     }
                     setJoined(true)
@@ -50,14 +50,14 @@ export default function useConversation(
             console.error(HOOK_NAME + "|leave|conversation is not defined")
             return
         }
-        if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(HOOK_NAME + "|leave", conversation)
         }
         return new Promise<void>((resolve, reject) => {
             if (conversation.isJoined()) {
                 conversation.leave().then(() => {
                     // local user successfully left the conversation.
-                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|left", conversation.getName())
                     }
                     setJoined(false)
@@ -75,7 +75,7 @@ export default function useConversation(
     //
     useEffect(() => {
         if (session && name) {
-            if (globalThis.apirtcReactLibLogLevel?.isDebugEnabled) {
+            if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(HOOK_NAME + "|getOrCreateConversation", name, options)
             }
             const l_conversation = session.getOrCreateConversation(name, options);
@@ -84,14 +84,14 @@ export default function useConversation(
             if (l_autoJoin) {
                 setJoining(true)
                 l_conversation.join().then(() => {
-                    if (globalThis.apirtcReactLibLogLevel?.isInfoEnabled) {
+                    if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|joined", l_conversation)
                         //,JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
                     }
                     setJoined(true)
                     setJoining(false)
                 }).catch((error: any) => {
-                    if (globalThis.apirtcReactLibLogLevel?.isWarnEnabled) {
+                    if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                         console.warn(HOOK_NAME + "|useEffect conversation.join()", error)
                     }
                     setJoining(false)
@@ -103,7 +103,7 @@ export default function useConversation(
                         l_conversation.destroy()
                         setConversation(undefined)
                     }).catch((error: any) => {
-                        if (globalThis.apirtcReactLibLogLevel?.isWarnEnabled) {
+                        if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                             console.warn(HOOK_NAME + "|useEffect conversation.leave()", error)
                         }
                         l_conversation.destroy()

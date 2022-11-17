@@ -25,7 +25,11 @@ export default [
                 file: 'dist/react-lib.production.min.js',
                 format: "umd",
                 sourcemap: true,
-                name: 'ReactLib'
+                name: 'ApiRtcReactLib',
+                globals: {
+                    'react': 'React',
+                    '@apirtc/apirtc': 'apiRTC'
+                }
             },
         ],
         plugins: [

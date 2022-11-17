@@ -86,12 +86,12 @@ describe('useSession', () => {
     })
 
     test(`LoginPassword credentials`, async () => {
-        const { result, waitForNextUpdate } = renderHook(() => useSession({ username: 'foo', password: 'bar' }))
+        const { result, waitForNextUpdate } = renderHook(() => useSession({ username: 'foo', password: 'bar' }, { cloudUrl: "https://my.cloud.address" }))
         expect(result.current.connecting).toBe(true)
         await waitForNextUpdate()
         console.log('SESSION', result.current.session)
         expect(result.current.connecting).toBe(false)
-        expect(result.current.session?.getId()).toBe("{\"uri\":\"apirtc:foo\"}{\"cloudUrl\":\"https://cloud.apirtc.com\",\"password\":\"bar\"}")
+        expect(result.current.session?.getId()).toBe("{\"uri\":\"apirtc:foo\"}{\"cloudUrl\":\"https://my.cloud.address\",\"password\":\"bar\"}")
     })
 
     test(`ApiKey credentials`, async () => {

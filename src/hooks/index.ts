@@ -6,5 +6,6 @@ export { default as useConversationStreams } from "./useConversationStreams"
 export { default as usePresence } from "./usePresence"
 export { default as useSession, Credentials } from "./useSession"
 export { default as useStreamApplyVideoProcessor } from './useStreamApplyVideoProcessor'
-export { default as useStreamBlur } from "./useStreamBlur"
+// deprecated useStreamBlur, replaced by more generic useStreamApplyVideoProcessor
+//export { default as useStreamBlur } from "./useStreamBlur"
 export { default as useUserMediaDevices } from "./useUserMediaDevices"

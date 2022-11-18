@@ -4,6 +4,9 @@ import './getDisplayMedia.mock'
 
 import { Contact, UserAgent, Session, UserAgentOptions } from '@apirtc/apirtc'
 
+let contactListUpdateFn: Function | undefined;
+const subscribedGroups: Set<string> = new Set();
+
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
@@ -12,15 +15,11 @@ jest.mock('@apirtc/apirtc', () => {
     // Set log level to max to maximize code coverage
     globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
 
-    let contactListUpdateFn: Function;
-
     return {
         __esModule: true,
         ...originalModule,
         UserAgent: jest.fn().mockImplementation((options: UserAgentOptions) => {
-            return {
-
-            }
+            return {}
         }),
         Session: jest.fn().mockImplementation((ua: UserAgent, options: any) => {
             return {
@@ -29,12 +28,22 @@ jest.mock('@apirtc/apirtc', () => {
                         contactListUpdateFn = fn;
                     }
                 },
-                removeListener: (event: string, fn: Function) => { },
+                removeListener: (event: string, fn: Function) => {
+                    if (event === 'contactListUpdate' && fn === contactListUpdateFn) {
+                        contactListUpdateFn = undefined;
+                    }
+                },
                 getUserAgent: () => { return ua },
-                subscribeToGroup: (groupName: string) => { },
-                unsubscribeToGroup: (groupName: string) => { },
+                subscribeToGroup: (groupName: string) => {
+                    subscribedGroups.add(groupName)
+                },
+                unsubscribeToGroup: (groupName: string) => {
+                    subscribedGroups.delete(groupName)
+                },
                 simulateContactListUpdate: (updatedContacts: any) => {
-                    contactListUpdateFn(updatedContacts)
+                    if (contactListUpdateFn) {
+                        contactListUpdateFn(updatedContacts)
+                    }
                 }
             }
         }),
@@ -49,7 +58,9 @@ import usePresence from './usePresence'
 describe('usePresence', () => {
     test(`If session is undefined, contactsByGroup is empty`, () => {
         const { result } = renderHook(() => usePresence(undefined, []));
-        expect(result.current.contactsByGroup).toStrictEqual(new Map());
+        expect(result.current.contactsByGroup).toStrictEqual(new Map())
+        expect(subscribedGroups.size).toEqual(0)
+        expect(contactListUpdateFn).toBeUndefined()
     })
     test(`With session, empty groups array`, () => {
 
@@ -57,7 +68,9 @@ describe('usePresence', () => {
         const session = new Session(userAgent, {});
 
         const { result } = renderHook(() => usePresence(session, []));
-        expect(result.current.contactsByGroup).toStrictEqual(new Map());
+        expect(result.current.contactsByGroup).toStrictEqual(new Map())
+        expect(subscribedGroups.size).toEqual(0)
+        expect(contactListUpdateFn).toBeUndefined()
 
         // Simulate a group update, but we have not provided any groups
         act(() => {
@@ -68,7 +81,7 @@ describe('usePresence', () => {
             })
         })
 
-        expect(result.current.contactsByGroup).toStrictEqual(new Map());
+        expect(result.current.contactsByGroup).toStrictEqual(new Map())
     })
 
     test(`With session, non-empty groups array`, () => {
@@ -77,7 +90,12 @@ describe('usePresence', () => {
         const session = new Session(userAgent, {});
 
         const { result } = renderHook(() => usePresence(session, ['group1', 'group2']));
-        expect(result.current.contactsByGroup).toStrictEqual(new Map());
+
+        expect(result.current.contactsByGroup).toStrictEqual(new Map())
+        expect(subscribedGroups.size).toEqual(2)
+        expect(subscribedGroups.has('group1')).toBeTruthy()
+        expect(subscribedGroups.has('group2')).toBeTruthy()
+        expect(contactListUpdateFn).toBeDefined()
 
         // Simulate a group1 update
         const contact01 = new Contact('id01', {})
@@ -125,7 +143,12 @@ describe('usePresence', () => {
         const { result, rerender } = renderHook(
             (groups: string[]) => usePresence(session, groups),
             { initialProps: ['group1', 'group2'] });
+
         expect(result.current.contactsByGroup).toStrictEqual(new Map());
+        expect(subscribedGroups.size).toEqual(2)
+        expect(subscribedGroups.has('group1')).toBeTruthy()
+        expect(subscribedGroups.has('group2')).toBeTruthy()
+        expect(contactListUpdateFn).toBeDefined()
 
         // Simulate a group1 update
         const contact01 = new Contact('id01', {})
@@ -147,5 +170,14 @@ describe('usePresence', () => {
 
         expectedMap.delete('group2')
         expect(result.current.contactsByGroup).toStrictEqual(expectedMap)
+        expect(subscribedGroups.size).toEqual(1)
+        expect(subscribedGroups.has('group1')).toBeTruthy()
+        expect(contactListUpdateFn).toBeDefined()
+
+        rerender([])
+
+        expect(result.current.contactsByGroup).toStrictEqual(new Map())
+        expect(subscribedGroups.size).toEqual(0)
+        expect(contactListUpdateFn).toBeUndefined()
     })
 })

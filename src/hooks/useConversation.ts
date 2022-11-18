@@ -1,29 +1,34 @@
 import { useState, useEffect, useCallback } from 'react'
-import apiRTC, { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc'
+import { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc'
 
-const HOOK_NAME = "useConversation"
+
+const HOOK_NAME = "useConversation";
+/**
+ * Please note that the hook won't react on autoJoin change
+ */
 export default function useConversation(
     session: Session | undefined,
     name: string | undefined,
     options?: GetOrCreateConversationOptions,
     autoJoin: boolean = false
 ) {
-    const [conversation, setConversation] = useState<Conversation>()
-    const [joined, setJoined] = useState<boolean>(false)
-    const [joining, setJoining] = useState<boolean>(false)
+    const [conversation, setConversation] = useState<Conversation>();
+    const [joined, setJoined] = useState<boolean>(false);
+    const [joining, setJoining] = useState<boolean>(false);
 
     // Callbacks
     //
     const join = useCallback(() => {
-        if (!conversation) {
-            console.error(HOOK_NAME + "|join|conversation is not defined")
-            return
-        }
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|" + new Date + "|join", conversation,
-                JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
+            console.debug(HOOK_NAME + "|join", conversation)
+            //JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
         }
         return new Promise<void>((resolve, reject) => {
+            if (!conversation) {
+                console.error(HOOK_NAME + "|join|conversation is not defined")
+                reject(HOOK_NAME + "|join|conversation not defined")
+                return
+            }
             if (!conversation.isJoined()) {
                 setJoining(true)
                 conversation.join().then(() => {
@@ -46,14 +51,16 @@ export default function useConversation(
     }, [conversation])
 
     const leave = useCallback(() => {
-        if (!conversation) {
-            console.error(HOOK_NAME + "|leave|conversation is not defined")
-            return
-        }
+
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(HOOK_NAME + "|leave", conversation)
         }
         return new Promise<void>((resolve, reject) => {
+            if (!conversation) {
+                console.error(HOOK_NAME + "|leave|conversation is not defined")
+                reject(HOOK_NAME + "|leave|conversation not defined")
+                return
+            }
             if (conversation.isJoined()) {
                 conversation.leave().then(() => {
                     // local user successfully left the conversation.
@@ -76,7 +83,7 @@ export default function useConversation(
     useEffect(() => {
         if (session && name) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + "|getOrCreateConversation", name, options)
+                console.debug(HOOK_NAME + "|getOrCreateConversation", name, options, autoJoin)
             }
             const l_conversation = session.getOrCreateConversation(name, options);
             setConversation(l_conversation)
@@ -98,17 +105,22 @@ export default function useConversation(
                 })
             }
             return () => {
+                if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                    console.debug(HOOK_NAME + "|useEffect cleanup", name, options, autoJoin)
+                }
                 if (l_conversation.isJoined()) {
-                    l_conversation.leave().then(() => {
-                        l_conversation.destroy()
-                        setConversation(undefined)
-                    }).catch((error: any) => {
-                        if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                            console.warn(HOOK_NAME + "|useEffect conversation.leave()", error)
-                        }
-                        l_conversation.destroy()
-                        setConversation(undefined)
-                    })
+                    l_conversation.leave()
+                        //.then(() => {})
+                        .catch((error: any) => {
+                            if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                                console.warn(HOOK_NAME + "|useEffect conversation.leave()", error)
+                            }
+                        })
+                        .finally(() => {
+                            l_conversation.destroy()
+                            setConversation(undefined)
+                            setJoined(false)
+                        })
                 } else {
                     // It is important to destroy the conversation.
                     // Otherwise subsequent getOrCreateConversation with same name would get
@@ -119,7 +131,7 @@ export default function useConversation(
                 }
             }
         }
-    }, [session, name, JSON.stringify(options), autoJoin])
+    }, [session, name, JSON.stringify(options)]) // Do not react on autoJoin, this is too tricky to handle
 
     return {
         conversation,

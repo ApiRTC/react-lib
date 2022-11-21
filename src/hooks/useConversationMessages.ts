@@ -21,7 +21,7 @@ export default function useConversationMessages(
         if (conversation) {
             const onMessage = (message: ConversationMessage) => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|on:message:", message, messages)
+                    console.info(HOOK_NAME + "|on:message:", conversation.getName(), message)
                 }
                 messages.push(message)
                 setO_Messages(Array.from(messages))
@@ -41,7 +41,7 @@ export default function useConversationMessages(
             conversation?.sendMessage(msgContent)
                 .then((uuid: number) => {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|sentMessage", uuid, msgContent, messages)
+                        console.info(HOOK_NAME + "|sentMessage", conversation.getName(), uuid, msgContent)
                     }
                     messages.push({ content: msgContent, sender: sender, time: new Date() })
                     setO_Messages(Array.from(messages))

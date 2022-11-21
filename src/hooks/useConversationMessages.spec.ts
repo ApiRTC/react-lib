@@ -38,7 +38,6 @@ jest.mock('@apirtc/apirtc', () => {
                             resolve(456)
                         }
                     })
-
                 }
             }
         }),

@@ -132,7 +132,7 @@ describe('useConversationModeration', () => {
         const onEjected = (contact: Contact) => { l_ejected.add(contact) }
         const onEjectedSelf = () => { ejectedSelf = true; }
 
-        const { result } = renderHook(
+        renderHook(
             (props: { conversation: Conversation }) => useConversationModeration(props.conversation, onEjected, onEjectedSelf),
             { initialProps: { conversation } });
 

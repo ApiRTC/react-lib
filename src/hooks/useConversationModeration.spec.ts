@@ -159,7 +159,6 @@ describe('useConversationModeration', () => {
         expect(l_ejected.size).toBe(1)
         expect(l_ejected).toContain(contact01)
         expect(ejectedSelf).toBeTruthy()
-
     })
 
 })

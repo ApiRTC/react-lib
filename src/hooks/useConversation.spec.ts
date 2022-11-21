@@ -233,8 +233,8 @@ describe('useConversation', () => {
         simulateJoinFail = false;
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { name: string; autoJoin: boolean }) => useConversation(session, props.name, undefined, props.autoJoin),
-            { initialProps: { name: 'foo', autoJoin: true } });
+            (props: { name: string; join: boolean }) => useConversation(session, props.name, undefined, props.join),
+            { initialProps: { name: 'foo', join: true } });
         expect(result.current.conversation?.getName()).toEqual('foo')
         expect(result.current.joining).toEqual(true)
         expect(result.current.joined).toEqual(false)
@@ -246,23 +246,34 @@ describe('useConversation', () => {
         expect(simulateStatusJoined).toBeTruthy()
         expect(simulateDestroyed).toBeFalsy()
 
-        // now check that changing autoJoin does ot change anything
+        // Changing 'join' to false does a simple leave
         const l_conversation = result.current.conversation;
-        rerender({ name: 'foo', autoJoin: false })
+        rerender({ name: 'foo', join: false })
 
-        await waitForNextUpdate().then(() => {
-            throw new Error('it should not reach here');
-        }).catch(() => {
-            // expected
-            console.log("Expected: there should not be update")
-        })
+        await waitForNextUpdate()
+        // .then(() => {
+        //     throw new Error('it should not reach here');
+        // }).catch(() => {
+        //     // expected
+        //     console.log("Expected: there should not be update")
+        // })
+        expect(result.current.joined).toEqual(false)
+        expect(result.current.conversation).toBe(l_conversation)
+        expect(simulateStatusJoined).toBeFalsy()
+        expect(simulateDestroyed).toBeFalsy()
+
+        // Changing 'join' to true does a simple join
+        rerender({ name: 'foo', join: true })
+        expect(result.current.joining).toEqual(true)
+        await waitForNextUpdate()
         expect(result.current.joined).toEqual(true)
+        expect(result.current.joining).toEqual(false)
         expect(result.current.conversation).toBe(l_conversation)
         expect(simulateStatusJoined).toBeTruthy()
         expect(simulateDestroyed).toBeFalsy()
 
         // now rerender with undefined name, the conversation shall be left destroyed
-        rerender({ name: undefined, autoJoin: false } as any)
+        rerender({ name: undefined, join: true } as any)
 
         await waitForNextUpdate()
         expect(result.current.joined).toEqual(false)

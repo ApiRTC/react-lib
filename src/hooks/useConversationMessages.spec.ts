@@ -110,7 +110,6 @@ describe('useConversationMessages', () => {
         await waitForNextUpdate()
         expect(result.current.messages.length).toBe(2)
         expect(result.current.messages[1].content).toBe('a sent message')
-        expect(result.current.messages[1]).toBe('a sent message')
 
         // Test message send fail
         act(() => {

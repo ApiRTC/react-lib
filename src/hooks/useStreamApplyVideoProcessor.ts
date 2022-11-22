@@ -50,7 +50,7 @@ export default function useStreamApplyVideoProcessor(
                 console.debug(HOOK_NAME + "|releasing outStream", outStream)
             }
             // stream?.applyVideoProcessor('none').catch(error => {
-            //     if (globalThis.apirtcReactLibLogLevel?.isWarnEnabled) {
+            //     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
             //         console.warn(HOOK_NAME + "|doCheckAndReleaseOutStream", stream, outStream)
             //     }
             // })

@@ -30,59 +30,64 @@ export default function useConversationStreams(
   const publish: (localStream: Stream, options?: PublishOptions) => Promise<Stream> =
     useCallback((localStream: Stream, options?: PublishOptions) => {
       return new Promise<Stream>((resolve, reject) => {
-        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(HOOK_NAME + "|publish", conversation?.getName(), localStream, options, localStream instanceof Stream)
-        }
-        conversation?.publish(localStream, options).then((stream: Stream) => {
-          if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-            console.info(HOOK_NAME + "|stream published", stream)
+        if (conversation) {
+          if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|publish", conversation.getName(), localStream, options, localStream instanceof Stream)
           }
-          //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
-          publishedStreams.push(stream)
-          // Returning a new array makes lets React detect changes
-          setO_PublishedStreams(Array.from(publishedStreams))
-          resolve(stream)
-        }).catch((error: any) => {
-          reject(error)
-        })
+          conversation.publish(localStream, options).then((stream: Stream) => {
+            if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+              console.info(HOOK_NAME + "|stream published", stream)
+            }
+            //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
+            publishedStreams.push(stream)
+            // Returning a new array makes lets React detect changes
+            setO_PublishedStreams(Array.from(publishedStreams))
+            resolve(stream)
+          }).catch((error: any) => {
+            reject(error)
+          })
+        }
       })
     }, [conversation]);
 
   const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
-      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(HOOK_NAME + "|replacePublishedStream", oldStream.getId(), newStream.getId())
+      if (conversation) {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+          console.debug(HOOK_NAME + "|replacePublishedStream", conversation.getName(), oldStream.getId(), newStream.getId())
+        }
+        const conversationCall = conversation.getConversationCall(oldStream);
+        if (conversationCall) {
+          conversationCall.replacePublishedStream(newStream)
+            .then((stream: Stream) => {
+              if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                console.info(HOOK_NAME + "|stream replaced", oldStream, stream)
+              }
+              const index = publishedStreams.indexOf(oldStream);
+              if (index >= 0) {
+                publishedStreams.splice(index, 1, stream)
+                setO_PublishedStreams(Array.from(publishedStreams))
+              }
+              resolve(stream)
+            }).catch(error => {
+              reject(error)
+            })
+        }
       }
-      conversation?.getConversationCall(oldStream)?.replacePublishedStream(newStream)
-        .then((stream: Stream) => {
-          if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-            console.info(HOOK_NAME + "|stream replaced", oldStream, stream)
-          }
-          const index = publishedStreams.indexOf(oldStream);
-          if (index >= 0) {
-            publishedStreams.splice(index, 1, stream)
-          } else {
-            console.error(HOOK_NAME + "|cannot splice", publishedStreams, index)
-          }
-          setO_PublishedStreams(Array.from(publishedStreams))
-          resolve(stream)
-        }).catch(error => {
-          reject(error)
-        })
     })
   }, [conversation]);
 
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
-    if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-      console.debug(HOOK_NAME + "|unpublish", conversation?.getName(), localStream)
-    }
-    conversation?.unpublish(localStream)
-    const index = publishedStreams.indexOf(localStream);
-    if (index >= 0) {
-      publishedStreams.splice(index, 1)
-      setO_PublishedStreams(Array.from(publishedStreams))
-    } else {
-      console.error(HOOK_NAME + "|cannot splice", publishedStreams, index)
+    if (conversation) {
+      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        console.debug(HOOK_NAME + "|unpublish", conversation.getName(), localStream)
+      }
+      conversation.unpublish(localStream)
+      const index = publishedStreams.indexOf(localStream);
+      if (index >= 0) {
+        publishedStreams.splice(index, 1)
+        setO_PublishedStreams(Array.from(publishedStreams))
+      }
     }
   }, [conversation]);
 
@@ -91,75 +96,79 @@ export default function useConversationStreams(
     if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
       console.debug(HOOK_NAME + "|doHandlePublication", streamsToPublish, JSON.stringify(publishedStreamsCache.map(l_s => l_s?.getId())), maxLength)
     }
-    const newPublishedStreamsCache = new Array<Stream | null | undefined>()
+
+    // Strategy for published streams cache is to initialize it as it should be
+    // and only remove from if if publication fails.
+    const newPublishedStreamsCache = [...streamsToPublish]
+    setPublishedStreamsCache(newPublishedStreamsCache)
 
     // Loop on arrays index to publish new streams, or replace if necessary
     for (let i = 0; i < maxLength; i++) {
-      const stream = streamsToPublish[i];
-      const cachedStreamToPublish = publishedStreamsCache[i];
+      const toUnpublish = publishedStreamsCache[i];
+      const toPublish = streamsToPublish[i];
+
       if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(HOOK_NAME + "|doHandlePublication index", i, cachedStreamToPublish?.getId(), stream?.getId())
+        console.debug(HOOK_NAME + "|doHandlePublication index", i, toUnpublish?.getId(), toPublish?.getId())
       }
-      if (cachedStreamToPublish && stream) {
-        if (cachedStreamToPublish !== stream) {
-          // If position in both new and cached list are defined but are different:
-          // replace if and only if stream to replace shall not be published (at other position)
-          if (streamsToPublish.indexOf(cachedStreamToPublish) < 0) {
-            if (conversation && !conversation.isPublishedStream(stream)) {
-              replacePublishedStream(cachedStreamToPublish, stream).then((l_stream: Stream) => {
-                newPublishedStreamsCache.splice(i, 0, l_stream)
-              }).catch((error: Error) => {
-                if (errorCallback) {
-                  errorCallback(error)
-                } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                  console.warn(HOOK_NAME + "|replacePublishedStream", error)
-                }
-              })
-            } else {
-              unpublish(cachedStreamToPublish)
-              newPublishedStreamsCache.splice(i, 0, stream)
-            }
+      if (toUnpublish && toPublish && (toUnpublish !== toPublish)) {
+        // If position in both new and cached list are defined but are different:
+        // replace if and only if stream to unpublish shall not be published (at other position)
+        if (streamsToPublish.indexOf(toUnpublish) < 0) { // toUnpublish shall not be published
+          if (conversation && !conversation.isPublishedStream(toPublish)) {
+            replacePublishedStream(toUnpublish, toPublish).catch((error: Error) => {
+              newPublishedStreamsCache.splice(i, 1, null)
+              if (errorCallback) {
+                errorCallback(error)
+              } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                console.warn(HOOK_NAME + "|replacePublishedStream", error)
+              }
+            })
+          } else { // toPublish is already published
+            // So we shall not replace another stream by it, but we need to unpublish the toUnpublish
+            unpublish(toUnpublish)
           }
-        } else {
-          newPublishedStreamsCache.splice(i, 0, stream)
+        } else { // toUnpublish shall actually be published (at another position), so don't do anything about it
+          // But then we still have to publish toPublish stream (if not already published)
+          if (conversation && !conversation.isPublishedStream(toPublish)) {
+            // TODO manage publish options per stream ?!
+            publish(toPublish).catch((error: Error) => {
+              newPublishedStreamsCache.splice(i, 1, null)
+              if (errorCallback) {
+                errorCallback(error)
+              } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                console.warn(HOOK_NAME + "|publish", error)
+              }
+            })
+          }
         }
-      } else if (cachedStreamToPublish && !stream) {
+      } else if (toUnpublish && !toPublish) {
         // If position in new list is now undefined(or null) while it was in cache:
-        // unpublish if and only if stream shall not be published (at other position)
-        if (streamsToPublish.indexOf(cachedStreamToPublish) < 0) {
-          unpublish(cachedStreamToPublish)
-          newPublishedStreamsCache.splice(i, 0, stream)
+        // unpublish if and only if stream to unpublish shall not be published (at other position)
+        if (streamsToPublish.indexOf(toUnpublish) < 0) {
+          unpublish(toUnpublish)
         }
-      } else if (stream) {
+      } else if (!toUnpublish && toPublish) {
         // If position in new list is valid : publish it whatever the position in cache.
         // Depending on the case the stream might be already published, or it might be not
         // (can happen if the cache was set while Conversation was not joined yet).
         // Note that we could try to publish without checking isPublishedStream, the call would
         // reject with a console error but this would not affect the behavior.
-        if (conversation && !conversation.isPublishedStream(stream)) {
+        if (conversation && !conversation.isPublishedStream(toPublish)) {
           // TODO manage publish options per stream ?!
-          publish(stream).then((l_stream: Stream) => {
-            newPublishedStreamsCache.splice(i, 0, l_stream)
-          }).catch((error: Error) => {
+          publish(toPublish).catch((error: Error) => {
+            newPublishedStreamsCache.splice(i, 1, null)
             if (errorCallback) {
               errorCallback(error)
             } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
               console.warn(HOOK_NAME + "|publish", error)
             }
           })
-        } else {
-          if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|doHandlePublication stream already published", stream)
-          }
         }
-      } else if (!stream) {
-        newPublishedStreamsCache.splice(i, 0, stream)
       }
     }
-    setPublishedStreamsCache(newPublishedStreamsCache)
-
   }, [conversation, streamsToPublish,
-    JSON.stringify(publishedStreamsCache.map(l_s => l_s?.getId())),
+    //JSON.stringify(publishedStreamsCache.map(l_s => l_s?.getId())),
+    publishedStreamsCache,
     publish, unpublish, replacePublishedStream]);
 
   // --------------------------------------------------------------------------
@@ -171,7 +180,6 @@ export default function useConversationStreams(
         if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
           console.info(HOOK_NAME + "|on_streamAdded", remoteStream)
         }
-        //console.log(`PUSHING ${remoteStream.getId()} to subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())))
         subscribedStreams.push(remoteStream)
         setO_SubscribedStreams(Array.from(subscribedStreams))
       };
@@ -180,12 +188,9 @@ export default function useConversationStreams(
           console.info(HOOK_NAME + "|on_streamRemoved", remoteStream)
         }
         const index = subscribedStreams.indexOf(remoteStream)
-        //console.log(`TRY SPLICING ${remoteStream.getId()} from subscribedStreams`, JSON.stringify(subscribedStreams.map(s => s.getId())), index)
         if (index >= 0) {
           subscribedStreams.splice(index, 1)
           setO_SubscribedStreams(Array.from(subscribedStreams))
-        } else {
-          console.error(HOOK_NAME + "|cannot splice", subscribedStreams, index)
         }
       };
       const on_streamListChanged = (streamInfo: StreamInfo) => {
@@ -193,10 +198,10 @@ export default function useConversationStreams(
         if (streamInfo.isRemote === true) {
           if (streamInfo.listEventType === 'added') {
             // a remote stream was published
-            conversation?.subscribeToStream(streamId)
+            conversation.subscribeToStream(streamId)
           } else if (streamInfo.listEventType === 'removed') {
             // a remote stream is not published anymore
-            conversation?.unsubscribeToStream(streamId)
+            conversation.unsubscribeToStream(streamId)
           }
         }
       };
@@ -284,7 +289,6 @@ export default function useConversationStreams(
           conversation.subscribeToStream(streamId)
         }
       })
-
       return () => {
         unpublishAndUnsubscribeAll(conversation)
       }

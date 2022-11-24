@@ -69,7 +69,7 @@ export default function useConversationStreams(
                 setO_PublishedStreams(Array.from(publishedStreams))
               }
               resolve(stream)
-            }).catch(error => {
+            }).catch((error: any) => {
               reject(error)
             })
         }
@@ -283,7 +283,7 @@ export default function useConversationStreams(
         console.debug(HOOK_NAME + "|conversation", conversation)
       }
       // Subscribe to existing remote streams
-      conversation.getAvailableStreamList().forEach(streamInfo => {
+      conversation.getAvailableStreamList().forEach((streamInfo: StreamInfo) => {
         const streamId = String(streamInfo.streamId);
         if (streamInfo.isRemote === true) {
           conversation.subscribeToStream(streamId)

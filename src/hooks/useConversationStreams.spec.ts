@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react-hooks'
 
 import './getDisplayMedia.mock'
 
-import { Conversation, Stream, SubscribeOptions, ConversationUnsubscribeToStream } from '@apirtc/apirtc'
+import { Conversation, Stream, SubscribeOptions, ConversationUnsubscribeToStream, PublishOptions } from '@apirtc/apirtc'
 
 let conversationJoinedFn: Function | undefined = undefined;
 let conversationLeftFn: Function | undefined = undefined;
@@ -34,7 +34,7 @@ jest.mock('@apirtc/apirtc', () => {
                 getName: () => { return name },
                 isJoined: () => { return instance.joined },
                 isPublishedStream: (stream: Stream) => { return instance.publishedStreams.has(stream) },
-                publish: (stream: Stream) => {
+                publish: (stream: Stream, options?: PublishOptions) => {
                     return new Promise<Stream>((resolve, reject) => {
                         if ((stream as any).getOpts().publishFail) {
                             reject('publish-fail')
@@ -199,16 +199,16 @@ describe('useConversationStreams', () => {
         (conversation as any).joined = true;
 
         // First, render with empty streamsToPublish
-        const EMPTY_STREAMS: Array<Stream | null> = [];
+        const EMPTY_STREAMS: Array<{ stream: Stream, options?: PublishOptions } | null> = [];
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
             { initialProps: { conversation, streamsToPublish: EMPTY_STREAMS } });
 
         expect(result.current.publishedStreams).toBeDefined()
         expect(result.current.publishedStreams.length).toBe(0)
 
         const stream01 = new Stream(null, { id: 'stream-01' });
-        const streams: Array<Stream | null> = [stream01];
+        const streams: Array<{ stream: Stream, options?: PublishOptions } | null> = [{ stream: stream01 }];
 
         // Change streamsToPublish array, to [stream01]
 
@@ -234,8 +234,8 @@ describe('useConversationStreams', () => {
         //
         const stream02 = new Stream(null, { id: 'stream-02' });
         const stream03 = new Stream(null, { id: 'stream-03' });
-        streams[0] = stream02;
-        streams.push(stream03)
+        streams[0] = { stream: stream02 };
+        streams.push({ stream: stream03 })
         rerender({ conversation, streamsToPublish: streams })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
@@ -269,6 +269,43 @@ describe('useConversationStreams', () => {
         expect(conversation.isPublishedStream(stream02)).toBeFalsy()
     })
 
+    test(`streams publication [stream01, audioOnly] to [stream01, videoOnly]`, async () => {
+        const conversation = new Conversation('joined-conversation', {});
+        (conversation as any).joined = true;
+
+        const stream01 = new Stream(null, { id: 'stream-01' });
+
+        const { result, rerender, waitForNextUpdate } = renderHook(
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
+                props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01, options: { audioOnly: true } }] } });
+
+        await waitForNextUpdate()
+        expect(result.current.publishedStreams.length).toBe(1)
+        expect(result.current.publishedStreams[0]).toBe(stream01)
+        expect(conversation.isPublishedStream(stream01)).toBeTruthy()
+
+        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_publish = jest.spyOn(conversation, 'publish');
+        const spy_unpublish = jest.spyOn(conversation, 'unpublish');
+
+        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_unpublish).not.toHaveBeenCalled()
+        expect(spy_publish).not.toHaveBeenCalled()
+
+        // change to videoOnly
+        rerender({ conversation, streamsToPublish: [{ stream: stream01, options: { videoOnly: true } }] })
+
+        expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_unpublish).not.toHaveBeenCalled()
+        expect(spy_publish).not.toHaveBeenCalled()
+
+        await waitForNextUpdate()
+        expect(result.current.publishedStreams.length).toBe(1)
+        expect(result.current.publishedStreams[0]).toBe(stream01)
+        expect(conversation.isPublishedStream(stream01)).toBeTruthy()
+    })
+
     test(`streams publication [null, stream02] to [stream01, stream02]`, async () => {
         const conversation = new Conversation('joined-conversation', {});
         (conversation as any).joined = true;
@@ -277,8 +314,9 @@ describe('useConversationStreams', () => {
         const stream02 = new Stream(null, { id: 'stream-02' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [null, stream02] } });
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
+                props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [null, { stream: stream02 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(1)
@@ -294,7 +332,7 @@ describe('useConversationStreams', () => {
         expect(spy_publish).not.toHaveBeenCalled()
 
         // go from [null, stream02] to [stream01, stream02]
-        rerender({ conversation, streamsToPublish: [stream01, stream02] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }] })
 
         expect(spy_getConversationCall).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
@@ -315,8 +353,8 @@ describe('useConversationStreams', () => {
         const stream01 = new Stream(null, { id: 'stream-01' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [stream01] } });
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(1)
@@ -332,7 +370,7 @@ describe('useConversationStreams', () => {
         expect(spy_publish).not.toHaveBeenCalled()
 
         // go from [stream01] to [null, stream01]
-        rerender({ conversation, streamsToPublish: [null, stream01] } as any)
+        rerender({ conversation, streamsToPublish: [null, { stream: stream01 }] } as any)
 
         expect(spy_getConversationCall).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
@@ -363,8 +401,9 @@ describe('useConversationStreams', () => {
         const stream02 = new Stream(null, { id: 'stream-02' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [stream01, stream02] } });
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
+                props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(2)
@@ -379,7 +418,7 @@ describe('useConversationStreams', () => {
 
         // go from [stream01, stream02]
         //      to [stream02, stream01]
-        rerender({ conversation, streamsToPublish: [stream02, stream01] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream01 }] })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
         expect(spy_unpublish).toHaveBeenCalledTimes(0)
@@ -402,8 +441,9 @@ describe('useConversationStreams', () => {
         const stream03 = new Stream(null, { id: 'stream-03' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [stream01, stream02] } });
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
+                props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(2)
@@ -418,7 +458,7 @@ describe('useConversationStreams', () => {
 
         // go from [stream01, stream02]
         //      to [stream02, stream03]
-        rerender({ conversation, streamsToPublish: [stream02, stream03] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }] })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
@@ -439,14 +479,14 @@ describe('useConversationStreams', () => {
         const stream01 = new Stream(null, { id: 'stream-01', publishFail: true });
 
         const { result } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
                 props.conversation, props.streamsToPublish, (error: any) => {
                     done()
                     expect(error).toBe('publish-fail')
                     expect(result.current.publishedStreams.length).toBe(0)
                     expect(conversation.isPublishedStream(stream01)).toBeFalsy()
                 }),
-            { initialProps: { conversation, streamsToPublish: [stream01] } });
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }] } });
     })
 
     test(`streams publication [stream01], with publish error, with no errorCallback`, async () => {
@@ -456,9 +496,9 @@ describe('useConversationStreams', () => {
         const stream01 = new Stream(null, { id: 'stream-01', publishFail: true });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
                 props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [stream01] } });
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }] } });
 
         //await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(0)
@@ -473,11 +513,11 @@ describe('useConversationStreams', () => {
         const stream02 = new Stream(null, { id: 'stream-02' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
                 props.conversation, props.streamsToPublish, (error: any) => {
                     expect(error).toBe('replace-fail')
                 }),
-            { initialProps: { conversation, streamsToPublish: [stream01] } });
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(1)
@@ -488,7 +528,7 @@ describe('useConversationStreams', () => {
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
-        rerender({ conversation, streamsToPublish: [stream02] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream02 }] })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).toHaveBeenCalledTimes(0)
@@ -510,9 +550,9 @@ describe('useConversationStreams', () => {
         const stream02 = new Stream(null, { id: 'stream-02' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
                 props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [stream01] } });
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(1)
@@ -523,7 +563,7 @@ describe('useConversationStreams', () => {
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
-        rerender({ conversation, streamsToPublish: [stream02] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream02 }] })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).toHaveBeenCalledTimes(0)
@@ -548,13 +588,13 @@ describe('useConversationStreams', () => {
         const { result, rerender, waitForNextUpdate } = renderHook(
             (props: {
                 conversation: Conversation,
-                streamsToPublish: Array<Stream | null>,
+                streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null>,
                 errorCallback: (error: any) => void
             }) => useConversationStreams(
                 props.conversation, props.streamsToPublish, props.errorCallback),
             {
                 initialProps: {
-                    conversation, streamsToPublish: [stream01, stream02], errorCallback: (error: any) => {
+                    conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }], errorCallback: (error: any) => {
                         expect(error).toBe('publish-fail')
                     }
                 }
@@ -574,7 +614,7 @@ describe('useConversationStreams', () => {
         // go from [stream01, stream02]
         //      to [stream02, stream03]
         rerender({
-            conversation, streamsToPublish: [stream02, stream03], errorCallback: (error: any) => {
+            conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }], errorCallback: (error: any) => {
                 expect(error).toBe('publish-fail')
             }
         })
@@ -601,12 +641,12 @@ describe('useConversationStreams', () => {
         const { result, rerender, waitForNextUpdate } = renderHook(
             (props: {
                 conversation: Conversation,
-                streamsToPublish: Array<Stream | null>
+                streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null>
             }) => useConversationStreams(
                 props.conversation, props.streamsToPublish),
             {
                 initialProps: {
-                    conversation, streamsToPublish: [stream01, stream02]
+                    conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }]
                 }
             });
 
@@ -624,7 +664,7 @@ describe('useConversationStreams', () => {
         // go from [stream01, stream02]
         //      to [stream02, stream03]
         rerender({
-            conversation, streamsToPublish: [stream02, stream03]
+            conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }]
         })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
@@ -646,8 +686,8 @@ describe('useConversationStreams', () => {
         const stream02 = new Stream(null, { id: 'stream-02' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { conversation: Conversation, streamsToPublish: Array<Stream | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [stream01, stream02] } });
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(2)
@@ -662,7 +702,7 @@ describe('useConversationStreams', () => {
 
         // go from [stream01, stream02]
         //      to [stream02]
-        rerender({ conversation, streamsToPublish: [stream02] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream02 }] })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
         expect(spy_unpublish).toHaveBeenCalledTimes(1)

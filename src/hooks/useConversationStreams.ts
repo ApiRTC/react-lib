@@ -134,6 +134,7 @@ export default function useConversationStreams(
             })
         }
         if (previous.stream === next.stream) {
+          // Streams are the same, only replace if options are different
           if (JSON.stringify(previous.options) !== JSON.stringify(next.options)) {
             doReplacePublishedStream()
           }
@@ -141,7 +142,7 @@ export default function useConversationStreams(
           // If position in both new and cached list are defined but are different:
           // replace if and only if stream to unpublish shall not be published (at other position)
           if (streamsToPublishSet.has(previous.stream)) { // previous shall be published
-            // previous shall actually be published (at another position), so don't do anything about it
+            // Previous shall actually be published (at another position), so don't do anything about it
             // But then we still have to publish new stream (if not already published)
             if (conversation && !conversation.isPublishedStream(next.stream)) {
               publish(next.stream, next.options).catch((error: Error) => {
@@ -207,7 +208,7 @@ export default function useConversationStreams(
         if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
           console.info(HOOK_NAME + "|on_streamRemoved", remoteStream)
         }
-        const index = subscribedStreams.indexOf(remoteStream)
+        const index = subscribedStreams.indexOf(remoteStream);
         if (index >= 0) {
           subscribedStreams.splice(index, 1)
           setO_SubscribedStreams(Array.from(subscribedStreams))

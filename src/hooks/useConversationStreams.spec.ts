@@ -285,7 +285,7 @@ describe('useConversationStreams', () => {
         expect(conversation.isPublishedStream(stream02)).toBeFalsy()
     })
 
-    test(`streams publication with options switch [stream01, audioOnly] to [stream01, videoOnly]`, async () => {
+    test(`streams publication with options switch [{stream01, audioOnly}] to [{stream01, videoOnly}]`, async () => {
         const conversation = new Conversation('joined-conversation', {});
         (conversation as any).joined = true;
 

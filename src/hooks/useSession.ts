@@ -4,25 +4,26 @@ import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc'
 type LoginPassword = {
     username: string
     password: string
-}
+};
+
 function isInstanceOfLoginPassword(object: any): object is LoginPassword {
     if (typeof object !== 'object') return false;
     return 'username' in object;
 }
 
-type ApiKey = { apiKey: string }
+type ApiKey = { apiKey: string };
 function isInstanceOfApiKey(object: any): object is ApiKey {
     if (typeof object !== 'object') return false;
     return 'apiKey' in object;
 }
 
-type Token = { token: string }
+type Token = { token: string };
 function isInstanceOfToken(object: any): object is Token {
     if (typeof object !== 'object') return false;
     return 'token' in object;
 }
 
-export type Credentials = LoginPassword | ApiKey | Token
+export type Credentials = LoginPassword | ApiKey | Token;
 
 const HOOK_NAME = "useSession"
 export default function useSession(credentials?: Credentials, options?: RegisterInformation) {
@@ -82,7 +83,7 @@ export default function useSession(credentials?: Credentials, options?: Register
         return new Promise<void>((resolve, reject) => {
             const registerInformation: RegisterInformation = options ? options : {
                 cloudUrl: 'https://cloud.apirtc.com',
-            }
+            };
 
             let l_userAgent;
 
@@ -90,15 +91,15 @@ export default function useSession(credentials?: Credentials, options?: Register
                 registerInformation.password = credentials.password;
                 l_userAgent = new UserAgent({
                     uri: 'apirtc:' + credentials.username
-                })
+                });
             } else if (isInstanceOfApiKey(credentials)) {
                 l_userAgent = new UserAgent({
                     uri: `apiKey:${credentials.apiKey}`
-                })
+                });
             } else if (isInstanceOfToken(credentials)) {
                 l_userAgent = new UserAgent({
                     uri: `token:${credentials.token}`
-                })
+                });
             } else {
                 reject("credentials not recognized")
                 return
@@ -110,11 +111,11 @@ export default function useSession(credentials?: Credentials, options?: Register
                     console.info(HOOK_NAME + "|connected", l_session)
                 }
                 setSession(l_session)
-                setConnecting(false)
                 resolve()
             }).catch((error: any) => {
-                setConnecting(false)
                 reject(error)
+            }).finally(() => {
+                setConnecting(false)
             })
         })
     }
@@ -139,7 +140,7 @@ export default function useSession(credentials?: Credentials, options?: Register
 
     const disconnect = () => {
         setSession(undefined)
-    }
+    };
 
     return {
         //userAgent: userAgent, // can get it from session

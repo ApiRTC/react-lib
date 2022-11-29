@@ -6,6 +6,10 @@ This library offers React **ApiRTC** high order components. Theses are mostly ho
 
 `npm install @apirtc/react-lib`
 
+requires to have @apirtc/apirtc peer dependency installed too:
+
+`npm install @apirtc/apirtc`
+
 ## Hooks
 
 ### useSession
@@ -70,7 +74,7 @@ const { messages, sendMessage } = useConversationMessages(conversation);
 ```
 import { useConversationStreams } from '@apirtc/react-lib'
 const { publishedStreams, subscribedStreams } = useConversationStreams(
-        conversation, [localStream]);
+        conversation, [ { stream:localStream } ]);
 ```
 
 ## Components
@@ -87,12 +91,23 @@ import { VideoStream } from '@apirtc/react-lib'
 
 ## Configure log level
 
-In console, or from web app code:
+Available log levels:
+
+ * **debug**
+ * **info**
+ * **warn**
+ * **error**
+
+from web app code:
 
 ```
-globalThis.apirtcReactLibLogLevel.isDebugEnabled=false
-globalThis.apirtcReactLibLogLevel.isInfoEnabled=true
-globalThis.apirtcReactLibLogLevel.isWarnEnabled=true
+import { setLogLevel } from '@apirtc/react-lib'
+
+setLogLevel('warn')
 ```
 
-Available LogLevels : isDebugEnabled, isInfoEnabled, isWarnEnabled
+from console:
+
+```
+ApiRtcReactLib.setLogLevel('debug')
+```

@@ -2,7 +2,7 @@ import { renderHook, act } from '@testing-library/react-hooks'
 
 import './getDisplayMedia.mock'
 
-import { Conversation, Stream, SubscribeOptions, ConversationUnsubscribeToStream, PublishOptions } from '@apirtc/apirtc'
+import { Conversation, ConversationCall, Stream, SubscribeOptions, ConversationUnsubscribeToStream, PublishOptions } from '@apirtc/apirtc'
 
 let conversationJoinedFn: Function | undefined = undefined;
 let conversationLeftFn: Function | undefined = undefined;
@@ -19,11 +19,32 @@ jest.mock('@apirtc/apirtc', () => {
     return {
         __esModule: true,
         ...originalModule,
+        ConversationCall: jest.fn().mockImplementation(() => {
+            const instance = {
+                stream: null as unknown,
+                conversation: null,
+                replacePublishedStream: (new_stream: Stream, callbacks?: any, options?: PublishOptions) => {
+                    return new Promise<Stream>((resolve, reject) => {
+                        if ((instance.stream as any).getOpts().replaceFail) {
+                            reject('replace-fail')
+                        } else {
+                            (instance.conversation as any).publishedStreams.delete(instance.stream);
+                            (instance.conversation as any).conversationCalls.delete(instance.stream);
+                            instance.stream = new_stream;
+                            (instance.conversation as any).publishedStreams.add(new_stream);
+                            (instance.conversation as any).conversationCalls.set(new_stream, instance);
+                            resolve(new_stream)
+                        }
+                    })
+                }
+            }
+            return instance
+        }),
         Conversation: jest.fn().mockImplementation((name: string, options?: any) => {
-
             const instance = {
                 joined: false,
                 publishedStreams: new Set<Stream>(),
+                conversationCalls: new Map<Stream, ConversationCall>(),
                 getAvailableStreamList: () => {
                     //TODO: mock this
                     return [{ streamId: 's01', isRemote: true }, { streamId: 's00', isRemote: false }]
@@ -37,27 +58,20 @@ jest.mock('@apirtc/apirtc', () => {
                             reject('publish-fail')
                         } else {
                             instance.publishedStreams.add(stream)
+                            const conversationCall = new ConversationCall();
+                            (conversationCall as any).stream = stream;
+                            (conversationCall as any).conversation = instance;
+                            instance.conversationCalls.set(stream, conversationCall)
                             resolve(stream)
                         }
                     })
                 },
                 unpublish: (stream: Stream) => {
                     instance.publishedStreams.delete(stream)
+                    instance.conversationCalls.delete(stream)
                 },
-                getConversationCall: (streamToReplace: Stream) => {
-                    return {
-                        replacePublishedStream: (stream: Stream) => {
-                            return new Promise<Stream>((resolve, reject) => {
-                                if ((streamToReplace as any).getOpts().replaceFail) {
-                                    reject('replace-fail')
-                                } else {
-                                    instance.publishedStreams.delete(streamToReplace)
-                                    instance.publishedStreams.add(stream)
-                                    resolve(stream)
-                                }
-                            })
-                        }
-                    }
+                getConversationCall: (stream: Stream) => {
+                    return instance.conversationCalls.get(stream)
                 },
                 subscribeToStream: (streamId: number | string, options?: SubscribeOptions) => { },
                 // TODO: ask ApiRTC to give better interface name to unsubscribeToStream options.. by the way what are theses options ?
@@ -271,36 +285,47 @@ describe('useConversationStreams', () => {
         expect(conversation.isPublishedStream(stream02)).toBeFalsy()
     })
 
-    test(`streams publication [stream01, audioOnly] to [stream01, videoOnly]`, async () => {
+    test(`streams publication with options switch [stream01, audioOnly] to [stream01, videoOnly]`, async () => {
         const conversation = new Conversation('joined-conversation', {});
         (conversation as any).joined = true;
 
         const stream01 = new Stream(null, { id: 'stream-01' });
+        const audioOnly = { audioOnly: true };
+        const videoOnly = { videoOnly: true };
+
+        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_publish = jest.spyOn(conversation, 'publish');
+        const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
         const { result, rerender, waitForNextUpdate } = renderHook(
             (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
                 props.conversation, props.streamsToPublish),
-            { initialProps: { conversation, streamsToPublish: [{ stream: stream01, options: { audioOnly: true } }] } });
+            { initialProps: { conversation, streamsToPublish: [{ stream: stream01, options: audioOnly }] } });
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(1)
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
-        const spy_publish = jest.spyOn(conversation, 'publish');
-        const spy_unpublish = jest.spyOn(conversation, 'unpublish');
-
         expect(spy_getConversationCall).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
-        expect(spy_publish).not.toHaveBeenCalled()
+        expect(spy_publish).toHaveBeenCalled()
+        expect(spy_publish).toHaveBeenCalledWith(stream01, audioOnly)
+
+        const spy_replacePublishedStream = jest.spyOn((conversation as any).conversationCalls.get(stream01), 'replacePublishedStream');
 
         // change to videoOnly
-        rerender({ conversation, streamsToPublish: [{ stream: stream01, options: { videoOnly: true } }] })
+        rerender({ conversation, streamsToPublish: [{ stream: stream01, options: videoOnly }] })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_getConversationCall).toHaveBeenCalledWith(stream01)
+        // TODO : expect replacePublishedStream instead of getConversationCall, so that we can test videoOnly more easily
+        // To do that, ApiRTC should expose replacePublishedStream on Conversation directly
+        // #JIRA APIRTC-1059 : replacePublishedStream
+        expect(spy_replacePublishedStream).toHaveBeenCalledWith(stream01, undefined, videoOnly)
+
         expect(spy_unpublish).not.toHaveBeenCalled()
-        expect(spy_publish).not.toHaveBeenCalled()
+        expect(spy_publish).toHaveBeenCalled() // first publish
 
         await waitForNextUpdate()
         expect(result.current.publishedStreams.length).toBe(1)
@@ -744,7 +769,6 @@ describe('useConversationStreams', () => {
         (conversation as any).joined = true;
 
         const stream01 = new Stream(null, { id: 'stream-01' });
-        const stream02 = new Stream(null, { id: 'stream-02' });
 
         const { result, rerender, waitForNextUpdate } = renderHook(
             (props: { conversation: Conversation }) => useConversationStreams(props.conversation),

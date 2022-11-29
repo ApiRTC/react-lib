@@ -63,8 +63,7 @@ export default function useConversationStreams(
     return new Promise<Stream>((resolve, reject) => {
       if (conversation) {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|
-          ${oldStream.getId()} -> ${newStream.getId()}(${JSON.stringify(options)})`)
+          console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|${oldStream.getId()} -> ${newStream.getId()}(${JSON.stringify(options)})`)
         }
         const conversationCall = conversation.getConversationCall(oldStream);
         if (conversationCall) {

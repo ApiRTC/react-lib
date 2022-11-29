@@ -4,6 +4,7 @@ import './getDisplayMedia.mock'
 
 import { Conversation, Contact } from '@apirtc/apirtc'
 
+
 let contactJoinedWaitingRoomFn: Function | undefined = undefined;
 let contactLeftWaitingRoomFn: Function | undefined = undefined;
 let participantEjectedFn: Function | undefined = undefined;
@@ -12,9 +13,6 @@ let participantEjectedFn: Function | undefined = undefined;
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
-
-    // Set log level to max to maximize code coverage
-    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
 
     return {
         __esModule: true,
@@ -53,6 +51,11 @@ jest.mock('@apirtc/apirtc', () => {
 })
 
 import useConversationModeration from './useConversationModeration'
+
+import { setLogLevel } from '..'
+
+// Set log level to max to maximize code coverage
+setLogLevel('debug')
 
 // Testing guide
 // https://www.toptal.com/react/testing-react-hooks-tutorial

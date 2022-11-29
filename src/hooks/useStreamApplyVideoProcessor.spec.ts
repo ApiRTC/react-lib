@@ -1,4 +1,4 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react-hooks'
 
 import './getDisplayMedia.mock'
 
@@ -8,9 +8,6 @@ import { Stream } from '@apirtc/apirtc'
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
-
-    // Set log level to max to maximize code coverage
-    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
 
     return {
         __esModule: true,
@@ -39,6 +36,11 @@ jest.mock('@apirtc/apirtc', () => {
 })
 
 import useStreamApplyVideoProcessor from './useStreamApplyVideoProcessor'
+
+import { setLogLevel } from '..'
+
+// Set log level to max to maximize code coverage
+setLogLevel('debug')
 
 describe('useStreamApplyVideoProcessor', () => {
     test(`Default value of stream will be undefined`, () => {
@@ -114,7 +116,7 @@ describe('useStreamApplyVideoProcessor', () => {
 
     test(`With a Stream, to be blurred, blur fails, with callback`, (done: any) => {
         // As this is same test as above, try with different logs level config to complete code coverage
-        globalThis.apirtcReactLibLogLevel = { isDebugEnabled: false, isInfoEnabled: false, isWarnEnabled: false }
+        setLogLevel('error')
         const initStream = new Stream(null, { fail: true })
         const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'blur', undefined, (error) => {
             console.log("ERROR", error)

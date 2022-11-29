@@ -9,9 +9,6 @@ import { UserAgent, Session, UserAgentOptions } from '@apirtc/apirtc'
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
 
-    // Set log level to max to maximize code coverage
-    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
-
     let mediaDeviceChangedFn: Function;
 
     return {
@@ -46,6 +43,11 @@ jest.mock('@apirtc/apirtc', () => {
 })
 
 import useUserMediaDevices from './useUserMediaDevices'
+
+import { setLogLevel } from '..'
+
+// Set log level to max to maximize code coverage
+setLogLevel('debug')
 
 // Testing guide
 // https://www.toptal.com/react/testing-react-hooks-tutorial

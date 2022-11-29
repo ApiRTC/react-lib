@@ -1,16 +1,13 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react-hooks'
 
 import './getDisplayMedia.mock'
 
-import { Session, Stream, UserAgent, CreateStreamOptions, UserAgentOptions } from '@apirtc/apirtc'
+import { Session, UserAgent, CreateStreamOptions, UserAgentOptions } from '@apirtc/apirtc'
 
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
     const originalModule = jest.requireActual('@apirtc/apirtc');
-
-    // Set log level to max to maximize code coverage
-    globalThis.apirtcReactLibLogLevel = { isDebugEnabled: true, isInfoEnabled: true, isWarnEnabled: true }
 
     return {
         __esModule: true,
@@ -42,6 +39,11 @@ jest.mock('@apirtc/apirtc', () => {
 })
 
 import useCameraStream from './useCameraStream'
+
+import { setLogLevel } from '..'
+
+// Set log level to max to maximize code coverage
+setLogLevel('debug')
 
 describe('useCameraStream', () => {
     test(`Default value of stream will be undefined`, () => {

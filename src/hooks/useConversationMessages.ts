@@ -6,16 +6,16 @@ import { Contact, Conversation, ConversationMessage } from '@apirtc/apirtc'
 // into ConversationMessage when creating the local one, and we get it from conversation on:message
 // the uuid shall be the value used as a react child key when displaying list of messages
 
-const HOOK_NAME = "useConversationMessages"
+const HOOK_NAME = "useConversationMessages";
 export default function useConversationMessages(
     conversation: Conversation | undefined,
 ) {
     // Use an internal array which will always be the same object as far as React knows
     // This will avoid the need for adding it as a dependency for each callback
-    const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>())
+    const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
     // And use a copy as output array so that client code will react upon change
     // (only a new instance of array is detected by React)
-    const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>())
+    const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
 
     useEffect(() => {
         if (conversation) {
@@ -25,7 +25,7 @@ export default function useConversationMessages(
                 }
                 messages.push(message)
                 setO_Messages(Array.from(messages))
-            }
+            };
             conversation.on('message', onMessage)
 
             return () => {
@@ -54,7 +54,7 @@ export default function useConversationMessages(
                     reject(error)
                 })
         })
-    }, [conversation])
+    }, [conversation]);
 
     return {
         messages: o_messages,

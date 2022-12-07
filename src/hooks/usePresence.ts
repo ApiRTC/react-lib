@@ -7,14 +7,14 @@ import { Session, Contact } from '@apirtc/apirtc'
  * to make as little as possible unsubscribe/subscribe calls.
  */
 
-const HOOK_NAME = "usePresence"
+const HOOK_NAME = "usePresence";
 export default function usePresence(session: Session | undefined, groups: Array<string>) {
 
-    const [groupsCache] = useState<Set<string>>(new Set())
+    const [groupsCache] = useState<Set<string>>(new Set());
 
-    const [m_contactsByGroup] = useState<Map<string, Set<Contact>>>(new Map())
+    const [m_contactsByGroup] = useState<Map<string, Set<Contact>>>(new Map());
 
-    const [contactsByGroup, setContactsByGroup] = useState<Map<string, Set<Contact>>>(new Map())
+    const [contactsByGroup, setContactsByGroup] = useState<Map<string, Set<Contact>>>(new Map());
 
     useEffect(() => {
         if (session) {
@@ -121,7 +121,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                         // contactsByGroup is exposed, so change the Map object to let client code detect a change.
                         setContactsByGroup(new Map(m_contactsByGroup))
                     }
-                }
+                };
                 l_session.on('contactListUpdate', onContactListUpdate)
                 return () => {
                     l_session.removeListener('contactListUpdate', onContactListUpdate)

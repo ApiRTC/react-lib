@@ -3,7 +3,7 @@ import { MediaDeviceList, Session, UserAgent } from '@apirtc/apirtc'
 
 const EMPTY_LIST: MediaDeviceList = { audioinput: {}, audiooutput: {}, videoinput: {} }
 
-const HOOK_NAME = "useUserMediaDevices"
+const HOOK_NAME = "useUserMediaDevices";
 export default function useUserMediaDevices(
     session: Session | undefined
 ) {
@@ -11,7 +11,7 @@ export default function useUserMediaDevices(
 
     useEffect(() => {
         if (session) {
-            const userAgent: UserAgent = session.getUserAgent()
+            const userAgent: UserAgent = session.getUserAgent();
 
             const on_mediaDeviceChanged = () => {
                 const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices()
@@ -19,7 +19,7 @@ export default function useUserMediaDevices(
                     console.info(HOOK_NAME + "|mediaDeviceChanged", mediaDevices)
                 }
                 setUserMediaDevices(mediaDevices)
-            }
+            };
             userAgent.on("mediaDeviceChanged", on_mediaDeviceChanged)
 
             return () => {

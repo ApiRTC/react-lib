@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { Stream, VideoProcessorOptions } from '@apirtc/apirtc'
 
-const HOOK_NAME = "useStreamApplyVideoProcessor"
+const HOOK_NAME = "useStreamApplyVideoProcessor";
 /**
  * This hook takes stream passed as parameter, and
  * returns either this stream or a stream with video processor applied.
@@ -18,7 +18,7 @@ export default function useStreamApplyVideoProcessor(
     videoProcessorType: 'none' | 'blur' | 'backgroundImage', options?: VideoProcessorOptions,
     errorCallback?: (error: any) => void) {
     //
-    const [outStream, setOutStream] = useState(stream)
+    const [outStream, setOutStream] = useState(stream);
     const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>('none')
 
     useEffect(() => {

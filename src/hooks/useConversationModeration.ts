@@ -1,13 +1,13 @@
 import { useState, useEffect } from 'react'
 import { Contact, Conversation } from '@apirtc/apirtc'
 
-const HOOK_NAME = "useConversationModeration"
+const HOOK_NAME = "useConversationModeration";
 export default function useConversationModeration(
     conversation: Conversation | undefined,
     onEjected?: (contact: Contact) => void,
     onEjectedSelf?: () => void) {
 
-    const [candidates, setCandidates] = useState<Set<Contact>>(new Set<Contact>())
+    const [candidates, setCandidates] = useState<Set<Contact>>(new Set<Contact>());
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
@@ -22,7 +22,7 @@ export default function useConversationModeration(
                 // A candidate joined the waiting room.
                 candidates.add(contact)
                 setCandidates(new Set(candidates))
-            }
+            };
             const on_contactLeftWaitingRoom = (contact: Contact) => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                     console.info(HOOK_NAME + "|on:contactLeftWaitingRoom", contact)
@@ -30,7 +30,7 @@ export default function useConversationModeration(
                 // A candidate left the waiting room.
                 candidates.delete(contact)
                 setCandidates(new Set(candidates))
-            }
+            };
             // TODO make apirtc.d.ts update to replace 'any'
             const on_participantEjected = (data: any) => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
@@ -48,7 +48,7 @@ export default function useConversationModeration(
                         onEjected(data.contact)
                     }
                 }
-            }
+            };
 
             conversation
                 .on('contactJoinedWaitingRoom', on_contactJoinedWaitingRoom)

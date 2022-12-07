@@ -25,7 +25,7 @@ function isInstanceOfToken(object: any): object is Token {
 
 export type Credentials = LoginPassword | ApiKey | Token;
 
-const HOOK_NAME = "useSession"
+const HOOK_NAME = "useSession";
 export default function useSession(credentials?: Credentials, options?: RegisterInformation) {
 
     const [session, setSession] = useState<Session | undefined>()

@@ -12,6 +12,7 @@ const INFO: LogLevel = { level: 'info', isDebugEnabled: false, isInfoEnabled: tr
 
 declare global {
     var apirtcReactLibLogLevel: LogLevel;
+    var setApirtcReactLibLogLevel: Function;
 }
 
 // a default value MUST be set in case application using the library does not override it
@@ -35,4 +36,7 @@ export function setLogLevel(logLevelText: 'debug' | 'info' | 'warn' | 'error' | 
             // in case null is passed as input, default to 'info'
             globalThis.apirtcReactLibLogLevel = INFO;
     }
+    return globalThis.apirtcReactLibLogLevel
 }
+
+globalThis.setApirtcReactLibLogLevel = setLogLevel;

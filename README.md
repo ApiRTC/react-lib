@@ -107,5 +107,5 @@ setLogLevel('warn')
 from console:
 
 ```
-ApiRtcReactLib.setLogLevel('debug')
+setApirtcReactLibLogLevel('debug')
 ```

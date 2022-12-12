@@ -16,8 +16,7 @@ requires to have @apirtc/apirtc peer dependency installed too:
 
 ```
 import { useSession } from '@apirtc/react-lib'
-const { session, connecting } = useSession(
-   { apiKey: 'your_api_key' });
+const { session } = useSession({ apiKey: 'your_api_key' });
 ```
 ### useUserMediaDevices
 
@@ -37,7 +36,7 @@ const { stream } = useCameraStream(session);
 
 ```
 import { useStreamApplyVideoProcessor } from '@apirtc/react-lib'
-const { stream: localStream, applied: appliedEffect } = useStreamApplyVideoProcessor(stream, 'blur');
+const { stream: localStream } = useStreamApplyVideoProcessor(stream, 'blur');
 ```
 
 ### usePresence
@@ -51,8 +50,7 @@ const { contactsByGroup } = usePresence(session, ['groupName1', 'groupName2']);
 
 ```
 import { useConversation } from '@apirtc/react-lib'
-const { conversation, joining, joined, join, leave } = useConversation(
-        session, conversationName);
+const { conversation } = useConversation(session, 'conversationName', undefined, true);
 ```
 
 ### useConversationModeration
@@ -74,7 +72,7 @@ const { messages, sendMessage } = useConversationMessages(conversation);
 ```
 import { useConversationStreams } from '@apirtc/react-lib'
 const { publishedStreams, subscribedStreams } = useConversationStreams(
-        conversation, [ { stream:localStream } ]);
+        conversation, stream ? [{ stream: stream }] : []);
 ```
 
 ## Components

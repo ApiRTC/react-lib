@@ -36,7 +36,7 @@ const { stream } = useCameraStream(session);
 
 ```
 import { useStreamApplyVideoProcessor } from '@apirtc/react-lib'
-const { stream: localStream } = useStreamApplyVideoProcessor(stream, 'blur');
+const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, 'blur');
 ```
 
 ### usePresence

@@ -1,6 +1,6 @@
 {
   "name": "@apirtc/react-lib",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "description": "react library for apirtc",
   "main": "dist/esm/index.js",
   "module": "dist/esm/index.js",
@@ -19,7 +19,7 @@
   "author": "Kevin Moyse",
   "license": "MIT",
   "peerDependencies": {
-    "@apirtc/apirtc": "^4.7.8",
+    "@apirtc/apirtc": "^5.0.0",
     "react": "^17"
   },
   "devDependencies": {

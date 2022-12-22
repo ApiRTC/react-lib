@@ -241,6 +241,9 @@ export default function useConversationStreams(
 
   const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
     publishedStreams.forEach(stream => {
+      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+        console.debug(HOOK_NAME + "|unpublish stream", i_conversation, stream)
+      }
       i_conversation.unpublish(stream)
     })
     // Clear internal array

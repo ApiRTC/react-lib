@@ -14,11 +14,15 @@ requires to have @apirtc/apirtc peer dependency installed too:
 
 ### useSession
 
+Get a stateful session:
+
 ```ts
 import { useSession } from '@apirtc/react-lib'
 const { session } = useSession({ apiKey: 'your_api_key' });
 ```
 ### useUserMediaDevices
+
+Get a stateful list of available media devices:
 
 ```ts
 import { useUserMediaDevices } from '@apirtc/react-lib'
@@ -26,6 +30,8 @@ const { userMediaDevices } = useUserMediaDevices(session);
 ```
 
 ### useCameraStream
+
+Get a stateful value for the camera stream:
 
 ```ts
 import { useCameraStream } from '@apirtc/react-lib'
@@ -41,12 +47,16 @@ const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, 'blur');
 
 ### usePresence
 
+Get a stateful map of contacts by group:
+
 ```ts
 import { usePresence } from '@apirtc/react-lib'
 const { contactsByGroup } = usePresence(session, ['groupName1', 'groupName2']);
 ```
 
 ### useConversation
+
+Get a stateful **Conversation**:
 
 ```ts
 import { useConversation } from '@apirtc/react-lib'
@@ -55,9 +65,11 @@ const { conversation } = useConversation(session, 'conversationName', undefined,
 
 ### useConversationModeration
 
+Get a set of candidates **Contacts**, and get notified of ejection:
+
 ```ts
 import { useConversationModeration } from '@apirtc/react-lib'
-const { candidates } = useConversationModeration(conversation);
+const { candidates, onEjected, onEjectedSelf } = useConversationModeration(conversation);
 ```
 
 ### useConversationMessages
@@ -68,6 +80,8 @@ const { messages, sendMessage } = useConversationMessages(conversation);
 ```
 
 ### useConversationStreams
+
+Control **Stream**s to publish, and get stateful arrays of published and subscribed **Stream**s:
 
 ```ts
 import { useConversationStreams } from '@apirtc/react-lib'

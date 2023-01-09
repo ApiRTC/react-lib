@@ -18,6 +18,10 @@
   ],
   "author": "Kevin Moyse",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ApiRTC/react-lib"
+  },
   "peerDependencies": {
     "@apirtc/apirtc": "^5.0.0",
     "react": "^17"

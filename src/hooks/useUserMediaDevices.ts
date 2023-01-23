@@ -7,7 +7,7 @@ const HOOK_NAME = "useUserMediaDevices";
 export default function useUserMediaDevices(
     session: Session | undefined
 ) {
-    const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>(EMPTY_LIST)
+    const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>(EMPTY_LIST);
 
     useEffect(() => {
         if (session) {

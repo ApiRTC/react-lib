@@ -28,9 +28,9 @@ export type Credentials = LoginPassword | ApiKey | Token;
 const HOOK_NAME = "useSession";
 export default function useSession(credentials?: Credentials, options?: RegisterInformation) {
 
-    const [session, setSession] = useState<Session | undefined>()
-    const [connecting, setConnecting] = useState<boolean>(false)
-    const [error, setError] = useState<any>()
+    const [session, setSession] = useState<Session | undefined>();
+    const [connecting, setConnecting] = useState<boolean>(false);
+    const [error, setError] = useState<any>();
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {

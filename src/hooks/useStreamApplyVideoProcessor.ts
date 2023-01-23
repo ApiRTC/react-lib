@@ -19,7 +19,7 @@ export default function useStreamApplyVideoProcessor(
     errorCallback?: (error: any) => void) {
     //
     const [outStream, setOutStream] = useState(stream);
-    const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>('none')
+    const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>('none');
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {

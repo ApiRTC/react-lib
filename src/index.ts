@@ -1,7 +1,7 @@
 export * from './components'
 export * from './hooks'
 
-type LogLevel = {
+export type LogLevel = {
     level: 'debug' | 'info' | 'warn' | 'error'
     isDebugEnabled: boolean
     isInfoEnabled: boolean

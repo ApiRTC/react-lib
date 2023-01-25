@@ -13,11 +13,11 @@ import { Stream } from '@apirtc/apirtc'
 //
 // but for all there is a problem then in react display...
 
-export interface VideoStreamProps {
+export type VideoStreamProps = {
     stream: Stream,
     autoPlay?: boolean,
     muted?: boolean
-}
+};
 export default function VideoStream(props: VideoStreamProps) {
 
     // default autoPlay

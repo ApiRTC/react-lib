@@ -1,23 +1,22 @@
 import { useEffect, useState } from 'react'
 import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc'
 
-type LoginPassword = {
+export type LoginPassword = {
     username: string
     password: string
 };
-
 function isInstanceOfLoginPassword(object: any): object is LoginPassword {
     if (typeof object !== 'object') return false;
     return 'username' in object;
 }
 
-type ApiKey = { apiKey: string };
+export type ApiKey = { apiKey: string };
 function isInstanceOfApiKey(object: any): object is ApiKey {
     if (typeof object !== 'object') return false;
     return 'apiKey' in object;
 }
 
-type Token = { token: string };
+export type Token = { token: string };
 function isInstanceOfToken(object: any): object is Token {
     if (typeof object !== 'object') return false;
     return 'token' in object;

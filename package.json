@@ -27,7 +27,7 @@
     "url": "https://github.com/ApiRTC/react-lib"
   },
   "peerDependencies": {
-    "@apirtc/apirtc": "^5.0.3-rc.0",
+    "@apirtc/apirtc": "^5.0.3",
     "react": ">=17"
   },
   "devDependencies": {

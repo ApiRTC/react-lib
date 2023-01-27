@@ -1,8 +1,8 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { act, renderHook } from '@testing-library/react-hooks';
 
-import './getDisplayMedia.mock'
+import './getDisplayMedia.mock';
 
-import { RegisterInformation, UserAgentOptions } from '@apirtc/apirtc'
+import { RegisterInformation, UserAgentOptions } from '@apirtc/apirtc';
 
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
@@ -39,9 +39,9 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useSession, { Credentials } from './useSession'
+import useSession, { Credentials } from './useSession';
 
-import { setLogLevel } from '..'
+import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

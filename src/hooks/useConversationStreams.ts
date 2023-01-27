@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Conversation, PublishOptions, Stream, StreamInfo } from '@apirtc/apirtc'
+import { Conversation, PublishOptions, Stream, StreamInfo } from '@apirtc/apirtc';
+import { useCallback, useEffect, useState } from 'react';
 
 // TODO?: add pagination ?
 // interface Options {

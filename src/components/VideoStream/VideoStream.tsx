@@ -1,5 +1,5 @@
-import React, { useEffect, useRef } from 'react'
-import { Stream } from '@apirtc/apirtc'
+import { Stream } from '@apirtc/apirtc';
+import React, { useEffect, useRef } from 'react';
 
 // tried const Video = styled.video`
 //     max-width: 100%;

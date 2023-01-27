@@ -1,8 +1,8 @@
-import { renderHook } from '@testing-library/react-hooks'
+import { renderHook } from '@testing-library/react-hooks';
 
-import './getDisplayMedia.mock'
+import './getDisplayMedia.mock';
 
-import { Session, UserAgent, CreateStreamOptions, UserAgentOptions } from '@apirtc/apirtc'
+import { CreateStreamOptions, Session, UserAgent, UserAgentOptions } from '@apirtc/apirtc';
 
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
@@ -38,9 +38,9 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useCameraStream from './useCameraStream'
+import useCameraStream from './useCameraStream';
 
-import { setLogLevel } from '..'
+import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

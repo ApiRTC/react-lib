@@ -1,8 +1,8 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { act, renderHook } from '@testing-library/react-hooks';
 
-import './getDisplayMedia.mock'
+import './getDisplayMedia.mock';
 
-import { Conversation, Contact } from '@apirtc/apirtc'
+import { Contact, Conversation } from '@apirtc/apirtc';
 
 
 let contactJoinedWaitingRoomFn: Function | undefined = undefined;
@@ -50,9 +50,9 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useConversationModeration from './useConversationModeration'
+import useConversationModeration from './useConversationModeration';
 
-import { setLogLevel } from '..'
+import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

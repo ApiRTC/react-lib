@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Contact, Conversation, ConversationMessage } from '@apirtc/apirtc'
+import { Contact, Conversation, ConversationMessage } from '@apirtc/apirtc';
+import { useCallback, useEffect, useState } from 'react';
 
 // TODO : get and handle with pagination messages history
 // TODO : ask apirtc to include the uuid in ConversationMessage so that we can store it

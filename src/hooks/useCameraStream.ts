@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { CreateStreamOptions, Session, Stream, UserAgent } from '@apirtc/apirtc'
+import { CreateStreamOptions, Session, Stream, UserAgent } from '@apirtc/apirtc';
+import { useEffect, useState } from 'react';
 
 const HOOK_NAME = "useCameraStream";
 export default function useCameraStream(

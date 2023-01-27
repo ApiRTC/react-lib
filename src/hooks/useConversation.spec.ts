@@ -1,8 +1,8 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { act, renderHook } from '@testing-library/react-hooks';
 
-import './getDisplayMedia.mock'
+import './getDisplayMedia.mock';
 
-import { UserAgent, Session, Conversation, UserAgentOptions } from '@apirtc/apirtc'
+import { Conversation, Session, UserAgent, UserAgentOptions } from '@apirtc/apirtc';
 
 let simulateStatusJoined = false;
 let simulateDestroyed = false;
@@ -64,9 +64,9 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useConversation from './useConversation'
+import useConversation from './useConversation';
 
-import { setLogLevel } from '..'
+import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

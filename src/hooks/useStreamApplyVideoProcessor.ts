@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react'
-import { Stream, VideoProcessorOptions } from '@apirtc/apirtc'
+import { Stream, VideoProcessorOptions } from '@apirtc/apirtc';
+import { useCallback, useEffect, useState } from 'react';
 
 const HOOK_NAME = "useStreamApplyVideoProcessor";
 /**

@@ -1,8 +1,8 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { act, renderHook } from '@testing-library/react-hooks';
 
-import './getDisplayMedia.mock'
+import './getDisplayMedia.mock';
 
-import { Contact, UserAgent, Session, UserAgentOptions } from '@apirtc/apirtc'
+import { Contact, Session, UserAgent, UserAgentOptions } from '@apirtc/apirtc';
 
 let contactListUpdateFn: Function | undefined;
 const subscribedGroups: Set<string> = new Set();
@@ -47,9 +47,9 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import usePresence from './usePresence'
+import usePresence from './usePresence';
 
-import { setLogLevel } from '..'
+import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

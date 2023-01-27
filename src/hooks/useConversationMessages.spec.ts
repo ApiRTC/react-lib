@@ -1,8 +1,8 @@
-import { renderHook, act } from '@testing-library/react-hooks'
+import { act, renderHook } from '@testing-library/react-hooks';
 
-import './getDisplayMedia.mock'
+import './getDisplayMedia.mock';
 
-import { Conversation, Contact } from '@apirtc/apirtc'
+import { Contact, Conversation } from '@apirtc/apirtc';
 
 let messageFn: Function | undefined = undefined;
 
@@ -41,9 +41,9 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useConversationMessages from './useConversationMessages'
+import useConversationMessages from './useConversationMessages';
 
-import { setLogLevel } from '..'
+import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

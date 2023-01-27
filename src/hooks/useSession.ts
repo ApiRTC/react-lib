@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Session, UserAgent, RegisterInformation } from '@apirtc/apirtc'
+import { RegisterInformation, Session, UserAgent } from '@apirtc/apirtc';
+import { useEffect, useState } from 'react';
 
 export type LoginPassword = {
     username: string

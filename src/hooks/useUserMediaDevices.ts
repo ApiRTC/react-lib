@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { MediaDeviceList, Session, UserAgent } from '@apirtc/apirtc'
+import { MediaDeviceList, Session, UserAgent } from '@apirtc/apirtc';
+import { useEffect, useState } from 'react';
 
 const EMPTY_LIST: MediaDeviceList = { audioinput: {}, audiooutput: {}, videoinput: {} }
 

@@ -42,7 +42,7 @@ export default function useStreamApplyVideoProcessor(
             setOutStream(stream)
             setApplied('none')
         }
-    }, [stream, videoProcessorType, options])
+    }, [stream, videoProcessorType, JSON.stringify(options)])
 
     const doCheckAndReleaseOutStream = useCallback(() => {
         if (outStream && (outStream !== stream)) {

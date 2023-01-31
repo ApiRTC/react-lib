@@ -15,18 +15,20 @@ jest.mock('@apirtc/apirtc', () => {
         Stream: jest.fn().mockImplementation((data: MediaStream | null, opts: any) => {
             const initial = {
                 releaseCalled: false,
+                videoAppliedFilter: 'none',
                 getId: () => { return 'id' },
                 applyVideoProcessor: (type: string) => {
                     return new Promise<any>((resolve, reject) => {
                         if (opts.fail) {
                             reject('fail')
                         } else {
-
                             if (type === 'none') {
                                 resolve(initial);
                             } else {
+                                initial.videoAppliedFilter = type;
                                 resolve({
                                     releaseCalled: false,
+                                    videoAppliedFilter: type,
                                     getId: () => { return 'id-' + type },
                                     release: function () { this.releaseCalled = true }
                                 })
@@ -37,7 +39,7 @@ jest.mock('@apirtc/apirtc', () => {
                     })
                 },
                 release: function () { this.releaseCalled = true }
-            }
+            };
             return initial
         }),
     }

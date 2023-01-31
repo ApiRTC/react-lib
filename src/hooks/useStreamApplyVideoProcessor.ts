@@ -1,5 +1,5 @@
 import { Stream, VideoProcessorOptions } from '@apirtc/apirtc';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 
 const HOOK_NAME = "useStreamApplyVideoProcessor";
 /**
@@ -27,45 +27,24 @@ export default function useStreamApplyVideoProcessor(
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
         }
-        // && videoProcessorType !== 'none'
-        if (stream) {
+        if (stream && (stream as any).videoAppliedFilter !== videoProcessorType) {
             stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {
                 setOutStream(l_stream)
                 setApplied(videoProcessorType)
             }).catch(error => {
-                //setOutStream(stream)
+                setOutStream(stream)
+                setApplied((stream as any).videoAppliedFilter)
                 if (errorCallback) {
                     errorCallback(error)
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                     console.warn(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, error)
                 }
-                //setApplied(previousValue => previousValue)
             })
         } else {
-            //setOutStream(stream)
-            setApplied('none')
+            setOutStream(stream)
+            setApplied(stream ? (stream as any).videoAppliedFilter : 'none')
         }
     }, [stream, videoProcessorType, JSON.stringify(options)])
-
-    // const doCheckAndReleaseOutStream = useCallback(() => {
-    //     if (outStream && (outStream !== stream)) {
-    //         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-    //             console.debug(HOOK_NAME + "|releasing outStream", outStream)
-    //         }
-    //         // stream?.applyVideoProcessor('none').catch(error => {
-    //         //     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-    //         //         console.warn(HOOK_NAME + "|doCheckAndReleaseOutStream", stream, outStream)
-    //         //     }
-    //         // })
-    //         outStream.release()
-    //     }
-    // }, [stream, outStream])
-
-    // useEffect(() => {
-    //     return () => {
-    //         doCheckAndReleaseOutStream()
-    //     }
-    // }, [outStream])
 
     return {
         stream: outStream,

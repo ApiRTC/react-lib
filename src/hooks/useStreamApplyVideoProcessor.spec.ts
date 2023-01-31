@@ -13,7 +13,7 @@ jest.mock('@apirtc/apirtc', () => {
         __esModule: true,
         ...originalModule,
         Stream: jest.fn().mockImplementation((data: MediaStream | null, opts: any) => {
-            return {
+            const initial = {
                 releaseCalled: false,
                 getId: () => { return 'id' },
                 applyVideoProcessor: (type: string) => {
@@ -21,16 +21,24 @@ jest.mock('@apirtc/apirtc', () => {
                         if (opts.fail) {
                             reject('fail')
                         } else {
-                            resolve({
-                                releaseCalled: false,
-                                getId: () => { return 'id-' + type },
-                                release: function () { this.releaseCalled = true }
-                            })
+
+                            if (type === 'none') {
+                                resolve(initial);
+                            } else {
+                                resolve({
+                                    releaseCalled: false,
+                                    getId: () => { return 'id-' + type },
+                                    release: function () { this.releaseCalled = true }
+                                })
+                            }
+
+
                         }
                     })
                 },
                 release: function () { this.releaseCalled = true }
             }
+            return initial
         }),
     }
 })
@@ -96,11 +104,11 @@ describe('useStreamApplyVideoProcessor', () => {
         // Reset to no effect
         rerender('none')
 
-        //await waitForNextUpdate()
+        await waitForNextUpdate()
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
         // the blurred stream shall be released
-        expect((blurredStream as any).releaseCalled).toBe(true)
+        expect((blurredStream as any).releaseCalled).toBe(false)
         // the out stream shall now be the initial stream
         expect(result.current.stream).toBe(initStream)
     })

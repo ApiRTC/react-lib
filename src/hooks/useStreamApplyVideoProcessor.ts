@@ -10,8 +10,10 @@ const HOOK_NAME = "useStreamApplyVideoProcessor";
  * The hook fully manages the output stream (applies 'none' if input stream is set to undefined).
  * The hook never releases the input stream.
  * 
- * @param stream 
- * @returns stream blurred or not, toggle method, boolean blurred state.
+ * @param stream
+ * @param videoProcessorType
+ * @param {VideoProcessorOptions} options
+ * @returns stream with video processor applied (or not)
  */
 export default function useStreamApplyVideoProcessor(
     stream: Stream | undefined,
@@ -25,44 +27,45 @@ export default function useStreamApplyVideoProcessor(
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
         }
-        if (stream && videoProcessorType !== 'none') {
+        // && videoProcessorType !== 'none'
+        if (stream) {
             stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {
                 setOutStream(l_stream)
                 setApplied(videoProcessorType)
             }).catch(error => {
-                setOutStream(stream)
+                //setOutStream(stream)
                 if (errorCallback) {
                     errorCallback(error)
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                     console.warn(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, error)
                 }
-                setApplied(previousValue => previousValue)
+                //setApplied(previousValue => previousValue)
             })
         } else {
-            setOutStream(stream)
+            //setOutStream(stream)
             setApplied('none')
         }
     }, [stream, videoProcessorType, JSON.stringify(options)])
 
-    const doCheckAndReleaseOutStream = useCallback(() => {
-        if (outStream && (outStream !== stream)) {
-            if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + "|releasing outStream", outStream)
-            }
-            // stream?.applyVideoProcessor('none').catch(error => {
-            //     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-            //         console.warn(HOOK_NAME + "|doCheckAndReleaseOutStream", stream, outStream)
-            //     }
-            // })
-            outStream.release()
-        }
-    }, [stream, outStream])
+    // const doCheckAndReleaseOutStream = useCallback(() => {
+    //     if (outStream && (outStream !== stream)) {
+    //         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+    //             console.debug(HOOK_NAME + "|releasing outStream", outStream)
+    //         }
+    //         // stream?.applyVideoProcessor('none').catch(error => {
+    //         //     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+    //         //         console.warn(HOOK_NAME + "|doCheckAndReleaseOutStream", stream, outStream)
+    //         //     }
+    //         // })
+    //         outStream.release()
+    //     }
+    // }, [stream, outStream])
 
-    useEffect(() => {
-        return () => {
-            doCheckAndReleaseOutStream()
-        }
-    }, [outStream])
+    // useEffect(() => {
+    //     return () => {
+    //         doCheckAndReleaseOutStream()
+    //     }
+    // }, [outStream])
 
     return {
         stream: outStream,

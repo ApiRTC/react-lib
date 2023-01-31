@@ -9,9 +9,7 @@
   ],
   "types": "dist/index.d.ts",
   "scripts": {
-    "predocs": "rm -rf docs",
     "docs": "npx typedoc --out docs src",
-    "prebuild": "rm -rf dist",
     "build": "rollup -c",
     "postbuild": "npm run docs",
     "test": "jest --coverage"

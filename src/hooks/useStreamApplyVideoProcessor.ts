@@ -21,13 +21,13 @@ export default function useStreamApplyVideoProcessor(
     errorCallback?: (error: any) => void) {
     //
     const [outStream, setOutStream] = useState(stream);
-    const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>('none');
+    const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>(stream ? (stream as any).videoAppliedFilter : 'none');
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
+            console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, stream ? JSON.stringify((stream as any).children) : "empty")
         }
-        if (stream && (stream as any).videoAppliedFilter !== videoProcessorType) {
+        if (stream) {
             stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {
                 setOutStream(l_stream)
                 setApplied(videoProcessorType)

@@ -25,16 +25,16 @@ jest.mock('@apirtc/apirtc', () => {
                             if (type === 'none') {
                                 resolve(initial);
                             } else {
-                                initial.videoAppliedFilter = type;
-                                resolve({
+                                //initial.videoAppliedFilter = type;
+                                const streamWithEffect = {
                                     releaseCalled: false,
                                     videoAppliedFilter: type,
                                     getId: () => { return 'id-' + type },
                                     release: function () { this.releaseCalled = true }
-                                })
+                                };
+                                //(initial as any).children = [streamWithEffect];
+                                resolve(streamWithEffect)
                             }
-
-
                         }
                     })
                 },
@@ -79,11 +79,14 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.applied).toBe('none')
     })
 
-    test(`With a Stream, no effect`, () => {
+    test(`With a Stream, no effect`, async () => {
         const initStream = new Stream(null, {})
-        const { result } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'none'))
+        const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'none'))
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
+
+        //await waitForNextUpdate()
+        //expect(result.current.applied).toBe('none')
 
         expect((result.current.stream as any).releaseCalled).toBe(false)
     })

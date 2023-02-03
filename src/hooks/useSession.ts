@@ -117,7 +117,7 @@ export default function useSession(credentials?: Credentials, options?: Register
                 setConnecting(false)
             })
         })
-    }
+    };
 
     // const disconnect = useCallback(() => {
     //     return new Promise<void>((resolve, reject) => {

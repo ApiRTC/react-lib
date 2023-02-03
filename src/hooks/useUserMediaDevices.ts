@@ -20,7 +20,7 @@ export default function useUserMediaDevices(
                 }
                 setUserMediaDevices(mediaDevices)
             };
-            userAgent.on("mediaDeviceChanged", on_mediaDeviceChanged)
+            userAgent.on('mediaDeviceChanged', on_mediaDeviceChanged)
 
             return () => {
                 userAgent.removeListener('mediaDeviceChanged', on_mediaDeviceChanged)

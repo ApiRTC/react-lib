@@ -13,7 +13,7 @@ const HOOK_NAME = "useStreamApplyVideoProcessor";
  * @param stream
  * @param videoProcessorType
  * @param {VideoProcessorOptions} options
- * @returns stream with video processor applied (or not)
+ * @returns new stream with video processor applied (or original stream if no processor applied)
  */
 export default function useStreamApplyVideoProcessor(
     stream: Stream | undefined,

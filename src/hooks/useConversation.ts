@@ -3,13 +3,17 @@ import { useCallback, useEffect, useState } from 'react';
 
 const HOOK_NAME = "useConversation";
 /**
- * Please note that the hook won't react on autoJoin change
+ * A hook to getOrCreate a named conversation and manage join/leave
+ * @param session an ApiRTC Session
+ * @param name the conversation name
+ * @param options getOrCreateConversation options
+ * @param join true by default.
  */
 export default function useConversation(
     session: Session | undefined,
     name: string | undefined,
     options?: GetOrCreateConversationOptions,
-    join: boolean = false
+    join: boolean = true
 ) {
     const [conversation, setConversation] = useState<Conversation>();
     const [joined, setJoined] = useState<boolean>(false);

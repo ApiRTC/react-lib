@@ -42,7 +42,7 @@ export default function useStreamApplyVideoProcessor(
             })
         } else {
             setOutStream(stream)
-            setApplied(stream ? (stream as any).videoAppliedFilter : 'none')
+            setApplied('none')
         }
     }, [stream, videoProcessorType, JSON.stringify(options)])
 

@@ -59,18 +59,18 @@ export default function useConversationStreams(
       })
     }, [conversation]);
 
-  const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream, options?: PublishOptions) => {
+  const replacePublishedStream = useCallback((oldStream: Stream, newStream: Stream) => {
     return new Promise<Stream>((resolve, reject) => {
       if (conversation) {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|${oldStream.getId()} -> ${newStream.getId()}(${JSON.stringify(options)})`)
+          console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|${oldStream.getId()} -> ${newStream.getId()}`)
         }
         const conversationCall = conversation.getConversationCall(oldStream);
         if (conversationCall) {
-          conversationCall.replacePublishedStream(newStream, undefined, options)
+          conversationCall.replacePublishedStream(newStream)
             .then((stream: Stream) => {
               if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream, options)
+                console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream)
               }
               const index = publishedStreams.indexOf(oldStream);
               if (index >= 0) {
@@ -128,22 +128,30 @@ export default function useConversationStreams(
       const previous = publishedStreamsCache[i];
       const next = streamsToPublish[i];
 
+      const doPublish = (obj: { stream: Stream, options?: PublishOptions }) => {
+        publish(obj.stream, obj.options).catch((error: Error) => {
+          newPublishedStreamsCache.splice(i, 1, null)
+          if (errorCallback) {
+            errorCallback(error)
+          } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+            console.warn(`${HOOK_NAME}|publish|error`, error)
+          }
+        })
+      };
+
       if (previous && next) {
-        const doReplacePublishedStream = () => {
-          replacePublishedStream(previous.stream, next.stream, next.options)
-            .catch((error: Error) => {
-              newPublishedStreamsCache.splice(i, 1, null)
-              if (errorCallback) {
-                errorCallback(error)
-              } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                console.warn(`${HOOK_NAME}|replacePublishedStream|error`, error)
-              }
-            })
-        }
+
+        const doUnpublishPublish = () => {
+          unpublish(previous.stream)
+          doPublish(next)
+        };
+
         if (previous.stream === next.stream) {
           // Streams are the same, only replace if options are different
           if (JSON.stringify(previous.options) !== JSON.stringify(next.options)) {
-            doReplacePublishedStream()
+            // replacePublishStream does not allow to change PublishOptions, so we need to
+            // unpublish and republish
+            doUnpublishPublish()
           }
         } else {
           // If position in both new and cached list are defined but are different:
@@ -152,18 +160,25 @@ export default function useConversationStreams(
             // Previous shall actually be published (at another position), so don't do anything about it
             // But then we still have to publish new stream (if not already published)
             if (conversation && !conversation.isPublishedStream(next.stream)) {
-              publish(next.stream, next.options).catch((error: Error) => {
-                newPublishedStreamsCache.splice(i, 1, null)
-                if (errorCallback) {
-                  errorCallback(error)
-                } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                  console.warn(`${HOOK_NAME}|publish|error`, error)
-                }
-              })
+              doPublish(next)
             }
           } else {
             if (conversation && !conversation.isPublishedStream(next.stream)) {
-              doReplacePublishedStream()
+              // replacePublishStream does not allow to change PublishOptions, so we need to
+              // unpublish and republish if options also change
+              if (JSON.stringify(previous.options) === JSON.stringify(next.options)) {
+                replacePublishedStream(previous.stream, next.stream)
+                  .catch((error: Error) => {
+                    newPublishedStreamsCache.splice(i, 1, null)
+                    if (errorCallback) {
+                      errorCallback(error)
+                    } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                      console.warn(`${HOOK_NAME}|replacePublishedStream|error`, error)
+                    }
+                  })
+              } else {
+                doUnpublishPublish()
+              }
             } else { // new stream is already published
               // So we shall not replace another stream by it, but we need to unpublish the previous
               unpublish(previous.stream)
@@ -183,14 +198,7 @@ export default function useConversationStreams(
         // Note that we could try to publish without checking isPublishedStream, the call would
         // reject with a console error but this would not affect the behavior.
         if (conversation && !conversation.isPublishedStream(next.stream)) {
-          publish(next.stream, next.options).catch((error: Error) => {
-            newPublishedStreamsCache.splice(i, 1, null)
-            if (errorCallback) {
-              errorCallback(error)
-            } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-              console.warn(`${HOOK_NAME}|publish|error`, error)
-            }
-          })
+          doPublish(next)
         }
       }
     }

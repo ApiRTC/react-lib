@@ -19,7 +19,7 @@ export default function useConversationStreams(
 ) {
 
   if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-    console.debug(`${HOOK_NAME}|hook`)
+    console.debug(`${HOOK_NAME}|hook render`, streamsToPublish.map((obj) => obj?.options))
   }
 
   // A cache to handle publication differences
@@ -109,7 +109,15 @@ export default function useConversationStreams(
 
     // Strategy for published streams cache is to initialize it as it should be
     // and remove items if publication fails.
-    const newPublishedStreamsCache = [...streamsToPublish];
+    //const newPublishedStreamsCache = [...streamsToPublish];
+    // Need to do a real copy of options !:
+    const newPublishedStreamsCache = streamsToPublish.map(elt => {
+      if (elt && elt.options) {
+        return { stream: elt.stream, options: { ...elt.options } }
+      } else {
+        return elt
+      }
+    });
     setPublishedStreamsCache(newPublishedStreamsCache)
 
     // Prepare a set for Streams to publish, for further optimized check
@@ -320,7 +328,7 @@ export default function useConversationStreams(
 
   useEffect(() => {
     if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-      console.debug(`${HOOK_NAME}|streamsToPublish`,
+      console.debug(`${HOOK_NAME}|useEffect streamsToPublish`,
         JSON.stringify(streamsToPublish.map(l_s => l_s?.stream.getId() + '-' + JSON.stringify(l_s?.options))))
     }
     if (conversation && conversation.isJoined()) {

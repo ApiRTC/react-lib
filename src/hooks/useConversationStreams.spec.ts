@@ -333,6 +333,60 @@ describe('useConversationStreams', () => {
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
     })
 
+    test(`streams publication with option change [{stream01, videoOnly:false}] to [{stream01, videoOnly:true}]`, async () => {
+        const conversation = new Conversation('joined-conversation', {});
+        (conversation as any).joined = true;
+
+        const stream01 = new Stream(null, { id: 'stream-01' });
+        const videoOnlyFalse = { videoOnly: false };
+        const videoOnly = { videoOnly: true };
+
+        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_publish = jest.spyOn(conversation, 'publish');
+        const spy_unpublish = jest.spyOn(conversation, 'unpublish');
+
+        let localStream = { stream: stream01, options: videoOnlyFalse };
+        //const streamsToPublish = [{ stream: stream01, options: videoOnlyFalse }];
+
+        const { result, rerender, waitForNextUpdate } = renderHook(
+            (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
+                props.conversation, props.streamsToPublish),
+            { initialProps: { conversation, streamsToPublish: [localStream] } });
+
+        await waitForNextUpdate()
+        expect(result.current.publishedStreams.length).toBe(1)
+        expect(result.current.publishedStreams[0]).toBe(stream01)
+        expect(conversation.isPublishedStream(stream01)).toBeTruthy()
+
+        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_unpublish).not.toHaveBeenCalled()
+        expect(spy_publish).toHaveBeenCalled()
+        expect(spy_publish).toHaveBeenCalledWith(stream01, videoOnlyFalse)
+
+        const spy_replacePublishedStream = jest.spyOn((conversation as any).conversationCalls.get(stream01), 'replacePublishedStream');
+
+        // change to videoOnly
+        localStream.options.videoOnly = true;
+        //localStream.options = { videoOnly: true };
+        //localStream = { stream: stream01, options: { videoOnly: true } };
+        rerender({ conversation, streamsToPublish: [localStream] })
+
+        expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_getConversationCall).toHaveBeenCalledWith(stream01)
+        // TODO : expect replacePublishedStream instead of getConversationCall, so that we can test videoOnly more easily
+        // To do that, ApiRTC should expose replacePublishedStream on Conversation directly
+        // #JIRA APIRTC-1059 : replacePublishedStream
+        expect(spy_replacePublishedStream).toHaveBeenCalledWith(stream01, undefined, videoOnly)
+
+        expect(spy_unpublish).not.toHaveBeenCalled()
+        expect(spy_publish).toHaveBeenCalled() // first publish
+
+        await waitForNextUpdate()
+        expect(result.current.publishedStreams.length).toBe(1)
+        expect(result.current.publishedStreams[0]).toBe(stream01)
+        expect(conversation.isPublishedStream(stream01)).toBeTruthy()
+    })
+
     test(`streams publication [null, stream02] to [stream01, stream02]`, async () => {
         const conversation = new Conversation('joined-conversation', {});
         (conversation as any).joined = true;

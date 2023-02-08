@@ -109,7 +109,7 @@ describe('useConversation', () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent);
 
-        const { result, waitForNextUpdate } = renderHook(() => useConversation(session, 'foo'));
+        const { result, waitForNextUpdate } = renderHook(() => useConversation(session, 'foo', undefined, false));
         expect(result.current.conversation?.getName()).toEqual('foo')
         expect(result.current.joining).toEqual(false)
         expect(result.current.joined).toEqual(false)
@@ -199,7 +199,7 @@ describe('useConversation', () => {
         simulateJoinFail = false;
 
         const { result, rerender } = renderHook(
-            (props: { name: string }) => useConversation(session, props.name),
+            (props: { name: string }) => useConversation(session, props.name, undefined, false),
             { initialProps: { name: 'foo' } });
         expect(result.current.conversation?.getName()).toEqual('foo')
         expect(result.current.joining).toEqual(false)

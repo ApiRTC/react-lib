@@ -274,14 +274,20 @@ describe('useConversation', () => {
         expect(simulateStatusJoined).toBeTruthy()
         expect(simulateDestroyed).toBeFalsy()
 
+        const spy_destroy = jest.spyOn(result.current.conversation as any, 'destroy');
+
         // now rerender with undefined name, the conversation shall be left destroyed
         rerender({ name: undefined, join: true } as any)
 
-        await waitForNextUpdate()
+        //await waitForNextUpdate()
         expect(result.current.joined).toEqual(false)
         expect(result.current.joining).toEqual(false)
         expect(result.current.conversation).toBeUndefined()
         expect(simulateStatusJoined).toBeFalsy()
+
+        // Wait for the destroy call in finally clause
+        await new Promise((r) => setTimeout(r, 100))
+        expect(spy_destroy).toHaveBeenCalledTimes(1)
         expect(simulateDestroyed).toBeTruthy()
     })
 
@@ -320,10 +326,16 @@ describe('useConversation', () => {
 
         simulateLeaveFail = true;
 
+        const joined_conversation = result.current.conversation;
+        const spy_destroy = jest.spyOn(joined_conversation as any, 'destroy');
+
         rerender({ session: undefined } as any)
 
-        await waitForNextUpdate()
         expect(result.current.conversation).toBeUndefined()
+
+        // Wait for the destroy call in finally clause
+        await new Promise((r) => setTimeout(r, 100))
+        expect(spy_destroy).toHaveBeenCalledTimes(1)
         expect(simulateDestroyed).toBeTruthy()
     })
 })

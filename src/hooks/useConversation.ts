@@ -97,8 +97,7 @@ export default function useConversation(
                         })
                         .finally(() => {
                             l_conversation.destroy()
-                            setConversation(undefined)
-                            setJoined(false)
+                            // SHOULD NOT touch the state here as this async and the conversation may have already changed
                         })
                 } else {
                     // It is important to destroy the conversation.
@@ -106,8 +105,12 @@ export default function useConversation(
                     // previous handle, regardless of the potentially new options.
                     // This also allows to cleanup memory
                     l_conversation.destroy()
-                    setConversation(undefined)
                 }
+                // In any cases, update state accordingly
+                // Note: this is done here synchronously, this shall NOT be done in the leave().finally to prevent
+                // overriding a potential conversation change
+                setConversation(undefined)
+                setJoined(false)
             }
         }
     }, [session, name, JSON.stringify(options)])

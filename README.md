@@ -60,7 +60,7 @@ Get a stateful **Conversation**:
 
 ```ts
 import { useConversation } from '@apirtc/react-lib'
-const { conversation } = useConversation(session, 'conversationName', undefined, true);
+const { conversation } = useConversation(session, 'conversationName');
 ```
 
 ### useConversationModeration

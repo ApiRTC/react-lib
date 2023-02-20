@@ -45,10 +45,10 @@ jest.mock('@apirtc/apirtc', () => {
                 joined: false,
                 publishedStreams: new Set<Stream>(),
                 conversationCalls: new Map<Stream, ConversationCall>(),
-                getAvailableStreamList: () => {
-                    //TODO: mock this
-                    return [{ streamId: 's01', isRemote: true }, { streamId: 's00', isRemote: false }]
-                },
+                // getAvailableStreamList: () => { // This is a deprecated function in apirtc
+                //     //TODO: mock this
+                //     return [{ streamId: 's01', isRemote: true }, { streamId: 's00', isRemote: false }]
+                // },
                 getName: () => { return name },
                 isJoined: () => { return instance.joined },
                 isPublishedStream: (stream: Stream) => { return instance.publishedStreams.has(stream) },
@@ -168,8 +168,6 @@ describe('useConversationStreams', () => {
     test(`conversation, not joined`, () => {
         const conversation = new Conversation('not-joined-conversation', {});
 
-        const spy = jest.spyOn(conversation, 'getAvailableStreamList');
-
         const { result, rerender } = renderHook(
             (props: { conversation: Conversation }) => useConversationStreams(props.conversation),
             { initialProps: { conversation } });
@@ -184,8 +182,6 @@ describe('useConversationStreams', () => {
         expect(streamAddedFn).toBeDefined()
         expect(streamRemovedFn).toBeDefined()
         expect(streamListChangedFn).toBeDefined()
-
-        expect(spy).toHaveBeenCalled();
 
         // rerender with no conversation shall remove listeners
         // and change published/subscribed streams arrays

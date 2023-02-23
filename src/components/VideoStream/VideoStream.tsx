@@ -1,17 +1,6 @@
-import { Stream } from '@apirtc/apirtc';
 import React, { useEffect, useRef } from 'react';
 
-// tried const Video = styled.video`
-//     max-width: 100%;
-// `
-// or
-// /* override other styles to make responsive */
-// width: 100%    !important;
-// height: auto   !important;
-// or
-// return <video width="100%" ...
-//
-// but for all there is a problem then in react display...
+import { Stream } from '@apirtc/apirtc';
 
 export type VideoStreamProps = {
     stream: Stream,
@@ -20,7 +9,6 @@ export type VideoStreamProps = {
 };
 export default function VideoStream(props: VideoStreamProps) {
 
-    // default autoPlay
     const { autoPlay = true } = props;
 
     const videoRef = useRef<HTMLVideoElement>(null)

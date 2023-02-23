@@ -25,11 +25,12 @@ function isInstanceOfToken(object: any): object is Token {
 export type Credentials = LoginPassword | ApiKey | Token;
 
 const HOOK_NAME = "useSession";
-export default function useSession(credentials?: Credentials, options?: RegisterInformation) {
+export default function useSession(credentials?: Credentials, options?: RegisterInformation,
+    errorCallback?: (error: any) => void) {
 
     const [session, setSession] = useState<Session | undefined>();
     const [connecting, setConnecting] = useState<boolean>(false);
-    const [error, setError] = useState<any>();
+    //const [error, setError] = useState<any>();
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
@@ -38,16 +39,23 @@ export default function useSession(credentials?: Credentials, options?: Register
         if (credentials) {
             // To fix errors like "Warning: Can't perform a React state update on an unmounted component"
             // https://stackoverflow.com/questions/53949393/cant-perform-a-react-state-update-on-an-unmounted-component
-            let isMounted = true;
+            //let isMounted = true;
             connect(credentials, options).catch((error: any) => {
-                console.error(HOOK_NAME + "|connection failed", error, isMounted)
+                console.error(HOOK_NAME + "|connection failed", error)
                 setSession(undefined)
-                if (isMounted) {
-                    setError(error)
+                // if (isMounted) {
+                //     setError(error)
+                // }
+
+                if (errorCallback) {
+                    errorCallback(error)
+                } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                    console.warn(`${HOOK_NAME}|connect|error`, error)
                 }
+
             })
             return () => {
-                isMounted = false;
+                //isMounted = false;
                 setSession(undefined)
                 // Even though connecting is managed in connect(),
                 // mark connecting to false when credentials are changed
@@ -55,7 +63,7 @@ export default function useSession(credentials?: Credentials, options?: Register
                 // with other credentials. Note that to be perfect we should
                 // cancel the potentially running connect : Is that possible with ApiRTC ?
                 setConnecting(false)
-                setError(undefined)
+                //setError(undefined)
             }
         }
     }, [JSON.stringify(credentials), JSON.stringify(options)])
@@ -146,7 +154,6 @@ export default function useSession(credentials?: Credentials, options?: Register
         session: session,
         connecting,
         connect,
-        disconnect,
-        error
+        disconnect
     }
 }

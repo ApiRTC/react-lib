@@ -60,31 +60,20 @@ describe('useSession', () => {
         })
 
         expect(result.current.session).toBe(undefined)
-        expect(result.current.error).toBe(undefined)
     })
 
     test(`Unrecognized credentials`, async () => {
-        const { result, waitForNextUpdate } = renderHook(() => useSession({ foo: 'bar' } as unknown as Credentials))
+        const { result, waitForNextUpdate } = renderHook(() => useSession({ foo: 'bar' } as unknown as Credentials, undefined, (error: any) => {
+            expect(error).toBe('credentials not recognized')
+        }))
         expect(result.current.session).toBe(undefined)
         expect(result.current.connecting).toBe(false)
-        expect(result.current.error).toBe(undefined)
-
-        await waitForNextUpdate()
-        expect(result.current.session).toBe(undefined)
-        expect(result.current.connecting).toBe(false)
-        expect(result.current.error).toBe("credentials not recognized")
     })
 
-    test(`Unrecognized credentials (not an object)`, async () => {
+    test(`Unrecognized credentials (not an object), no error callback`, async () => {
         const { result, waitForNextUpdate } = renderHook(() => useSession('foo' as unknown as Credentials))
         expect(result.current.session).toBe(undefined)
         expect(result.current.connecting).toBe(false)
-        expect(result.current.error).toBe(undefined)
-
-        await waitForNextUpdate()
-        expect(result.current.session).toBe(undefined)
-        expect(result.current.connecting).toBe(false)
-        expect(result.current.error).toBe("credentials not recognized")
     })
 
     test(`LoginPassword credentials`, async () => {

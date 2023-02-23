@@ -30,7 +30,6 @@ export default function useSession(credentials?: Credentials, options?: Register
 
     const [session, setSession] = useState<Session | undefined>();
     const [connecting, setConnecting] = useState<boolean>(false);
-    //const [error, setError] = useState<any>();
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
@@ -43,19 +42,14 @@ export default function useSession(credentials?: Credentials, options?: Register
             connect(credentials, options).catch((error: any) => {
                 console.error(HOOK_NAME + "|connection failed", error)
                 setSession(undefined)
-                // if (isMounted) {
-                //     setError(error)
-                // }
 
                 if (errorCallback) {
                     errorCallback(error)
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                     console.warn(`${HOOK_NAME}|connect|error`, error)
                 }
-
             })
             return () => {
-                //isMounted = false;
                 setSession(undefined)
                 // Even though connecting is managed in connect(),
                 // mark connecting to false when credentials are changed
@@ -63,7 +57,6 @@ export default function useSession(credentials?: Credentials, options?: Register
                 // with other credentials. Note that to be perfect we should
                 // cancel the potentially running connect : Is that possible with ApiRTC ?
                 setConnecting(false)
-                //setError(undefined)
             }
         }
     }, [JSON.stringify(credentials), JSON.stringify(options)])

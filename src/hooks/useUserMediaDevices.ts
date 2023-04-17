@@ -3,20 +3,26 @@ import { useEffect, useState } from 'react';
 
 const EMPTY_LIST: MediaDeviceList = { audioinput: {}, audiooutput: {}, videoinput: {} };
 
+const getMediaDeviceFromLocalStorage = (key: string) => {
+    const value = localStorage.getItem(key);
+    const obj = value ? JSON.parse(value) : null;
+    return obj ? new MediaDevice(obj.id, obj.type, obj.label) : undefined;
+};
+
 const HOOK_NAME = "useUserMediaDevices";
-export default function useUserMediaDevices(
+export function useUserMediaDevices(
     session: Session | undefined,
     storageKeyPrefix: string = "apirtc"
 ) {
     const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>(EMPTY_LIST);
 
-    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice>();
-    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice>();
-    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice>();
+    const AUDIO_INPUT_KEY = storageKeyPrefix + '.audioIn';
+    const AUDIO_OUTPUT_KEY = storageKeyPrefix + '.audioOut';
+    const VIDEO_INPUT_KEY = storageKeyPrefix + '.videoIn';
 
-    const AUDIO_INPUT_ID_KEY = storageKeyPrefix + 'audioInputId';
-    const AUDIO_OUTPUT_ID_KEY = storageKeyPrefix + 'audioOutputId';
-    const VIDEO_INPUT_ID_KEY = storageKeyPrefix + 'videoInputId';
+    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY));
+    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY));
+    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY));
 
     useEffect(() => {
         if (session) {
@@ -39,51 +45,64 @@ export default function useUserMediaDevices(
     }, [session])
 
     useEffect(() => {
-        const audioInputId = localStorage.getItem(AUDIO_INPUT_ID_KEY);
-        const audioOutputId = localStorage.getItem(AUDIO_OUTPUT_ID_KEY);
-        const videoInputId = localStorage.getItem(VIDEO_INPUT_ID_KEY);
+        if (userMediaDevices !== EMPTY_LIST) {
+            const audioInputValue = localStorage.getItem(AUDIO_INPUT_KEY);
+            const audioInputId: string = audioInputValue ? JSON.parse(audioInputValue)['id'] : undefined;
+            if (audioInputId) {
+                setSelectedAudioIn(userMediaDevices.audioinput[audioInputId])
+            }
 
-        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + '|userMediaDevices, audioInputId, audioOutputId, videoInputId', userMediaDevices, audioInputId, audioOutputId, videoInputId)
+            const audioOutputValue = localStorage.getItem(AUDIO_OUTPUT_KEY);
+            const audioOutputId: string = audioOutputValue ? JSON.parse(audioOutputValue)['id'] : undefined;
+            if (audioOutputId) {
+                setSelectedAudioOut(userMediaDevices.audiooutput[audioOutputId])
+            }
+
+            const videoInputValue = localStorage.getItem(VIDEO_INPUT_KEY);
+            const videoInputId: string = videoInputValue ? JSON.parse(videoInputValue)['id'] : undefined;
+            if (videoInputId) {
+                setSelectedVideoIn(userMediaDevices.videoinput[videoInputId])
+            }
+
+            if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                console.debug(HOOK_NAME + '|userMediaDevices, audioInputId, audioOutputId, videoInputId', userMediaDevices, audioInputId, audioOutputId, videoInputId)
+            }
         }
 
-        if (audioInputId && userMediaDevices.audioinput[audioInputId]) {
-            setSelectedAudioIn(userMediaDevices.audioinput[audioInputId])
-        }
-        if (audioOutputId && userMediaDevices.audiooutput[audioOutputId]) {
-            setSelectedAudioOut(userMediaDevices.audiooutput[audioOutputId])
-        }
-        if (videoInputId && userMediaDevices.videoinput[videoInputId]) {
-            setSelectedVideoIn(userMediaDevices.videoinput[videoInputId])
-        }
     }, [userMediaDevices])
 
     useEffect(() => {
         if (selectedAudioIn) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + '|Storing audioInputId', selectedAudioIn.getId())
+                console.debug(HOOK_NAME + '|Storing audioInput', selectedAudioIn)
             }
-            localStorage.setItem(AUDIO_INPUT_ID_KEY, selectedAudioIn.getId())
+            localStorage.setItem(AUDIO_INPUT_KEY, JSON.stringify({
+                id: selectedAudioIn.getId(), type: selectedAudioIn.getType(), label: selectedAudioIn.getLabel()
+            }))
         }
-    }, [selectedAudioIn])
+    }, [selectedAudioIn?.getId()])
 
     useEffect(() => {
         if (selectedAudioOut) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + '|Storing audioOutputId', selectedAudioOut.getId())
+                console.debug(HOOK_NAME + '|Storing audioOutput', selectedAudioOut)
             }
-            localStorage.setItem(AUDIO_OUTPUT_ID_KEY, selectedAudioOut.getId())
+            localStorage.setItem(AUDIO_OUTPUT_KEY, JSON.stringify({
+                id: selectedAudioOut.getId(), type: selectedAudioOut.getType(), label: selectedAudioOut.getLabel()
+            }))
         }
-    }, [selectedAudioOut])
+    }, [selectedAudioOut?.getId()])
 
     useEffect(() => {
         if (selectedVideoIn) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + '|Storing videoInputId', selectedVideoIn.getId())
+                console.debug(HOOK_NAME + '|Storing VideoInput', selectedVideoIn)
             }
-            localStorage.setItem(VIDEO_INPUT_ID_KEY, selectedVideoIn.getId())
+            localStorage.setItem(VIDEO_INPUT_KEY, JSON.stringify({
+                id: selectedVideoIn.getId(), type: selectedVideoIn.getType(), label: selectedVideoIn.getLabel()
+            }))
         }
-    }, [selectedVideoIn])
+    }, [selectedVideoIn?.getId()])
 
     return {
         userMediaDevices,

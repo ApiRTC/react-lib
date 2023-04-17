@@ -45,13 +45,15 @@ jest.mock('@apirtc/apirtc', () => {
         }),
         MediaDevice: jest.fn().mockImplementation((id: string, type: string, label: string) => {
             return {
-                getId: () => { return id }
+                getId: () => { return id },
+                getType: () => { return type },
+                getLabel: () => { return label }
             }
         })
     }
 })
 
-import useUserMediaDevices from './useUserMediaDevices';
+import { useUserMediaDevices } from './useUserMediaDevices';
 
 import { setLogLevel } from '..';
 
@@ -62,9 +64,10 @@ setLogLevel('debug')
 // https://www.toptal.com/react/testing-react-hooks-tutorial
 
 describe('useUserMediaDevices', () => {
-    test(`If session is undefined, userMediaDevices is empty`, () => {
+    test(`If session is undefined, userMediaDevices is undefined`, () => {
         const { result } = renderHook(() => useUserMediaDevices(undefined));
         expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
+        //expect(result.current.userMediaDevices).toBeUndefined()
     })
     test(`on mediaDeviceChanged, userMediaDevices must update`, () => {
 
@@ -73,6 +76,7 @@ describe('useUserMediaDevices', () => {
 
         const { result } = renderHook(() => useUserMediaDevices(session));
         expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
+        //expect(result.current.userMediaDevices).toBeUndefined()
 
         act(() => {
             (userAgent as any).simulateMediaDeviceChanged()
@@ -85,12 +89,12 @@ describe('useUserMediaDevices', () => {
         //         videoinput: { 'idV01': { id: 'idV01' } }
         //     });
 
-        expect(result.current.userMediaDevices.audioinput['idA01']).toBeDefined()
-        expect(result.current.userMediaDevices.audioinput['idA01'].getId()).toBe('idA01')
+        expect(result.current.userMediaDevices?.audioinput['idA01']).toBeDefined()
+        expect(result.current.userMediaDevices?.audioinput['idA01'].getId()).toBe('idA01')
 
-        expect(result.current.userMediaDevices.audioinput['idA02']).toBeDefined()
-        expect(result.current.userMediaDevices.audiooutput['idA03']).toBeDefined()
-        expect(result.current.userMediaDevices.videoinput['idV01']).toBeDefined()
+        expect(result.current.userMediaDevices?.audioinput['idA02']).toBeDefined()
+        expect(result.current.userMediaDevices?.audiooutput['idA03']).toBeDefined()
+        expect(result.current.userMediaDevices?.videoinput['idV01']).toBeDefined()
 
         expect(result.current.selectedAudioIn).toBeUndefined()
         expect(result.current.selectedAudioOut).toBeUndefined()
@@ -102,25 +106,72 @@ describe('useUserMediaDevices', () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
-        localStorage.setItem('apirtc' + 'audioInputId', 'idA02')
-        localStorage.setItem('apirtc' + 'audioOutputId', 'idA03')
-        localStorage.setItem('apirtc' + 'videoInputId', 'idV01')
+        localStorage.setItem('apirtc' + '.audioIn', JSON.stringify({ id: 'idA02', type: 'audioinput', label: 'mic1' }))
+        localStorage.setItem('apirtc' + '.audioOut', JSON.stringify({ id: 'id-not-existing', type: 'audioinput', label: 'mic-not-existing' }))
+        localStorage.setItem('apirtc' + '.videoIn', JSON.stringify({ id: 'idV01', type: 'videoinput', label: 'cam1' }))
 
         const { result } = renderHook(() => useUserMediaDevices(session));
         expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
+        //expect(result.current.userMediaDevices).toBeUndefined()
+
+        // selected must be filled even before deviceChanged happened, with info stored in local-storage
+        //
+        expect(result.current.selectedAudioIn).toBeDefined()
+        expect(result.current.selectedAudioIn?.getId()).toBe('idA02')
+
+        expect(result.current.selectedAudioOut).toBeDefined()
+        expect(result.current.selectedAudioOut?.getId()).toBe('id-not-existing')
+
+        expect(result.current.selectedVideoIn).toBeDefined()
+        expect(result.current.selectedVideoIn?.getId()).toBe('idV01')
 
         act(() => {
             (userAgent as any).simulateMediaDeviceChanged()
         })
 
+        // device changed must update according to what is available
         expect(result.current.selectedAudioIn).toBeDefined()
         expect(result.current.selectedAudioIn?.getId()).toBe('idA02')
 
-        expect(result.current.selectedAudioOut).toBeDefined()
-        expect(result.current.selectedAudioOut?.getId()).toBe('idA03')
+        // in case the local storage does not exist in new list, undefined shall be set
+        expect(result.current.selectedAudioOut).toBeUndefined()
 
         expect(result.current.selectedVideoIn).toBeDefined()
         expect(result.current.selectedVideoIn?.getId()).toBe('idV01')
+
+        // use setSelected*
+        act(() => {
+            result.current.setSelectedAudioIn(result.current.userMediaDevices.audioinput['idA01'])
+            result.current.setSelectedAudioOut(new MediaDevice('test-a1', 'type', 'label'))
+            result.current.setSelectedVideoIn(new MediaDevice('test-v1', 'type', 'label'))
+        })
+
+        {
+            const value = localStorage.getItem('apirtc' + '.audioIn');
+            if (value) {
+                const obj = JSON.parse(value);
+                expect(obj['id']).toBe('idA01')
+            }
+        }
+
+        {
+            const value = localStorage.getItem('apirtc' + '.audioOut');
+            if (value) {
+                const obj = JSON.parse(value);
+                expect(obj['id']).toBe('test-a1')
+            }
+        }
+
+        {
+            const value = localStorage.getItem('apirtc' + '.videoIn');
+            if (value) {
+                const obj = JSON.parse(value);
+                expect(obj['id']).toBe('test-v1')
+            }
+        }
+
+
+        //, JSON.stringify({ id: 'idA02', type: 'audioinput', label: 'mic1' }))
     })
 
 })

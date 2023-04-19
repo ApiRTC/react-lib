@@ -69,25 +69,17 @@ describe('useUserMediaDevices', () => {
         expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
         //expect(result.current.userMediaDevices).toBeUndefined()
     })
-    test(`on mediaDeviceChanged, userMediaDevices must update`, () => {
 
+    test(`on mediaDeviceChanged, userMediaDevices must update`, () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
         const { result } = renderHook(() => useUserMediaDevices(session));
         expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
-        //expect(result.current.userMediaDevices).toBeUndefined()
 
         act(() => {
             (userAgent as any).simulateMediaDeviceChanged()
         })
-
-        // expect(result.current.userMediaDevices).toStrictEqual(
-        //     {
-        //         audioinput: { 'idA01': { id: 'idA01' }, 'idA02': { id: 'idA02' } },
-        //         audiooutput: { 'idA03': { id: 'idA03' } },
-        //         videoinput: { 'idV01': { id: 'idV01' } }
-        //     });
 
         expect(result.current.userMediaDevices?.audioinput['idA01']).toBeDefined()
         expect(result.current.userMediaDevices?.audioinput['idA01'].getId()).toBe('idA01')
@@ -102,17 +94,25 @@ describe('useUserMediaDevices', () => {
     })
 
     test(`localStorage`, () => {
-
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
-        localStorage.setItem('apirtc' + '.audioIn', JSON.stringify({ id: 'idA02', type: 'audioinput', label: 'mic1' }))
-        localStorage.setItem('apirtc' + '.audioOut', JSON.stringify({ id: 'id-not-existing', type: 'audioinput', label: 'mic-not-existing' }))
-        localStorage.setItem('apirtc' + '.videoIn', JSON.stringify({ id: 'idV01', type: 'videoinput', label: 'cam1' }))
+        const toString = (mediaDevice: MediaDevice) => {
+            return JSON.stringify({ id: mediaDevice.getId(), type: mediaDevice.getType(), label: mediaDevice.getLabel() })
+        }
+
+        const idA02 = new MediaDevice('idA02', 'audioinput', 'mic1');
+        const notExisting = new MediaDevice('id-not-existing', 'audioinput', 'mic-not-existing');
+        const idV01 = new MediaDevice('idV01', 'videoinput', 'cam1');
+        localStorage.setItem('apirtc' + '.audioIn', toString(idA02))
+        localStorage.setItem('apirtc' + '.audioOut', toString(notExisting))
+        localStorage.setItem('apirtc' + '.videoIn', toString(idV01))
 
         const { result } = renderHook(() => useUserMediaDevices(session));
-        expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
-        //expect(result.current.userMediaDevices).toBeUndefined()
+        expect(result.current.userMediaDevices.audioinput['idA02']).toBeDefined()
+        expect(result.current.userMediaDevices.audioinput['idA02'].getLabel()).toBe('mic1')
+        expect(result.current.userMediaDevices.audiooutput['id-not-existing']).toBeDefined()
+        expect(result.current.userMediaDevices.videoinput['idV01']).toBeDefined()
 
         // selected must be filled even before deviceChanged happened, with info stored in local-storage
         //
@@ -170,8 +170,20 @@ describe('useUserMediaDevices', () => {
             }
         }
 
-
         //, JSON.stringify({ id: 'idA02', type: 'audioinput', label: 'mic1' }))
     })
 
+    test(`localStorage invalid json`, () => {
+        const userAgent = new UserAgent({});
+        const session = new Session(userAgent, {});
+
+        localStorage.setItem('apirtc' + '.audioIn', '{invalid-JSON')
+        localStorage.setItem('apirtc' + '.audioOut', JSON.stringify({ id: "ID", type: "TYPE", label: "LABEL" }))
+        localStorage.setItem('apirtc' + '.videoIn', JSON.stringify({ id: "ID", type: "TYPE", label: "LABEL" }))
+
+        const { result } = renderHook(() => useUserMediaDevices(session));
+        expect(result.current.userMediaDevices.audioinput).toStrictEqual({})
+        expect(result.current.userMediaDevices.audiooutput['ID'].getLabel()).toBe('LABEL')
+        expect(result.current.userMediaDevices.videoinput['ID'].getType()).toBe('TYPE')
+    })
 })

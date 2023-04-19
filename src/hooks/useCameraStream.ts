@@ -2,13 +2,16 @@ import { CreateStreamOptions, Session, Stream, UserAgent } from '@apirtc/apirtc'
 import { useEffect, useState } from 'react';
 
 const HOOK_NAME = "useCameraStream";
-export default function useCameraStream(
+export function useCameraStream(
     session: Session | undefined,
     options: CreateStreamOptions = {}
 ) {
     const [stream, setStream] = useState<Stream>();
 
     useEffect(() => {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(HOOK_NAME + "|useEffect", session, JSON.stringify(options))
+        }
         if (session) {
             const userAgent: UserAgent = session.getUserAgent();
             userAgent.createStream(options).then((localStream: Stream) => {
@@ -32,12 +35,13 @@ export default function useCameraStream(
     }, [session, JSON.stringify(options)])
 
     useEffect(() => {
-        return () => {
-            if (stream) {
+        const l_stream = stream;
+        if (l_stream) {
+            return () => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|release stream", stream)
+                    console.info(HOOK_NAME + "|release stream", l_stream)
                 }
-                stream.release()
+                l_stream.release()
             }
         }
     }, [stream])

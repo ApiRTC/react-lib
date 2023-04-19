@@ -38,7 +38,7 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useCameraStream from './useCameraStream';
+import { useCameraStream } from './useCameraStream';
 
 import { setLogLevel } from '..';
 

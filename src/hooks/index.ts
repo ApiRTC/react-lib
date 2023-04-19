@@ -1,4 +1,4 @@
-export { default as useCameraStream } from "./useCameraStream"
+export { useCameraStream } from "./useCameraStream"
 export { default as useConversation } from "./useConversation"
 export { default as useConversationMessages } from "./useConversationMessages"
 export { default as useConversationModeration } from "./useConversationModeration"

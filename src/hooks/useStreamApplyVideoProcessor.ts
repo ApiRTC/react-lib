@@ -25,7 +25,7 @@ export default function useStreamApplyVideoProcessor(
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, stream ? JSON.stringify((stream as any).children) : "empty")
+            console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
         }
         if (stream) {
             stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {

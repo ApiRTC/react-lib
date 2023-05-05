@@ -47,7 +47,6 @@ export default function useConversationStreams(
             if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
               console.info(`${HOOK_NAME}|published|${conversation.getName()}`, stream)
             }
-            //console.log(`PUSHING ${stream.getId()} to publishedStreams`, JSON.stringify(publishedStreams.map(s => s.getId())))
             publishedStreams.push(stream)
             // Returning a new array makes lets React detect changes
             setO_PublishedStreams(Array.from(publishedStreams))

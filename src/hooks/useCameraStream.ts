@@ -10,7 +10,7 @@ export function useCameraStream(
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect", session, JSON.stringify(options))
+            console.debug(HOOK_NAME + "|useEffect", session, options)
         }
         if (session) {
             const userAgent: UserAgent = session.getUserAgent();

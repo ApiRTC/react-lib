@@ -21,6 +21,7 @@ export default function useStreamApplyVideoProcessor(
     errorCallback?: (error: any) => void) {
     //
     const [outStream, setOutStream] = useState(stream);
+    const [applying, setApplying] = useState(false);
     const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>(stream ? (stream as any).videoAppliedFilter : 'none');
 
     useEffect(() => {
@@ -28,6 +29,7 @@ export default function useStreamApplyVideoProcessor(
             console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
         }
         if (stream) {
+            setApplying(true)
             stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {
                 setOutStream(l_stream)
                 setApplied(videoProcessorType)
@@ -39,6 +41,8 @@ export default function useStreamApplyVideoProcessor(
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                     console.warn(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, error)
                 }
+            }).finally(() => {
+                setApplying(false)
             })
         } else {
             setOutStream(stream)
@@ -48,6 +52,7 @@ export default function useStreamApplyVideoProcessor(
 
     return {
         stream: outStream,
+        applying,
         applied
     }
 }

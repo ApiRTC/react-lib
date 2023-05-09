@@ -84,8 +84,10 @@ describe('useStreamApplyVideoProcessor', () => {
         const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'none'))
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeTruthy()
 
-        //await waitForNextUpdate()
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
         //expect(result.current.applied).toBe('none')
 
         expect((result.current.stream as any).releaseCalled).toBe(false)
@@ -96,20 +98,23 @@ describe('useStreamApplyVideoProcessor', () => {
         const { result, waitForNextUpdate, rerender } = renderHook(
             (type: 'none' | 'blur') => useStreamApplyVideoProcessor(initStream, type),
             { initialProps: 'blur' });
-        await waitForNextUpdate()
+        expect(result.current.applying).toBeTruthy()
 
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
         expect(result.current.stream).toBeDefined()
         expect(result.current.stream).not.toBe(initStream)
-
-        const blurredStream = result.current.stream
+        const blurredStream = result.current.stream;
         expect(blurredStream?.getId()).toBe('id-blur')
         expect((blurredStream as any).releaseCalled).toBe(false)
         expect(result.current.applied).toBe('blur')
 
         // Reset to no effect
         rerender('none')
+        expect(result.current.applying).toBeTruthy()
 
         await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
         // the blurred stream shall be released
@@ -118,31 +123,63 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.stream).toBe(initStream)
     })
 
-    test(`With a Stream, to be blurred, blur fails`, () => {
+    test(`With a Stream, to be blurred, blur fails`, async () => {
         const initStream = new Stream(null, { fail: true })
         const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'blur'))
         // the values don't change, so no need to wait for next update
         //await waitForNextUpdate()
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeTruthy()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
     })
 
-    test(`With a Stream, to be blurred, blur fails, with callback`, (done: any) => {
-        // As this is same test as above, try with different logs level config to complete code coverage
+    // test(`With a Stream, to be blurred, blur fails, with callback`, (done: any) => {
+    //     // As this is  almost same test as above, try with different logs level config to complete code coverage
+    //     setLogLevel('error')
+    //     const initStream = new Stream(null, { fail: true })
+    //     const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'blur', undefined, (error) => {
+    //         console.log("ERROR", error)
+    //         try {
+    //             expect(result.current.applying).toBeFalsy()
+    //             expect(error).toBe('fail')
+    //             done()
+    //         } catch (err) {
+    //             done(err);
+    //         }
+    //     }))
+    //     // the values don't change, so no need to wait for next update
+    //     //await waitForNextUpdate()
+    //     expect(result.current.stream?.getId()).toBe('id')
+    //     expect(result.current.applied).toBe('none') 
+    // })
+
+    test(`With a Stream, to be blurred, blur fails, with callback`, async () => {
+        // As this is  almost same test as above, try with different logs level config to complete code coverage
         setLogLevel('error')
         const initStream = new Stream(null, { fail: true })
-        const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'blur', undefined, (error) => {
+
+        let tested = false;
+
+        const callback = (error: any) => {
             console.log("ERROR", error)
             try {
                 expect(error).toBe('fail')
-                done()
+                tested = true;
             } catch (err) {
-                done(err);
             }
-        }))
+        };
+
+        const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'blur', undefined, callback));
         // the values don't change, so no need to wait for next update
-        //await waitForNextUpdate()
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeTruthy()
+
+        await waitForNextUpdate();
+        expect(result.current.applying).toBeFalsy()
+        expect(tested).toBe(true)
     })
 })

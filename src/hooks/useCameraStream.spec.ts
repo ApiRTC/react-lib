@@ -56,15 +56,19 @@ describe('useCameraStream', () => {
         const init_session = new Session(init_userAgent)
         const init_options: CreateStreamOptions = { facingMode: 'user' }
         const { result, waitForNextUpdate } = renderHook(() => useCameraStream(init_session, init_options))
+        expect(result.current.grabbing).toBeTruthy()
         await waitForNextUpdate()
         expect(result.current.stream?.getId()).toBe('{\"uri\":\"foo\"}{\"facingMode\":\"user\"}')
+        expect(result.current.grabbing).toBeFalsy()
     })
 
-    test(`With a Session, fail to create stream`, () => {
+    test(`With a Session, fail to create stream`, async () => {
         const init_userAgent = new UserAgent({ uri: "fail" })
         const init_session = new Session(init_userAgent)
-        const { result } = renderHook(() => useCameraStream(init_session))
+        const { result, waitForNextUpdate } = renderHook(() => useCameraStream(init_session))
         expect(result.current.stream?.getId()).toBe(undefined)
+        expect(result.current.grabbing).toBeTruthy()
+        await waitForNextUpdate()
+        expect(result.current.grabbing).toBeFalsy()
     })
-
 })

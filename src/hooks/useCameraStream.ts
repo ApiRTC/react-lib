@@ -7,6 +7,7 @@ export function useCameraStream(
     options: CreateStreamOptions = {}
 ) {
     const [stream, setStream] = useState<Stream>();
+    const [grabbing, setGrabbing] = useState<boolean>(false);
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
@@ -14,6 +15,7 @@ export function useCameraStream(
         }
         if (session) {
             const userAgent: UserAgent = session.getUserAgent();
+            setGrabbing(true)
             userAgent.createStream(options).then((localStream: Stream) => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                     console.info(HOOK_NAME + "|createStream", options, localStream)
@@ -22,6 +24,8 @@ export function useCameraStream(
             }).catch((error: any) => {
                 console.error(HOOK_NAME + "|createStream", options, error)
                 setStream(undefined)
+            }).finally(() => {
+                setGrabbing(false)
             })
 
             // DO NOT set out stream to undefined in the return, to prevent unnecessary refreshes
@@ -47,6 +51,7 @@ export function useCameraStream(
     }, [stream])
 
     return {
-        stream
+        stream,
+        grabbing
     }
 }

@@ -1,4 +1,4 @@
-import { Conversation, GetOrCreateConversationOptions, Session } from '@apirtc/apirtc';
+import { Conversation, GetOrCreateConversationOptions, JoinOptions, Session } from '@apirtc/apirtc';
 import { useCallback, useEffect, useState } from 'react';
 
 const HOOK_NAME = "useConversation";
@@ -7,13 +7,15 @@ const HOOK_NAME = "useConversation";
  * @param session an ApiRTC Session
  * @param name the conversation name
  * @param options getOrCreateConversation options
- * @param join true by default.
+ * @param join true by default
+ * @param joinOptions conversation.join options
  */
 export default function useConversation(
     session: Session | undefined,
     name: string | undefined,
     options?: GetOrCreateConversationOptions,
-    join: boolean = true
+    join: boolean = true,
+    joinOptions?: JoinOptions
 ) {
     const [conversation, setConversation] = useState<Conversation>();
     const [joined, setJoined] = useState<boolean>(false);
@@ -23,9 +25,9 @@ export default function useConversation(
     //
     // Offering Promised join/leave methods allows developer to act on then/catch
     //
-    const o_join = useCallback(() => {
+    const o_join = useCallback((joinOptions: JoinOptions = {}) => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|join", conversation)
+            console.debug(HOOK_NAME + "|join", conversation, joinOptions)
             //JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
         }
         return new Promise<void>((resolve, reject) => {
@@ -35,7 +37,7 @@ export default function useConversation(
             }
             if (!conversation.isJoined()) {
                 setJoining(true)
-                conversation.join().then(() => {
+                conversation.join(joinOptions).then(() => {
                     // successfully joined the conversation.
                     setJoined(true)
                     resolve()
@@ -118,20 +120,20 @@ export default function useConversation(
     useEffect(() => {
         if (conversation && join) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + "|useEffect", conversation, join)
+                console.debug(HOOK_NAME + "|useEffect", conversation, join, joinOptions)
             }
             const l_conversation = conversation;
             const l_join = join;
             if (l_join) {
                 setJoining(true)
-                l_conversation.join().then(() => {
+                l_conversation.join(joinOptions).then(() => {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|joined", l_conversation)
                     }
                     setJoined(true)
                 }).catch((error: any) => {
                     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                        console.warn(HOOK_NAME + "|useEffect conversation.join()", error)
+                        console.warn(HOOK_NAME + "|useEffect conversation.join()", joinOptions, error)
                     }
                 }).finally(() => {
                     setJoining(false)
@@ -152,7 +154,7 @@ export default function useConversation(
                 }
             }
         }
-    }, [conversation, join])
+    }, [conversation, joinOptions, join])
 
     return {
         conversation,

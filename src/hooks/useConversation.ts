@@ -154,7 +154,7 @@ export default function useConversation(
                 }
             }
         }
-    }, [conversation, joinOptions, join])
+    }, [conversation, join, JSON.stringify(joinOptions)])
 
     return {
         conversation,

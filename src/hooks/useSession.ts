@@ -33,14 +33,14 @@ export default function useSession(credentials?: Credentials, options?: Register
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect credentials, options", credentials, options)
+            console.debug(`${HOOK_NAME}|useEffect credentials, options`, credentials, options)
         }
         if (credentials) {
             // To fix errors like "Warning: Can't perform a React state update on an unmounted component"
             // https://stackoverflow.com/questions/53949393/cant-perform-a-react-state-update-on-an-unmounted-component
             //let isMounted = true;
             connect(credentials, options).catch((error: any) => {
-                console.error(HOOK_NAME + "|connection failed", error)
+                console.error(`${HOOK_NAME}|connection failed`, error)
                 setSession(undefined)
 
                 if (errorCallback) {
@@ -63,17 +63,17 @@ export default function useSession(credentials?: Credentials, options?: Register
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect session", session)
+            console.debug(`${HOOK_NAME}|useEffect session`, session)
         }
         if (session) {
             const l_session = session;
             return () => {
                 l_session.disconnect().then(() => {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|disconnected", l_session)
+                        console.info(`${HOOK_NAME}|disconnected`, l_session)
                     }
                 }).catch((error: any) => {
-                    console.error(HOOK_NAME + "|disconnect", error)
+                    console.error(`${HOOK_NAME}|disconnect`, error)
                 })
             }
         }
@@ -108,7 +108,7 @@ export default function useSession(credentials?: Credentials, options?: Register
             setConnecting(true)
             l_userAgent.register(registerInformation).then(l_session => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|connected", l_session)
+                    console.info(`${HOOK_NAME}|connected`, l_session)
                 }
                 setSession(l_session)
                 resolve()

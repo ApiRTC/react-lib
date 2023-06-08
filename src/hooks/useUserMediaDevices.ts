@@ -53,9 +53,10 @@ export function useUserMediaDevices(
             const userAgent: UserAgent = session.getUserAgent();
 
             const on_mediaDeviceChanged = () => {
-                const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices()
+                const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices();
+
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|mediaDeviceChanged", mediaDevices)
+                    console.info(`${HOOK_NAME}|mediaDeviceChanged`, mediaDevices)
                 }
 
                 setUserMediaDevices(mediaDevices)
@@ -76,7 +77,7 @@ export function useUserMediaDevices(
                 }
 
                 if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                    console.debug(HOOK_NAME + '|userMediaDevices, audioIn, audioOut, videoIn', mediaDevices, audioInStoredMediaDevice?.getId(), audioOutStoredMediaDevice?.getId(), videoInStoredMediaDevice?.getId())
+                    console.debug(`${HOOK_NAME}|userMediaDevices, audioIn, audioOut, videoIn`, mediaDevices, audioInStoredMediaDevice?.getId(), audioOutStoredMediaDevice?.getId(), videoInStoredMediaDevice?.getId())
                 }
             };
             userAgent.on('mediaDeviceChanged', on_mediaDeviceChanged)
@@ -91,7 +92,7 @@ export function useUserMediaDevices(
     useEffect(() => {
         if (selectedAudioIn) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + '|Storing audioIn', selectedAudioIn)
+                console.debug(`${HOOK_NAME}|Storing audioIn`, selectedAudioIn)
             }
             setLocalStorage(AUDIO_INPUT_KEY, JSON.stringify({
                 id: selectedAudioIn.getId(), type: selectedAudioIn.getType(), label: selectedAudioIn.getLabel()
@@ -102,7 +103,7 @@ export function useUserMediaDevices(
     useEffect(() => {
         if (selectedAudioOut) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + '|Storing audioOut', selectedAudioOut)
+                console.debug(`${HOOK_NAME}|Storing audioOut`, selectedAudioOut)
             }
             setLocalStorage(AUDIO_OUTPUT_KEY, JSON.stringify({
                 id: selectedAudioOut.getId(), type: selectedAudioOut.getType(), label: selectedAudioOut.getLabel()
@@ -113,7 +114,7 @@ export function useUserMediaDevices(
     useEffect(() => {
         if (selectedVideoIn) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + '|Storing videoIn', selectedVideoIn)
+                console.debug(`${HOOK_NAME}|Storing videoIn`, selectedVideoIn)
             }
             setLocalStorage(VIDEO_INPUT_KEY, JSON.stringify({
                 id: selectedVideoIn.getId(), type: selectedVideoIn.getType(), label: selectedVideoIn.getLabel()

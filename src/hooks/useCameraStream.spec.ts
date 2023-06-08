@@ -65,7 +65,9 @@ describe('useCameraStream', () => {
     test(`With a Session, fail to create stream`, async () => {
         const init_userAgent = new UserAgent({ uri: "fail" })
         const init_session = new Session(init_userAgent)
-        const { result, waitForNextUpdate } = renderHook(() => useCameraStream(init_session))
+        const { result, waitForNextUpdate } = renderHook(() => useCameraStream(init_session, undefined,(error: any) => {
+            expect(error).toBe('fail')
+        }))
         expect(result.current.stream?.getId()).toBe(undefined)
         expect(result.current.grabbing).toBeTruthy()
         await waitForNextUpdate()

@@ -88,7 +88,7 @@ export default function useConversationStreams(
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
     if (conversation) {
       if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(`${HOOK_NAME}|unpublish|${conversation.getName()}`, localStream)
+        console.debug(`${HOOK_NAME}|unpublish|${conversation.getName()}`, localStream.getId(), localStream)
       }
       conversation.unpublish(localStream)
       const index = publishedStreams.indexOf(localStream);
@@ -103,13 +103,17 @@ export default function useConversationStreams(
     const maxLength = Math.max(publishedStreamsCache.length, streamsToPublish.length);
     if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
       console.debug(`${HOOK_NAME}|doHandlePublication`, streamsToPublish,
-        JSON.stringify(publishedStreamsCache.map(l_s => l_s?.stream.getId())), maxLength)
+        JSON.stringify(publishedStreamsCache.map(l_s => l_s?.stream.getId())),
+        JSON.stringify(streamsToPublish.map(l_s => l_s?.stream.getId())),
+        maxLength)
     }
 
-    // Strategy for published streams cache is to initialize it as it should be
+    // make a copy of current cache
+    const currentPublishedStreamsCache = [...publishedStreamsCache];
+
+    // Strategy for publishedStreamsCache is to initialize it as it should be
     // and remove items if publication fails.
-    //const newPublishedStreamsCache = [...streamsToPublish];
-    // Need to do a real copy of options !:
+    // Need to do a real copy of options ! :
     const newPublishedStreamsCache = streamsToPublish.map(elt => {
       if (elt && elt.options) {
         return { stream: elt.stream, options: { ...elt.options } }
@@ -117,24 +121,30 @@ export default function useConversationStreams(
         return elt
       }
     });
+    // Replace cache
+    publishedStreamsCache.length = 0;
+    publishedStreamsCache.push(...newPublishedStreamsCache);
 
     // Prepare a set for Streams to publish, for further optimized check
     const streamsToPublishSet = new Set(streamsToPublish.filter(notEmpty).map((item) => item.stream));
 
     const doPublish = (index: number, obj: { stream: Stream, options?: PublishOptions }) => {
-      publish(obj.stream, obj.options).catch((error: Error) => {
-        newPublishedStreamsCache.splice(index, 1, null)
-        if (errorCallback) {
-          errorCallback(error)
-        } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-          console.warn(`${HOOK_NAME}|publish|error`, error)
-        }
-      })
+      publish(obj.stream, obj.options)
+        .catch((error: Error) => {
+          // Note that publishedStreamsCache is updated asynchronously here (catch)
+          // Hence why publishedStreamsCache must always be the same array instance
+          publishedStreamsCache.splice(index, 1, null)
+          if (errorCallback) {
+            errorCallback(error)
+          } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+            console.warn(`${HOOK_NAME}|publish|error`, error)
+          }
+        })
     };
 
     // Loop on arrays index to publish new streams, or replace if necessary
     for (let i = 0; i < maxLength; i++) {
-      const previous = publishedStreamsCache[i];
+      const previous = currentPublishedStreamsCache[i];
       const next = streamsToPublish[i];
 
       if (previous && next) {
@@ -167,7 +177,9 @@ export default function useConversationStreams(
               if (JSON.stringify(previous.options) === JSON.stringify(next.options)) {
                 replacePublishedStream(previous.stream, next.stream)
                   .catch((error: Error) => {
-                    newPublishedStreamsCache.splice(i, 1, null)
+                    // Note that publishedStreamsCache is updated asynchronously here (catch)
+                    // Hence why publishedStreamsCache must always be the same array instance
+                    publishedStreamsCache.splice(i, 1, null)
                     if (errorCallback) {
                       errorCallback(error)
                     } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
@@ -200,10 +212,6 @@ export default function useConversationStreams(
         }
       }
     }
-
-    // Replace cache
-    publishedStreamsCache.length = 0;
-    publishedStreamsCache.push(...newPublishedStreamsCache);
 
   }, [conversation,
     //streamsToPublish, change is captured by JSON.stringify below

@@ -757,13 +757,14 @@ describe('useConversationStreams', () => {
         })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
-        expect(spy_unpublish).toHaveBeenCalledTimes(0)
+        expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(1)
 
         expect(result.current.publishedStreams.length).toBe(1)
         expect(result.current.publishedStreams[0]).toBe(stream02)
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
+        expect(conversation.isPublishedStream(stream01)).toBeFalsy()
         expect(conversation.isPublishedStream(stream03)).toBeFalsy()
     })
 
@@ -805,13 +806,14 @@ describe('useConversationStreams', () => {
         })
 
         expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
-        expect(spy_unpublish).toHaveBeenCalledTimes(0)
+        expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(1)
 
         expect(result.current.publishedStreams.length).toBe(1)
         expect(result.current.publishedStreams[0]).toBe(stream02)
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
+        expect(conversation.isPublishedStream(stream01)).toBeFalsy()
         expect(conversation.isPublishedStream(stream03)).toBeFalsy()
     })
 

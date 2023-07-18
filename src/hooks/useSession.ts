@@ -68,6 +68,9 @@ export default function useSession(credentials?: Credentials, options?: Register
         if (session) {
             const l_session = session;
             return () => {
+                if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                    console.debug(`${HOOK_NAME}|useEffect session cleanup`, l_session)
+                }
                 l_session.disconnect().then(() => {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(`${HOOK_NAME}|disconnected`, l_session)

@@ -27,12 +27,12 @@ export default function useConversation(
     //
     const o_join = useCallback((joinOptions: JoinOptions = {}) => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|join", conversation, joinOptions)
+            console.debug(`${HOOK_NAME}|join`, conversation, joinOptions)
             //JSON.stringify((apiRTC as any).session.apiCCWebRTCClient.webRTCClient.MCUClient.sessionMCUs))
         }
         return new Promise<void>((resolve, reject) => {
             if (!conversation) {
-                reject(HOOK_NAME + "|join|conversation not defined")
+                reject(`${HOOK_NAME}|join|conversation not defined`)
                 return
             }
             if (!conversation.isJoined()) {
@@ -48,18 +48,18 @@ export default function useConversation(
                     setJoining(false)
                 })
             } else {
-                reject(HOOK_NAME + "|join|conversation already joined")
+                reject(`${HOOK_NAME}|join|conversation already joined`)
             }
         })
     }, [conversation]);
 
     const o_leave = useCallback(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|leave", conversation)
+            console.debug(`${HOOK_NAME}|leave`, conversation)
         }
         return new Promise<void>((resolve, reject) => {
             if (!conversation) {
-                reject(HOOK_NAME + "|leave|conversation not defined")
+                reject(`${HOOK_NAME}|leave|conversation not defined`)
                 return
             }
             if (conversation.isJoined()) {
@@ -71,7 +71,7 @@ export default function useConversation(
                     reject(error)
                 })
             } else {
-                reject(HOOK_NAME + "|leave|conversation is not joined")
+                reject(`${HOOK_NAME}|leave|conversation is not joined`)
             }
         })
     }, [conversation]);
@@ -81,20 +81,20 @@ export default function useConversation(
     useEffect(() => {
         if (session && name) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + "|getOrCreateConversation", name, options, join)
+                console.debug(`${HOOK_NAME}|getOrCreateConversation`, name, options, join)
             }
             const l_conversation = session.getOrCreateConversation(name, options);
             setConversation(l_conversation)
             return () => {
                 if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                    console.debug(HOOK_NAME + "|useEffect cleanup", name, options, join)
+                    console.debug(`${HOOK_NAME}|useEffect cleanup`, name, options, join)
                 }
                 if (l_conversation.isJoined()) {
                     l_conversation.leave()
                         .then(() => { })
                         .catch((error: any) => {
                             if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                                console.warn(HOOK_NAME + "|useEffect conversation.leave()", error)
+                                console.warn(`${HOOK_NAME}|useEffect conversation.leave()`, error)
                             }
                         })
                         .finally(() => {
@@ -120,7 +120,7 @@ export default function useConversation(
     useEffect(() => {
         if (conversation && join) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(HOOK_NAME + "|useEffect", conversation, join, joinOptions)
+                console.debug(`${HOOK_NAME}|useEffect`, conversation, join, joinOptions)
             }
             const l_conversation = conversation;
             const l_join = join;
@@ -128,12 +128,12 @@ export default function useConversation(
                 setJoining(true)
                 l_conversation.join(joinOptions).then(() => {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|joined", l_conversation)
+                        console.info(`${HOOK_NAME}|joined`, l_conversation)
                     }
                     setJoined(true)
                 }).catch((error: any) => {
                     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                        console.warn(HOOK_NAME + "|useEffect conversation.join()", joinOptions, error)
+                        console.warn(`${HOOK_NAME}|useEffect conversation.join() error`, l_conversation, joinOptions, error)
                     }
                 }).finally(() => {
                     setJoining(false)
@@ -141,14 +141,14 @@ export default function useConversation(
             }
             return () => {
                 if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                    console.debug(HOOK_NAME + "|useEffect cleanup", l_conversation, l_join)
+                    console.debug(`${HOOK_NAME}|useEffect cleanup`, l_conversation, l_join)
                 }
                 if (l_conversation.isJoined()) {
                     l_conversation.leave().then(() => {
                         setJoined(false)
                     }).catch((error: any) => {
                         if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                            console.warn(HOOK_NAME + "|useEffect conversation.leave()", error)
+                            console.warn(`${HOOK_NAME}|useEffect conversation.leave() error`, l_conversation, error)
                         }
                     })
                 }

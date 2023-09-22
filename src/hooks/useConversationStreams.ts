@@ -64,23 +64,19 @@ export default function useConversationStreams(
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
           console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|${oldStream.getId()} -> ${newStream.getId()}`)
         }
-        const conversationCall = conversation.getConversationCall(oldStream);
-        if (conversationCall) {
-          conversationCall.replacePublishedStream(newStream)
-            .then((stream: Stream) => {
-              if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream)
-              }
-              const index = publishedStreams.indexOf(oldStream);
-              if (index >= 0) {
-                publishedStreams.splice(index, 1, stream)
-                setO_PublishedStreams(Array.from(publishedStreams))
-              }
-              resolve(stream)
-            }).catch((error: any) => {
-              reject(error)
-            })
-        }
+        conversation.replacePublishedStream(oldStream, newStream).then((stream: Stream) => {
+          if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+            console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream)
+          }
+          const index = publishedStreams.indexOf(oldStream);
+          if (index >= 0) {
+            publishedStreams.splice(index, 1, stream)
+            setO_PublishedStreams(Array.from(publishedStreams))
+          }
+          resolve(stream)
+        }).catch((error: any) => {
+          reject(error)
+        })
       }
     })
   }, [conversation]);

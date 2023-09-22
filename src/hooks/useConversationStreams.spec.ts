@@ -19,32 +19,32 @@ jest.mock('@apirtc/apirtc', () => {
     return {
         __esModule: true,
         ...originalModule,
-        ConversationCall: jest.fn().mockImplementation(() => {
-            const instance = {
-                stream: null as unknown,
-                conversation: null,
-                replacePublishedStream: (new_stream: Stream, callbacks?: any, options?: PublishOptions) => {
-                    return new Promise<Stream>((resolve, reject) => {
-                        if ((instance.stream as any).getOpts().replaceFail) {
-                            reject('replace-fail')
-                        } else {
-                            (instance.conversation as any).publishedStreams.delete(instance.stream);
-                            (instance.conversation as any).conversationCalls.delete(instance.stream);
-                            instance.stream = new_stream;
-                            (instance.conversation as any).publishedStreams.add(new_stream);
-                            (instance.conversation as any).conversationCalls.set(new_stream, instance);
-                            resolve(new_stream)
-                        }
-                    })
-                }
-            }
-            return instance
-        }),
+        // ConversationCall: jest.fn().mockImplementation(() => {
+        //     const instance = {
+        //         stream: null as unknown,
+        //         conversation: null,
+        //         replacePublishedStream: (new_stream: Stream, callbacks?: any, options?: PublishOptions) => {
+        //             return new Promise<Stream>((resolve, reject) => {
+        //                 if ((instance.stream as any).getOpts().replaceFail) {
+        //                     reject('replace-fail')
+        //                 } else {
+        //                     (instance.conversation as any).publishedStreams.delete(instance.stream);
+        //                     (instance.conversation as any).conversationCalls.delete(instance.stream);
+        //                     instance.stream = new_stream;
+        //                     (instance.conversation as any).publishedStreams.add(new_stream);
+        //                     (instance.conversation as any).conversationCalls.set(new_stream, instance);
+        //                     resolve(new_stream)
+        //                 }
+        //             })
+        //         }
+        //     }
+        //     return instance
+        // }),
         Conversation: jest.fn().mockImplementation((name: string, options?: any) => {
             const instance = {
                 joined: false,
                 publishedStreams: new Set<Stream>(),
-                conversationCalls: new Map<Stream, ConversationCall>(),
+                //conversationCalls: new Map<Stream, ConversationCall>(),
                 // getAvailableStreamList: () => { // This is a deprecated function in apirtc
                 //     //TODO: mock this
                 //     return [{ streamId: 's01', isRemote: true }, { streamId: 's00', isRemote: false }]
@@ -61,18 +61,32 @@ jest.mock('@apirtc/apirtc', () => {
                             const conversationCall = new ConversationCall();
                             (conversationCall as any).stream = stream;
                             (conversationCall as any).conversation = instance;
-                            instance.conversationCalls.set(stream, conversationCall)
+                            //instance.conversationCalls.set(stream, conversationCall)
                             resolve(stream)
                         }
                     })
                 },
                 unpublish: (stream: Stream) => {
                     instance.publishedStreams.delete(stream)
-                    instance.conversationCalls.delete(stream)
+                    //instance.conversationCalls.delete(stream)
                 },
-                getConversationCall: (stream: Stream) => {
-                    return instance.conversationCalls.get(stream)
+                replacePublishedStream: (oldStream: Stream, newStream: Stream, callbacks?: any) => {
+                    return new Promise<Stream>((resolve, reject) => {
+                        if ((oldStream as any).getOpts().replaceFail) {
+                            reject('replace-fail')
+                        } else {
+                            (instance as any).publishedStreams.delete(oldStream);
+                           // (instance as any).conversationCalls.delete(instance.stream);
+                            //instance.stream = new_stream;
+                            (instance as any).publishedStreams.add(newStream);
+                            //(instance as any).conversationCalls.set(new_stream, instance);
+                            resolve(newStream)
+                        }
+                    })
                 },
+                // getConversationCall: (stream: Stream) => {
+                //     return instance.conversationCalls.get(stream)
+                // },
                 subscribeToStream: (streamId: number | string, options?: SubscribeOptions) => { },
                 // TODO: ask ApiRTC to give better interface name to unsubscribeToStream options.. by the way what are theses options ?
                 unsubscribeToStream: (stream: Stream, options?: ConversationUnsubscribeToStream) => { },
@@ -225,7 +239,8 @@ describe('useConversationStreams', () => {
         // Change streamsToPublish array, to [stream01]
 
         const spy_isPublishedStream = jest.spyOn(conversation, 'isPublishedStream');
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -233,7 +248,7 @@ describe('useConversationStreams', () => {
 
         expect(spy_isPublishedStream).toHaveBeenCalledTimes(1)
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalledTimes(1)
 
@@ -250,7 +265,7 @@ describe('useConversationStreams', () => {
         streams.push({ stream: stream03 })
         rerender({ conversation, streamsToPublish: streams })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).not.toHaveBeenCalled()
         //expect(spy_isPublishedStream).toHaveBeenCalledTimes(2)
         expect(spy_publish).toHaveBeenCalledTimes(2)
@@ -269,7 +284,7 @@ describe('useConversationStreams', () => {
         streams[0] = null;
         rerender({ conversation, streamsToPublish: streams })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(2)
 
@@ -289,7 +304,8 @@ describe('useConversationStreams', () => {
         const audioOnly = { audioOnly: true };
         const videoOnly = { videoOnly: true };
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -303,12 +319,12 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalledWith(stream01, audioOnly)
 
-        const spy_replacePublishedStream = jest.spyOn((conversation as any).conversationCalls.get(stream01), 'replacePublishedStream');
+        //const spy_replacePublishedStream = jest.spyOn((conversation as any).conversationCalls.get(stream01), 'replacePublishedStream');
 
         // change to videoOnly
         rerender({ conversation, streamsToPublish: [{ stream: stream01, options: videoOnly }] })
@@ -323,7 +339,7 @@ describe('useConversationStreams', () => {
         //expect(spy_unpublish).not.toHaveBeenCalled()
         //expect(spy_publish).toHaveBeenCalled() // first publish
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(2) // initial and second publish
         expect(spy_publish).toHaveBeenCalledWith(stream01, videoOnly)
@@ -342,7 +358,8 @@ describe('useConversationStreams', () => {
         const videoOnlyFalse = { videoOnly: false };
         const videoOnly = { videoOnly: true };
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -359,12 +376,12 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalledWith(stream01, videoOnlyFalse)
 
-        const spy_replacePublishedStream = jest.spyOn((conversation as any).conversationCalls.get(stream01), 'replacePublishedStream');
+        //const spy_replacePublishedStream = jest.spyOn((conversation as any).conversationCalls.get(stream01), 'replacePublishedStream');
 
         // change to videoOnly
         localStream.options.videoOnly = true;
@@ -382,7 +399,7 @@ describe('useConversationStreams', () => {
         //expect(spy_unpublish).not.toHaveBeenCalled()
         //expect(spy_publish).toHaveBeenCalled() // first publish
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(2)
         expect(spy_publish).toHaveBeenCalledWith(stream01, videoOnly)
@@ -402,7 +419,8 @@ describe('useConversationStreams', () => {
         const videoOnlyFalse = { videoOnly: false };
         const videoOnly = { videoOnly: true };
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -419,7 +437,7 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalledWith(stream01, videoOnlyFalse)
@@ -431,7 +449,7 @@ describe('useConversationStreams', () => {
         //localStream = { stream: stream01, options: { videoOnly: true } };
         rerender({ conversation, streamsToPublish: [localStream] })
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(2)
         expect(spy_publish).toHaveBeenCalledWith(stream02, videoOnly)
@@ -460,18 +478,19 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream02)
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).not.toHaveBeenCalled()
 
         // go from [null, stream02] to [stream01, stream02]
         rerender({ conversation, streamsToPublish: [{ stream: stream01 }, { stream: stream02 }] })
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).toHaveBeenCalledTimes(1)
 
@@ -498,18 +517,19 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).not.toHaveBeenCalled()
 
         // go from [stream01] to [null, stream01]
         rerender({ conversation, streamsToPublish: [null, { stream: stream01 }] } as any)
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         expect(spy_unpublish).not.toHaveBeenCalled()
         expect(spy_publish).not.toHaveBeenCalled()
 
@@ -521,7 +541,7 @@ describe('useConversationStreams', () => {
         // go from [null, stream01] to []
         rerender({ conversation, streamsToPublish: [] } as any)
 
-        expect(spy_getConversationCall).not.toHaveBeenCalled()
+        expect(spy_replacePublishedStream).not.toHaveBeenCalled()
         //expect(spy_unpublish).toHaveBeenCalled()
         expect(spy_publish).not.toHaveBeenCalled()
 
@@ -549,7 +569,8 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[1]).toBe(stream02)
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -557,7 +578,7 @@ describe('useConversationStreams', () => {
         //      to [stream02, stream01]
         rerender({ conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream01 }] })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(0)
         expect(spy_unpublish).toHaveBeenCalledTimes(0)
         expect(spy_publish).toHaveBeenCalledTimes(0)
 
@@ -589,7 +610,8 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[1]).toBe(stream02)
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -597,7 +619,7 @@ describe('useConversationStreams', () => {
         //      to [stream02, stream03]
         rerender({ conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }] })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(0)
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(1)
 
@@ -661,13 +683,14 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
         rerender({ conversation, streamsToPublish: [{ stream: stream02 }] })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).toHaveBeenCalledTimes(0)
         expect(spy_publish).toHaveBeenCalledTimes(0)
 
@@ -696,13 +719,14 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[0]).toBe(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
         rerender({ conversation, streamsToPublish: [{ stream: stream02 }] })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(1)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).toHaveBeenCalledTimes(0)
         expect(spy_publish).toHaveBeenCalledTimes(0)
 
@@ -745,7 +769,8 @@ describe('useConversationStreams', () => {
         expect(conversation.isPublishedStream(stream01)).toBeFalsy()
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -757,7 +782,7 @@ describe('useConversationStreams', () => {
             }
         })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(0) // no replace expected here
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(0) // no replace expected here
         expect(spy_unpublish).toHaveBeenCalledTimes(0) // expect no unpublish because stream01 was not published, and stream02 is to be published
         expect(spy_publish).toHaveBeenCalledTimes(1) // this is the (failing) attempt to publish stream03
 
@@ -797,7 +822,8 @@ describe('useConversationStreams', () => {
         expect(conversation.isPublishedStream(stream01)).toBeFalsy()
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -807,7 +833,7 @@ describe('useConversationStreams', () => {
             conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }]
         })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(0) // no replace expected here
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(0) // no replace expected here
         expect(spy_unpublish).toHaveBeenCalledTimes(0) // expect no unpublish because stream01 was not published, and stream02 is to be published
         expect(spy_publish).toHaveBeenCalledTimes(1) // this is the (failing) attempt to publish stream03
 
@@ -837,7 +863,8 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams[1]).toBe(stream02)
         expect(conversation.isPublishedStream(stream02)).toBeTruthy()
 
-        const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        // const spy_getConversationCall = jest.spyOn(conversation, 'getConversationCall');
+        const spy_replacePublishedStream = jest.spyOn(conversation, 'replacePublishedStream');
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
@@ -845,7 +872,7 @@ describe('useConversationStreams', () => {
         //      to [stream02]
         rerender({ conversation, streamsToPublish: [{ stream: stream02 }] })
 
-        expect(spy_getConversationCall).toHaveBeenCalledTimes(0)
+        expect(spy_replacePublishedStream).toHaveBeenCalledTimes(0)
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
         expect(spy_publish).toHaveBeenCalledTimes(0)
 

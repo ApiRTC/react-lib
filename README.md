@@ -4,11 +4,13 @@ This library offers React **ApiRTC** high order components. Theses are mostly ho
 
 ## Install
 
-`npm install @apirtc/react-lib`
+`npm install @apirtc/react-lib @apirtc/apirtc`
 
-requires to have @apirtc/apirtc peer dependency installed too:
+Note: @apirtc/apirtc is required as a peer dependency.
 
-`npm install @apirtc/apirtc`
+## Coding example
+
+Visit this [codesandbox](https://codesandbox.io/s/apirtc-react-lib-demo-nrmcrn) to understand how easy it is to create a simple conferencing application with **@apirtc/react-lib**.
 
 ## Hooks
 
@@ -100,6 +102,8 @@ import { VideoStream } from '@apirtc/react-lib'
 
 <VideoStream stream={stream} muted={false}></VideoStream>
 ```
+
+Note: For more comprehensive set of UI components, please have a look at [@apirtc/mui-react-lib](https://github.com/ApiRTC/mui-react-lib)
 
 ## Configure log level
 

@@ -53,7 +53,7 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import { useUserMediaDevices } from './useUserMediaDevices';
+import { useUserMediaDevices, NO_STORAGE } from './useUserMediaDevices';
 
 import { setLogLevel } from '..';
 
@@ -88,6 +88,41 @@ describe('useUserMediaDevices', () => {
         expect(result.current.userMediaDevices?.audiooutput['idA03']).toBeDefined()
         expect(result.current.userMediaDevices?.videoinput['idV01']).toBeDefined()
 
+        expect(result.current.selectedAudioIn).toBeUndefined()
+        expect(result.current.selectedAudioOut).toBeUndefined()
+        expect(result.current.selectedVideoIn).toBeUndefined()
+    })
+
+    test(`no-storage`, () => {
+        const userAgent = new UserAgent({});
+        const session = new Session(userAgent, {});
+
+        const toString = (mediaDevice: MediaDevice) => {
+            return JSON.stringify({ id: mediaDevice.getId(), type: mediaDevice.getType(), label: mediaDevice.getLabel() })
+        }
+
+        const idA01 = new MediaDevice('idA01', 'audioinput', 'mic1');
+        const idV01 = new MediaDevice('idV01', 'videoinput', 'cam1');
+        localStorage.setItem('apirtc' + '.audioIn', toString(idA01))
+        localStorage.setItem('apirtc' + '.videoIn', toString(idV01))
+
+        const { result } = renderHook(() => useUserMediaDevices(session, NO_STORAGE));
+        expect(result.current.userMediaDevices.audioinput).toStrictEqual({})
+        expect(result.current.userMediaDevices.audiooutput).toStrictEqual({})
+        expect(result.current.userMediaDevices.videoinput).toStrictEqual({})
+
+        // selected must NOT be filled
+        //
+        expect(result.current.selectedAudioIn).toBeUndefined()
+        expect(result.current.selectedAudioOut).toBeUndefined()
+        expect(result.current.selectedVideoIn).toBeUndefined()
+
+        act(() => {
+            (userAgent as any).simulateMediaDeviceChanged()
+        })
+
+        // selected must NOT be filled even after device changed
+        //
         expect(result.current.selectedAudioIn).toBeUndefined()
         expect(result.current.selectedAudioOut).toBeUndefined()
         expect(result.current.selectedVideoIn).toBeUndefined()

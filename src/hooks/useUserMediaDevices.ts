@@ -3,8 +3,6 @@ import { useEffect, useMemo, useState } from 'react';
 
 const HOOK_NAME = "useUserMediaDevices";
 
-export const NO_STORAGE: string = 'no-storage';
-
 const getMediaDeviceFromLocalStorage = (key: string) => {
     try {
         const value = localStorage.getItem(key);
@@ -22,17 +20,23 @@ const setLocalStorage = (key: string, value: string) => {
     } catch (error: any) { }
 };
 
+/**
+ * useUserMediaDevices hook
+ * @param session a valid ApiRTC Session
+ * @param storageKeyPrefix do not set or set to undefined to NOT use local storage to get nor store devices ids.
+ * @returns {userMediaDevices, selectedAudioIn, setSelectedAudioIn, selectedAudioOut, setSelectedAudioOut, selectedVideoIn, setSelectedVideoIn}
+ */
 export function useUserMediaDevices(
     session: Session | undefined,
-    storageKeyPrefix: string = "apirtc"
+    storageKeyPrefix?: string
 ) {
     const AUDIO_INPUT_KEY = storageKeyPrefix + '.audioIn';
     const AUDIO_OUTPUT_KEY = storageKeyPrefix + '.audioOut';
     const VIDEO_INPUT_KEY = storageKeyPrefix + '.videoIn';
 
-    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(storageKeyPrefix !== NO_STORAGE ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
-    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(storageKeyPrefix !== NO_STORAGE ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
-    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(storageKeyPrefix !== NO_STORAGE ? getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY) : undefined);
+    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
+    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
+    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY) : undefined);
 
     const default_list = useMemo(() => {
         return {
@@ -63,7 +67,7 @@ export function useUserMediaDevices(
 
                 setUserMediaDevices(mediaDevices)
 
-                if (storageKeyPrefix !== NO_STORAGE) {
+                if (storageKeyPrefix) {
                     const audioInStoredMediaDevice = getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY);
                     if (audioInStoredMediaDevice) {
                         setSelectedAudioIn(mediaDevices.audioinput[audioInStoredMediaDevice.getId()])
@@ -94,7 +98,7 @@ export function useUserMediaDevices(
     }, [session])
 
     useEffect(() => {
-        if (selectedAudioIn && storageKeyPrefix !== NO_STORAGE) {
+        if (selectedAudioIn && storageKeyPrefix) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(`${HOOK_NAME}|Storing audioIn`, selectedAudioIn)
             }
@@ -105,7 +109,7 @@ export function useUserMediaDevices(
     }, [selectedAudioIn?.getId()])
 
     useEffect(() => {
-        if (selectedAudioOut && storageKeyPrefix !== NO_STORAGE) {
+        if (selectedAudioOut && storageKeyPrefix) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(`${HOOK_NAME}|Storing audioOut`, selectedAudioOut)
             }
@@ -116,7 +120,7 @@ export function useUserMediaDevices(
     }, [selectedAudioOut?.getId()])
 
     useEffect(() => {
-        if (selectedVideoIn && storageKeyPrefix !== NO_STORAGE) {
+        if (selectedVideoIn && storageKeyPrefix) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(`${HOOK_NAME}|Storing videoIn`, selectedVideoIn)
             }

@@ -53,7 +53,7 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import { useUserMediaDevices, NO_STORAGE } from './useUserMediaDevices';
+import { useUserMediaDevices } from './useUserMediaDevices';
 
 import { setLogLevel } from '..';
 
@@ -93,7 +93,33 @@ describe('useUserMediaDevices', () => {
         expect(result.current.selectedVideoIn).toBeUndefined()
     })
 
-    test(`no-storage`, () => {
+    // for code coverage sake !
+    test(`on mediaDeviceChanged, userMediaDevices must update, begin with empty local-storage values`, () => {
+        const userAgent = new UserAgent({});
+        const session = new Session(userAgent, {});
+
+        const localStoragePrefix = 'apirtc';
+
+        const { result } = renderHook(() => useUserMediaDevices(session, localStoragePrefix));
+        expect(result.current.userMediaDevices).toStrictEqual({ audioinput: {}, audiooutput: {}, videoinput: {} });
+
+        act(() => {
+            (userAgent as any).simulateMediaDeviceChanged()
+        })
+
+        expect(result.current.userMediaDevices?.audioinput['idA01']).toBeDefined()
+        expect(result.current.userMediaDevices?.audioinput['idA01'].getId()).toBe('idA01')
+
+        expect(result.current.userMediaDevices?.audioinput['idA02']).toBeDefined()
+        expect(result.current.userMediaDevices?.audiooutput['idA03']).toBeDefined()
+        expect(result.current.userMediaDevices?.videoinput['idV01']).toBeDefined()
+
+        expect(result.current.selectedAudioIn).toBeUndefined()
+        expect(result.current.selectedAudioOut).toBeUndefined()
+        expect(result.current.selectedVideoIn).toBeUndefined()
+    })
+
+    test(`with no local storage`, () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
@@ -103,10 +129,10 @@ describe('useUserMediaDevices', () => {
 
         const idA01 = new MediaDevice('idA01', 'audioinput', 'mic1');
         const idV01 = new MediaDevice('idV01', 'videoinput', 'cam1');
-        localStorage.setItem('apirtc' + '.audioIn', toString(idA01))
-        localStorage.setItem('apirtc' + '.videoIn', toString(idV01))
+        // localStorage.setItem(localStoragePrefix + '.audioIn', toString(idA01))
+        // localStorage.setItem(localStoragePrefix + '.videoIn', toString(idV01))
 
-        const { result } = renderHook(() => useUserMediaDevices(session, NO_STORAGE));
+        const { result } = renderHook(() => useUserMediaDevices(session, undefined));
         expect(result.current.userMediaDevices.audioinput).toStrictEqual({})
         expect(result.current.userMediaDevices.audiooutput).toStrictEqual({})
         expect(result.current.userMediaDevices.videoinput).toStrictEqual({})
@@ -128,7 +154,7 @@ describe('useUserMediaDevices', () => {
         expect(result.current.selectedVideoIn).toBeUndefined()
     })
 
-    test(`localStorage`, () => {
+    test(`with local storage`, () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
@@ -136,14 +162,16 @@ describe('useUserMediaDevices', () => {
             return JSON.stringify({ id: mediaDevice.getId(), type: mediaDevice.getType(), label: mediaDevice.getLabel() })
         }
 
+        const localStoragePrefix = 'apirtc';
+
         const idA02 = new MediaDevice('idA02', 'audioinput', 'mic1');
         const notExisting = new MediaDevice('id-not-existing', 'audioinput', 'mic-not-existing');
         const idV01 = new MediaDevice('idV01', 'videoinput', 'cam1');
-        localStorage.setItem('apirtc' + '.audioIn', toString(idA02))
-        localStorage.setItem('apirtc' + '.audioOut', toString(notExisting))
-        localStorage.setItem('apirtc' + '.videoIn', toString(idV01))
+        localStorage.setItem(localStoragePrefix + '.audioIn', toString(idA02))
+        localStorage.setItem(localStoragePrefix + '.audioOut', toString(notExisting))
+        localStorage.setItem(localStoragePrefix + '.videoIn', toString(idV01))
 
-        const { result } = renderHook(() => useUserMediaDevices(session));
+        const { result } = renderHook(() => useUserMediaDevices(session, localStoragePrefix));
         expect(result.current.userMediaDevices.audioinput['idA02']).toBeDefined()
         expect(result.current.userMediaDevices.audioinput['idA02'].getLabel()).toBe('mic1')
         expect(result.current.userMediaDevices.audiooutput['id-not-existing']).toBeDefined()
@@ -182,7 +210,7 @@ describe('useUserMediaDevices', () => {
         })
 
         {
-            const value = localStorage.getItem('apirtc' + '.audioIn');
+            const value = localStorage.getItem(localStoragePrefix + '.audioIn');
             if (value) {
                 const obj = JSON.parse(value);
                 expect(obj['id']).toBe('idA01')
@@ -190,7 +218,7 @@ describe('useUserMediaDevices', () => {
         }
 
         {
-            const value = localStorage.getItem('apirtc' + '.audioOut');
+            const value = localStorage.getItem(localStoragePrefix + '.audioOut');
             if (value) {
                 const obj = JSON.parse(value);
                 expect(obj['id']).toBe('test-a1')
@@ -198,7 +226,7 @@ describe('useUserMediaDevices', () => {
         }
 
         {
-            const value = localStorage.getItem('apirtc' + '.videoIn');
+            const value = localStorage.getItem(localStoragePrefix + '.videoIn');
             if (value) {
                 const obj = JSON.parse(value);
                 expect(obj['id']).toBe('test-v1')
@@ -212,11 +240,13 @@ describe('useUserMediaDevices', () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
-        localStorage.setItem('apirtc' + '.audioIn', '{invalid-JSON')
-        localStorage.setItem('apirtc' + '.audioOut', JSON.stringify({ id: "ID", type: "TYPE", label: "LABEL" }))
-        localStorage.setItem('apirtc' + '.videoIn', JSON.stringify({ id: "ID", type: "TYPE", label: "LABEL" }))
+        const localStoragePrefix = 'apirtc';
 
-        const { result } = renderHook(() => useUserMediaDevices(session));
+        localStorage.setItem(localStoragePrefix + '.audioIn', '{invalid-JSON')
+        localStorage.setItem(localStoragePrefix + '.audioOut', JSON.stringify({ id: "ID", type: "TYPE", label: "LABEL" }))
+        localStorage.setItem(localStoragePrefix + '.videoIn', JSON.stringify({ id: "ID", type: "TYPE", label: "LABEL" }))
+
+        const { result } = renderHook(() => useUserMediaDevices(session, localStoragePrefix));
         expect(result.current.userMediaDevices.audioinput).toStrictEqual({})
         expect(result.current.userMediaDevices.audiooutput['ID'].getLabel()).toBe('LABEL')
         expect(result.current.userMediaDevices.videoinput['ID'].getType()).toBe('TYPE')

@@ -5,11 +5,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [1.0.18] - 2023-10-16
+## [1.0.19] - 2023-10-16
 
 ### Enhanced
 
-- useUserMediaDevices: NO_STORAGE storageKeyPrefix value indicates to NOT use local storage to get and store selected devices ids
+- useUserMediaDevices: storageKeyPrefix undefined value indicates to NOT use local storage to get and store selected devices ids
 
 ## [1.0.17] - 2023-07-18
 

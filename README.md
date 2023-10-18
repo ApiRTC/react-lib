@@ -65,6 +65,15 @@ import { useConversation } from '@apirtc/react-lib'
 const { conversation } = useConversation(session, 'conversationName');
 ```
 
+### useConversationContacts
+
+Get **Conversation** **Contact**s in your state:
+
+```ts
+import { useConversationContacts } from '@apirtc/react-lib'
+const { contacts } = useConversationContacts(conversation);
+```
+
 ### useConversationModeration
 
 Get a set of candidates **Contacts**, and get notified of ejection:

@@ -10,14 +10,13 @@ const HOOK_NAME = "useConversationMessages";
 export default function useConversationMessages(
     conversation: Conversation | undefined,
 ) {
-
     const [messages, setMessages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
 
     useEffect(() => {
         if (conversation) {
             const onMessage = (message: ConversationMessage) => {
-                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                    console.info(HOOK_NAME + "|on:message:", conversation.getName(), message)
+                if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                    console.debug(`${HOOK_NAME}|on:message:`, conversation.getName(), message)
                 }
                 setMessages((l_messages) => [...l_messages, message])
             };
@@ -35,14 +34,14 @@ export default function useConversationMessages(
             conversation?.sendMessage(msgContent)
                 .then((uuid: number) => {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|sentMessage", conversation.getName(), uuid, msgContent)
+                        console.info(`${HOOK_NAME}|sentMessage`, conversation.getName(), uuid, msgContent)
                     }
                     setMessages((l_messages) => [...l_messages, { content: msgContent, sender: sender, time: new Date() }])
                     resolve()
                 })
                 .catch((error: any) => {
                     if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                        console.warn(HOOK_NAME + "|sendMessage error", error)
+                        console.warn(`${HOOK_NAME}|sendMessage error`, error)
                     }
                     reject(error)
                 })

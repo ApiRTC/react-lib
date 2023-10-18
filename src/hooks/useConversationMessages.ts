@@ -10,12 +10,8 @@ const HOOK_NAME = "useConversationMessages";
 export default function useConversationMessages(
     conversation: Conversation | undefined,
 ) {
-    // Use an internal array which will always be the same object as far as React knows
-    // This will avoid the need for adding it as a dependency for each callback
-    const [messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
-    // And use a copy as output array so that client code will react upon change
-    // (only a new instance of array is detected by React)
-    const [o_messages, setO_Messages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
+
+    const [messages, setMessages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
 
     useEffect(() => {
         if (conversation) {
@@ -23,15 +19,13 @@ export default function useConversationMessages(
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                     console.info(HOOK_NAME + "|on:message:", conversation.getName(), message)
                 }
-                messages.push(message)
-                setO_Messages(Array.from(messages))
+                setMessages((l_messages) => [...l_messages, message])
             };
             conversation.on('message', onMessage)
 
             return () => {
                 conversation.removeListener('message', onMessage)
-                messages.length = 0;
-                setO_Messages(new Array<any>())
+                setMessages(new Array<ConversationMessage>())
             }
         }
     }, [conversation])
@@ -43,8 +37,7 @@ export default function useConversationMessages(
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|sentMessage", conversation.getName(), uuid, msgContent)
                     }
-                    messages.push({ content: msgContent, sender: sender, time: new Date() })
-                    setO_Messages(Array.from(messages))
+                    setMessages((l_messages) => [...l_messages, { content: msgContent, sender: sender, time: new Date() }])
                     resolve()
                 })
                 .catch((error: any) => {
@@ -57,7 +50,7 @@ export default function useConversationMessages(
     }, [conversation]);
 
     return {
-        messages: o_messages,
+        messages,
         sendMessage
     }
 }

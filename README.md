@@ -19,15 +19,16 @@ Visit this [codesandbox](https://codesandbox.io/s/apirtc-react-lib-demo-nrmcrn) 
 Get a stateful session:
 
 ```ts
-import { useSession } from '@apirtc/react-lib'
-const { session } = useSession({ apiKey: 'your_api_key' });
+import { useSession } from "@apirtc/react-lib";
+const { session } = useSession({ apiKey: "your_api_key" });
 ```
+
 ### useUserMediaDevices
 
 Get a stateful list of available media devices:
 
 ```ts
-import { useUserMediaDevices } from '@apirtc/react-lib'
+import { useUserMediaDevices } from "@apirtc/react-lib";
 const { userMediaDevices } = useUserMediaDevices(session);
 ```
 
@@ -36,15 +37,15 @@ const { userMediaDevices } = useUserMediaDevices(session);
 Get a stateful value for the camera stream:
 
 ```ts
-import { useCameraStream } from '@apirtc/react-lib'
+import { useCameraStream } from "@apirtc/react-lib";
 const { stream } = useCameraStream(session);
 ```
 
 ### useStreamApplyVideoProcessor
 
 ```ts
-import { useStreamApplyVideoProcessor } from '@apirtc/react-lib'
-const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, 'blur');
+import { useStreamApplyVideoProcessor } from "@apirtc/react-lib";
+const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, "blur");
 ```
 
 ### usePresence
@@ -52,8 +53,8 @@ const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, 'blur');
 Get a stateful map of contacts by group:
 
 ```ts
-import { usePresence } from '@apirtc/react-lib'
-const { contactsByGroup } = usePresence(session, ['groupName1', 'groupName2']);
+import { usePresence } from "@apirtc/react-lib";
+const { contactsByGroup } = usePresence(session, ["groupName1", "groupName2"]);
 ```
 
 ### useConversation
@@ -61,8 +62,8 @@ const { contactsByGroup } = usePresence(session, ['groupName1', 'groupName2']);
 Get a stateful **Conversation**:
 
 ```ts
-import { useConversation } from '@apirtc/react-lib'
-const { conversation } = useConversation(session, 'conversationName');
+import { useConversation } from "@apirtc/react-lib";
+const { conversation } = useConversation(session, "conversationName");
 ```
 
 ### useConversationContacts
@@ -70,7 +71,7 @@ const { conversation } = useConversation(session, 'conversationName');
 Get **Conversation** **Contact**s in your state:
 
 ```ts
-import { useConversationContacts } from '@apirtc/react-lib'
+import { useConversationContacts } from "@apirtc/react-lib";
 const { contacts } = useConversationContacts(conversation);
 ```
 
@@ -79,14 +80,15 @@ const { contacts } = useConversationContacts(conversation);
 Get a set of candidates **Contacts**, and get notified of ejection:
 
 ```ts
-import { useConversationModeration } from '@apirtc/react-lib'
-const { candidates, onEjected, onEjectedSelf } = useConversationModeration(conversation);
+import { useConversationModeration } from "@apirtc/react-lib";
+const { candidates, onEjected, onEjectedSelf } =
+  useConversationModeration(conversation);
 ```
 
 ### useConversationMessages
 
 ```ts
-import { useConversationMessages } from '@apirtc/react-lib'
+import { useConversationMessages } from "@apirtc/react-lib";
 const { messages, sendMessage } = useConversationMessages(conversation);
 ```
 
@@ -95,9 +97,11 @@ const { messages, sendMessage } = useConversationMessages(conversation);
 Control **Stream**s to publish, and get stateful arrays of published and subscribed **Stream**s:
 
 ```ts
-import { useConversationStreams } from '@apirtc/react-lib'
+import { useConversationStreams } from "@apirtc/react-lib";
 const { publishedStreams, subscribedStreams } = useConversationStreams(
-        conversation, stream ? [{ stream: stream }] : []);
+  conversation,
+  stream ? [{ stream: stream }] : []
+);
 ```
 
 ## Components
@@ -107,9 +111,9 @@ const { publishedStreams, subscribedStreams } = useConversationStreams(
 Use it to display any **ApiRTC** **Stream**.
 
 ```tsx
-import { VideoStream } from '@apirtc/react-lib'
+import { VideoStream } from "@apirtc/react-lib";
 
-<VideoStream stream={stream} muted={false}></VideoStream>
+<VideoStream stream={stream} muted={false}></VideoStream>;
 ```
 
 Note: For more comprehensive set of UI components, please have a look at [@apirtc/mui-react-lib](https://github.com/ApiRTC/mui-react-lib)
@@ -118,21 +122,21 @@ Note: For more comprehensive set of UI components, please have a look at [@apirt
 
 Available log levels:
 
- * **debug**
- * **info**
- * **warn**
- * **error**
+- **debug**
+- **info**
+- **warn**
+- **error**
 
 from web app code:
 
 ```ts
-import { setLogLevel } from '@apirtc/react-lib'
+import { setLogLevel } from "@apirtc/react-lib";
 
-setLogLevel('warn')
+setLogLevel("warn");
 ```
 
 from console:
 
 ```js
-setApirtcReactLibLogLevel('debug')
+setApirtcReactLibLogLevel("debug");
 ```

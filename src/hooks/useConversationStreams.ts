@@ -1,5 +1,5 @@
 import { Conversation, PublishOptions, Stream, StreamInfo } from '@apirtc/apirtc';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 
 // TODO?: add pagination ?
 // interface Options {
@@ -23,8 +23,7 @@ export default function useConversationStreams(
   }
 
   // A cache to handle publication differences
-  const [publishedStreamsCache] =
-    useState<Array<{ stream: Stream, options?: PublishOptions } | undefined | null>>([]);
+  const publishedStreamsCache = useRef<Array<{ stream: Stream, options?: PublishOptions } | undefined | null>>([]);
 
   const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>());
   const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
@@ -88,16 +87,16 @@ export default function useConversationStreams(
   }, [conversation]);
 
   const doHandlePublication = useCallback(() => {
-    const maxLength = Math.max(publishedStreamsCache.length, streamsToPublish.length);
+    const maxLength = Math.max(publishedStreamsCache.current.length, streamsToPublish.length);
     if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
       console.debug(`${HOOK_NAME}|doHandlePublication`, streamsToPublish,
-        JSON.stringify(publishedStreamsCache.map(l_s => l_s?.stream.getId())),
+        JSON.stringify(publishedStreamsCache.current.map(l_s => l_s?.stream.getId())),
         JSON.stringify(streamsToPublish.map(l_s => l_s?.stream.getId())),
         maxLength)
     }
 
     // make a copy of current cache
-    const currentPublishedStreamsCache = [...publishedStreamsCache];
+    const currentPublishedStreamsCache = [...publishedStreamsCache.current];
 
     // Strategy for publishedStreamsCache is to initialize it as it should be
     // and remove items if publication fails.
@@ -110,8 +109,8 @@ export default function useConversationStreams(
       }
     });
     // Replace cache
-    publishedStreamsCache.length = 0;
-    publishedStreamsCache.push(...newPublishedStreamsCache);
+    publishedStreamsCache.current.length = 0;
+    publishedStreamsCache.current.push(...newPublishedStreamsCache);
 
     // Prepare a set for Streams to publish, for further optimized check
     const streamsToPublishSet = new Set(streamsToPublish.filter(notEmpty).map((item) => item.stream));
@@ -121,7 +120,7 @@ export default function useConversationStreams(
         .catch((error: Error) => {
           // Note that publishedStreamsCache is updated asynchronously here (catch)
           // Hence why publishedStreamsCache must always be the same array instance
-          publishedStreamsCache.splice(index, 1, null)
+          publishedStreamsCache.current.splice(index, 1, null)
           if (errorCallback) {
             errorCallback(error)
           } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
@@ -167,7 +166,7 @@ export default function useConversationStreams(
                   .catch((error: Error) => {
                     // Note that publishedStreamsCache is updated asynchronously here (catch)
                     // Hence why publishedStreamsCache must always be the same array instance
-                    publishedStreamsCache.splice(i, 1, null)
+                    publishedStreamsCache.current.splice(i, 1, null)
                     if (errorCallback) {
                       errorCallback(error)
                     } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
@@ -219,7 +218,7 @@ export default function useConversationStreams(
     })
 
     // Clear cache
-    publishedStreamsCache.length = 0;
+    publishedStreamsCache.current.length = 0;
 
     setSubscribedStreams((l_streams) => {
       l_streams.forEach(stream => {

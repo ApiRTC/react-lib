@@ -11,7 +11,7 @@ export default function VideoStream(props: VideoStreamProps) {
 
     const { autoPlay = true } = props;
 
-    const videoRef = useRef<HTMLVideoElement>(null)
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         const ref = videoRef.current;

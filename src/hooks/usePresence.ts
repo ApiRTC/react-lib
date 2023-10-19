@@ -1,5 +1,5 @@
 import { Contact, Session } from '@apirtc/apirtc';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 /**
  * Subscribe to groups and returns contactsByGroup (of theses groups only) when updated.
@@ -10,26 +10,25 @@ import { useEffect, useState } from 'react';
 const HOOK_NAME = "usePresence";
 export default function usePresence(session: Session | undefined, groups: Array<string>) {
 
-    const [groupsCache] = useState<Set<string>>(new Set());
-
-    const [m_contactsByGroup] = useState<Map<string, Set<Contact>>>(new Map());
+    const m_groupsCache = useRef<Set<string>>(new Set());
+    const m_contactsByGroup = useRef<Map<string, Set<Contact>>>(new Map());
 
     const [contactsByGroup, setContactsByGroup] = useState<Map<string, Set<Contact>>>(new Map());
 
     useEffect(() => {
         if (session) {
             return () => {
-                m_contactsByGroup.clear()
-                setContactsByGroup(new Map(m_contactsByGroup))
-                groupsCache.clear()
+                m_contactsByGroup.current.clear()
+                setContactsByGroup(new Map(m_contactsByGroup.current))
+                m_groupsCache.current.clear()
             }
         }
     }, [session])
 
     const getOrCreateGroupSet = (group: string) => {
-        const o_set = m_contactsByGroup.get(group) ?? new Set();
-        if (!m_contactsByGroup.has(group)) {
-            m_contactsByGroup.set(group, o_set)
+        const o_set = m_contactsByGroup.current.get(group) ?? new Set();
+        if (!m_contactsByGroup.current.has(group)) {
+            m_contactsByGroup.current.set(group, o_set)
         }
         return o_set
     };
@@ -45,31 +44,31 @@ export default function usePresence(session: Session | undefined, groups: Array<
             // Diff update subscription to groups
             //
             l_groupsSet.forEach(group => {
-                if (!groupsCache.has(group)) {
+                if (!m_groupsCache.current.has(group)) {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|subscribeToGroup", group)
                     }
-                    groupsCache.add(group)
+                    m_groupsCache.current.add(group)
                     l_session.subscribeToGroup(group)
                 }
             })
 
             let needsRefresh = false;
-            groupsCache.forEach(group => {
+            m_groupsCache.current.forEach(group => {
                 if (!l_groupsSet.has(group)) {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                         console.info(HOOK_NAME + "|unsubscribeToGroup", group)
                     }
                     l_session.unsubscribeToGroup(group)
-                    groupsCache.delete(group)
-                    m_contactsByGroup.delete(group)
+                    m_groupsCache.current.delete(group)
+                    m_contactsByGroup.current.delete(group)
                     needsRefresh = true;
                 }
             })
 
             if (needsRefresh) {
                 // contactsByGroup is exposed, so change the Map object to let client code detect a change.
-                setContactsByGroup(new Map(m_contactsByGroup))
+                setContactsByGroup(new Map(m_contactsByGroup.current))
             }
 
             if (groups.length > 0) {
@@ -101,7 +100,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
                                 // if set is empty, no need to keep the group as key in the map
                                 if (l_set.size === 0) {
-                                    m_contactsByGroup.delete(group)
+                                    m_contactsByGroup.current.delete(group)
                                 }
                             }
                         }
@@ -109,7 +108,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
                     // For data updates, trigger a refresh if and only if contact is part of managed groups
                     for (const contact of updatedContacts.userDataChanged as Contact[]) {
-                        for (const l_contacts of m_contactsByGroup.values()) {
+                        for (const l_contacts of m_contactsByGroup.current.values()) {
                             if (l_contacts.has(contact)) {
                                 needsRefresh = true;
                                 break;
@@ -119,7 +118,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
                     if (needsRefresh) {
                         // contactsByGroup is exposed, so change the Map object to let client code detect a change.
-                        setContactsByGroup(new Map(m_contactsByGroup))
+                        setContactsByGroup(new Map(m_contactsByGroup.current))
                     }
                 };
                 l_session.on('contactListUpdate', onContactListUpdate)

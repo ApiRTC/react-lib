@@ -26,15 +26,8 @@ export default function useConversationStreams(
   const [publishedStreamsCache] =
     useState<Array<{ stream: Stream, options?: PublishOptions } | undefined | null>>([]);
 
-  // Use an internal array which will always be the same object as far as React knows
-  // This will avoid the need for adding it as a dependency for each callback
-  const [publishedStreams] = useState<Array<Stream>>(new Array<Stream>());
-  // And use a copy as output array so that client code will react upon change
-  // (only a new instance of array is detected by React)
-  const [o_publishedStreams, setO_PublishedStreams] = useState<Array<Stream>>(new Array<Stream>());
-
-  const [subscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
-  const [o_subscribedStreams, setO_SubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
+  const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>());
+  const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
 
   const publish: (localStream: Stream, options?: PublishOptions) => Promise<Stream> =
     useCallback((localStream: Stream, options?: PublishOptions) => {
@@ -47,9 +40,7 @@ export default function useConversationStreams(
             if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
               console.info(`${HOOK_NAME}|published|${conversation.getName()}`, stream)
             }
-            publishedStreams.push(stream)
-            // Returning a new array makes lets React detect changes
-            setO_PublishedStreams(Array.from(publishedStreams))
+            setPublishedStreams((l_streams) => [...l_streams, stream])
             resolve(stream)
           }).catch((error: any) => {
             reject(error)
@@ -68,11 +59,16 @@ export default function useConversationStreams(
           if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
             console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream)
           }
-          const index = publishedStreams.indexOf(oldStream);
-          if (index >= 0) {
-            publishedStreams.splice(index, 1, stream)
-            setO_PublishedStreams(Array.from(publishedStreams))
-          }
+
+          // replace old stream by new one at same position
+          setPublishedStreams((l_streams) => {
+            const index = l_streams.indexOf(oldStream);
+            if (index >= 0) {
+              l_streams.splice(index, 1, stream)
+            }
+            return Array.from(l_streams)
+          })
+
           resolve(stream)
         }).catch((error: any) => {
           reject(error)
@@ -87,11 +83,7 @@ export default function useConversationStreams(
         console.debug(`${HOOK_NAME}|unpublish|${conversation.getName()}`, localStream.getId(), localStream)
       }
       conversation.unpublish(localStream)
-      const index = publishedStreams.indexOf(localStream);
-      if (index >= 0) {
-        publishedStreams.splice(index, 1)
-        setO_PublishedStreams(Array.from(publishedStreams))
-      }
+      setPublishedStreams((l_streams) => l_streams.filter((l_stream) => l_stream !== localStream))
     }
   }, [conversation]);
 
@@ -216,31 +208,32 @@ export default function useConversationStreams(
     publish, unpublish, replacePublishedStream]);
 
   const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
-    publishedStreams.forEach(stream => {
-      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(`${HOOK_NAME}|unpublish|${i_conversation.getName()}`, stream)
-      }
-      i_conversation.unpublish(stream)
+    setPublishedStreams((l_streams) => {
+      l_streams.forEach(stream => {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+          console.debug(`${HOOK_NAME}|unpublish|${i_conversation.getName()}`, stream)
+        }
+        i_conversation.unpublish(stream)
+      })
+      return new Array()
     })
-    // Clear internal array
-    publishedStreams.length = 0;
 
     // Clear cache
     publishedStreamsCache.length = 0;
 
-    subscribedStreams.forEach(stream => {
-      if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(`${HOOK_NAME}|unsubscribeToStream|${i_conversation.getName()}`, stream)
-      }
-      i_conversation.unsubscribeToStream(stream.getId())
+    setSubscribedStreams((l_streams) => {
+      l_streams.forEach(stream => {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+          console.debug(`${HOOK_NAME}|unsubscribeToStream|${i_conversation.getName()}`, stream)
+        }
+        i_conversation.unsubscribeToStream(stream.getId())
+      })
+      return new Array()
     })
-    // Clear internal array
-    subscribedStreams.length = 0;
 
     // Clear output arrays with new array so that parent gets notified of a change.
-    // Simply setting length to 0 is not detected by react.
-    setO_PublishedStreams(new Array<Stream>())
-    setO_SubscribedStreams(new Array<Stream>())
+    setPublishedStreams(new Array())
+    setSubscribedStreams(new Array())
   };
 
   // --------------------------------------------------------------------------
@@ -248,22 +241,17 @@ export default function useConversationStreams(
   //
   useEffect(() => {
     if (conversation) {
-      const on_streamAdded = (remoteStream: Stream) => {
+      const on_streamAdded = (stream: Stream) => {
         if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-          console.info(`${HOOK_NAME}|on_streamAdded|${conversation.getName()}`, remoteStream)
+          console.info(`${HOOK_NAME}|on_streamAdded|${conversation.getName()}`, stream)
         }
-        subscribedStreams.push(remoteStream)
-        setO_SubscribedStreams(Array.from(subscribedStreams))
+        setSubscribedStreams((l_streams) => [...l_streams, stream])
       };
-      const on_streamRemoved = (remoteStream: Stream) => {
+      const on_streamRemoved = (stream: Stream) => {
         if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-          console.info(`${HOOK_NAME}|on_streamRemoved|${conversation.getName()}`, remoteStream)
+          console.info(`${HOOK_NAME}|on_streamRemoved|${conversation.getName()}`, stream)
         }
-        const index = subscribedStreams.indexOf(remoteStream);
-        if (index >= 0) {
-          subscribedStreams.splice(index, 1)
-          setO_SubscribedStreams(Array.from(subscribedStreams))
-        }
+        setSubscribedStreams((l_streams) => l_streams.filter((l_stream) => l_stream !== stream))
       };
       const on_streamListChanged = (streamInfo: StreamInfo) => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
@@ -332,8 +320,8 @@ export default function useConversationStreams(
   // doHandlePublication already changes on conversation change
 
   return {
-    publishedStreams: o_publishedStreams,
-    subscribedStreams: o_subscribedStreams,
+    publishedStreams,
+    subscribedStreams,
     publish,
     unpublish,
     replacePublishedStream

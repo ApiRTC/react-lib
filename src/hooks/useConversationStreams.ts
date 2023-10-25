@@ -100,7 +100,7 @@ export default function useConversationStreams(
 
     // Strategy for publishedStreamsCache is to initialize it as it should be
     // and remove items if publication fails.
-    // Need to do a real copy of options ! :
+    // Need to do a real copy of options :
     const newPublishedStreamsCache = streamsToPublish.map(elt => {
       if (elt && elt.options) {
         return { stream: elt.stream, options: { ...elt.options } }
@@ -207,7 +207,9 @@ export default function useConversationStreams(
     publish, unpublish, replacePublishedStream]);
 
   const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
+    // Clear output arrays with new array so that parent gets notified of a change.
     setPublishedStreams((l_streams) => {
+      // unpublish all published streams
       l_streams.forEach(stream => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
           console.debug(`${HOOK_NAME}|unpublish|${i_conversation.getName()}`, stream)
@@ -221,6 +223,7 @@ export default function useConversationStreams(
     publishedStreamsCache.current.length = 0;
 
     setSubscribedStreams((l_streams) => {
+      // make sure to unsubscribe to subscribed streams
       l_streams.forEach(stream => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
           console.debug(`${HOOK_NAME}|unsubscribeToStream|${i_conversation.getName()}`, stream)
@@ -229,10 +232,6 @@ export default function useConversationStreams(
       })
       return new Array()
     })
-
-    // Clear output arrays with new array so that parent gets notified of a change.
-    setPublishedStreams(new Array())
-    setSubscribedStreams(new Array())
   };
 
   // --------------------------------------------------------------------------

@@ -1,6 +1,6 @@
 {
   "name": "@apirtc/react-lib",
-  "version": "1.1.0",
+  "version": "1.1.1-rc.1",
   "description": "react library for ApiRTC",
   "main": "dist/esm/index.js",
   "module": "dist/esm/index.js",

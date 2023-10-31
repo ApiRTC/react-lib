@@ -76,7 +76,7 @@ jest.mock('@apirtc/apirtc', () => {
                             reject('replace-fail')
                         } else {
                             (instance as any).publishedStreams.delete(oldStream);
-                           // (instance as any).conversationCalls.delete(instance.stream);
+                            // (instance as any).conversationCalls.delete(instance.stream);
                             //instance.stream = new_stream;
                             (instance as any).publishedStreams.add(newStream);
                             //(instance as any).conversationCalls.set(new_stream, instance);
@@ -965,7 +965,6 @@ describe('useConversationStreams', () => {
 
         expect(streamListChangedFn).toBeDefined()
 
-        const spy_subscribeToStream = jest.spyOn(conversation, 'subscribeToStream');
         const spy_unsubscribeToStream = jest.spyOn(conversation, 'unsubscribeToStream');
 
         //await waitForNextUpdate()
@@ -980,13 +979,38 @@ describe('useConversationStreams', () => {
         rerender({ conversation: null } as any)
 
         expect(result.current.subscribedStreams.length).toBe(0)
-
         expect(spy_unsubscribeToStream).toHaveBeenCalledTimes(1)
+    })
 
-        //await waitForNextUpdate()
-        //expect(spy_unsubscribeToStream).toHaveBeenCalledTimes(1)
-        // TODO test streams already available when joining
+    test(`streams subscription to available streams, and unsubscribeAll`, async () => {
+        const conversation = new Conversation('whatever', {});
+        (conversation as any).joined = true;
 
+        const stream01 = new Stream(null, { id: 's01' });
+
+        const { result, rerender, waitForNextUpdate } = renderHook(
+            (props: { conversation: Conversation, }) => useConversationStreams(props.conversation),
+            { initialProps: { conversation } });
+
+        expect(streamListChangedFn).toBeDefined()
+        expect(result.current.unsubscribeAll).toBeDefined()
+
+        const spy_unsubscribeToStream = jest.spyOn(conversation, 'unsubscribeToStream');
+
+        expect(result.current.subscribedStreams.length).toBe(0)
+
+        act(() => {
+            streamAddedFn?.call(this, stream01)
+        })
+
+        expect(result.current.subscribedStreams.length).toBe(1)
+
+        act(() => {
+            result.current.unsubscribeAll();
+        })
+
+        expect(result.current.subscribedStreams.length).toBe(0)
+        expect(spy_unsubscribeToStream).toHaveBeenCalledTimes(1)
     })
 
 })

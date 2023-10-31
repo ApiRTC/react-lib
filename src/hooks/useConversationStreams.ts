@@ -206,7 +206,7 @@ export default function useConversationStreams(
     //publishedStreamsCache, // no need to put in dependency array as the instance shall never change
     publish, unpublish, replacePublishedStream]);
 
-  const unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
+  const m_unpublishAll = (i_conversation: Conversation) => {
     // Clear output arrays with new array so that parent gets notified of a change.
     setPublishedStreams((l_streams) => {
       // unpublish all published streams
@@ -218,10 +218,11 @@ export default function useConversationStreams(
       })
       return new Array()
     })
-
     // Clear cache
     publishedStreamsCache.current.length = 0;
+  };
 
+  const m_unsubscribeAll = (i_conversation: Conversation) => {
     setSubscribedStreams((l_streams) => {
       // make sure to unsubscribe to subscribed streams
       l_streams.forEach(stream => {
@@ -233,6 +234,17 @@ export default function useConversationStreams(
       return new Array()
     })
   };
+
+  const m_unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
+    m_unpublishAll(i_conversation)
+    m_unsubscribeAll(i_conversation)
+  };
+
+  const unsubscribeAll = useCallback(() => {
+    if (conversation) {
+      m_unsubscribeAll(conversation)
+    }
+  }, [conversation]);
 
   // --------------------------------------------------------------------------
   // useEffect(s) - Order is important
@@ -277,7 +289,7 @@ export default function useConversationStreams(
         conversation.removeListener('streamRemoved', on_streamRemoved)
         conversation.removeListener('streamAdded', on_streamAdded)
 
-        unpublishAndUnsubscribeAll(conversation)
+        m_unpublishAndUnsubscribeAll(conversation)
       }
     }
   }, [conversation])
@@ -299,7 +311,7 @@ export default function useConversationStreams(
           console.info(`${HOOK_NAME}|on_left|${conversation.getName()}`)
         }
         // Forcing unpublish will allow to republish if joining again
-        unpublishAndUnsubscribeAll(conversation)
+        m_unpublishAndUnsubscribeAll(conversation)
       };
 
       conversation.on('joined', on_joined)
@@ -322,6 +334,7 @@ export default function useConversationStreams(
     subscribedStreams,
     publish,
     unpublish,
-    replacePublishedStream
+    replacePublishedStream,
+    unsubscribeAll
   }
 }

@@ -35,7 +35,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect session, groups", groups)
+            console.debug(`${HOOK_NAME}|useEffect session, groups`, groups)
         }
         if (session) {
             const l_session = session;
@@ -46,7 +46,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
             l_groupsSet.forEach(group => {
                 if (!m_groupsCache.current.has(group)) {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|subscribeToGroup", group)
+                        console.info(`${HOOK_NAME}|subscribeToGroup`, group)
                     }
                     m_groupsCache.current.add(group)
                     l_session.subscribeToGroup(group)
@@ -57,7 +57,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
             m_groupsCache.current.forEach(group => {
                 if (!l_groupsSet.has(group)) {
                     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                        console.info(HOOK_NAME + "|unsubscribeToGroup", group)
+                        console.info(`${HOOK_NAME}|unsubscribeToGroup`, group)
                     }
                     l_session.unsubscribeToGroup(group)
                     m_groupsCache.current.delete(group)
@@ -75,7 +75,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 const onContactListUpdate = (updatedContacts: any) => {
 
                     if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                        console.debug(HOOK_NAME + "|contactListUpdate", updatedContacts)
+                        console.debug(`${HOOK_NAME}|contactListUpdate`, updatedContacts)
                     }
 
                     let needsRefresh = false;

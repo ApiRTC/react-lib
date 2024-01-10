@@ -26,7 +26,7 @@ export default function useStreamApplyVideoProcessor(
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(HOOK_NAME + "|useEffect", stream, videoProcessorType, options)
+            console.debug(`${HOOK_NAME}|useEffect`, stream, videoProcessorType, options)
         }
         if (stream) {
             setApplying(true)
@@ -39,7 +39,7 @@ export default function useStreamApplyVideoProcessor(
                 if (errorCallback) {
                     errorCallback(error)
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                    console.warn(HOOK_NAME + "|useEffect", stream, videoProcessorType, options, error)
+                    console.warn(`${HOOK_NAME}|useEffect`, stream, videoProcessorType, options, error)
                 }
             }).finally(() => {
                 setApplying(false)

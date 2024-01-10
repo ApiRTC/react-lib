@@ -93,7 +93,7 @@ export default function useSession(credentials?: Credentials, options?: Register
             if (isInstanceOfLoginPassword(credentials)) {
                 registerInformation.password = credentials.password;
                 l_userAgent = new UserAgent({
-                    uri: 'apirtc:' + credentials.username
+                    uri: `apirtc:${credentials.username}`
                 });
             } else if (isInstanceOfApiKey(credentials)) {
                 l_userAgent = new UserAgent({
@@ -128,11 +128,11 @@ export default function useSession(credentials?: Credentials, options?: Register
     //         if (session) {
     //             const l_session = session;
     //             l_session.disconnect().then(() => {
-    //                 console.log(HOOK_NAME + "|disconnected", l_session)
+    //                 console.log(`${HOOK_NAME}|disconnected`, l_session)
     //                 setSession(undefined)
     //                 resolve()
     //             }).catch((error: any) => {
-    //                 console.error(HOOK_NAME + "|disconnect", error)
+    //                 console.error(`${HOOK_NAME}|disconnect`, error)
     //                 reject(error)
     //             })
     //         } else {

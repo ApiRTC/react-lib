@@ -30,9 +30,9 @@ export function useUserMediaDevices(
     session: Session | undefined,
     storageKeyPrefix?: string
 ) {
-    const AUDIO_INPUT_KEY = storageKeyPrefix + '.audioIn';
-    const AUDIO_OUTPUT_KEY = storageKeyPrefix + '.audioOut';
-    const VIDEO_INPUT_KEY = storageKeyPrefix + '.videoIn';
+    const AUDIO_INPUT_KEY = `${storageKeyPrefix}.audioIn`;
+    const AUDIO_OUTPUT_KEY = `${storageKeyPrefix}.audioOut`;
+    const VIDEO_INPUT_KEY = `${storageKeyPrefix}.videoIn`;
 
     const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
     const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);

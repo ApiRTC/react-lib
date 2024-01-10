@@ -15,6 +15,12 @@ export default function useConversationStreams(
   conversation: Conversation | undefined,
   /** fully managed list of Stream(s) to publish, with associated publish options */
   streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | undefined | null> = [],
+  // TODO: streamIdsToSubscribeTo subscribe to all streams if undefined (default),
+  // or subscribe only to the streamIds in the list. Subscribe to none if list is empty.
+  // Note : the consumer will need to subscribe first to know the ids at least once,
+  // => but this is not good as it would not know if those ids are no more published.. so we need to also output
+  // the list of streams info if  we go that way...
+  // streamIdsToSubscribeTo?: Array<string>,
   errorCallback?: (error: any) => void
 ) {
 
@@ -202,7 +208,7 @@ export default function useConversationStreams(
 
   }, [conversation,
     //streamsToPublish, change is captured by JSON.stringify below
-    JSON.stringify(streamsToPublish.map(l_s => l_s?.stream.getId() + '-' + JSON.stringify(l_s?.options))),
+    JSON.stringify(streamsToPublish.map(l_s => `${l_s?.stream.getId()}-${JSON.stringify(l_s?.options)}`)),
     //publishedStreamsCache, // no need to put in dependency array as the instance shall never change
     publish, unpublish, replacePublishedStream]);
 

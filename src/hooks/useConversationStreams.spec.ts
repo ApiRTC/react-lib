@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Conversation, ConversationCall, ConversationUnsubscribeToStream, PublishOptions, Stream, SubscribeOptions } from '@apirtc/apirtc';
 
+import useConversationStreams from './useConversationStreams';
+
+import { setLogLevel } from '..';
+
 let conversationJoinedFn: Function | undefined = undefined;
 let conversationLeftFn: Function | undefined = undefined;
 
@@ -140,10 +144,6 @@ jest.mock('@apirtc/apirtc', () => {
     }
 })
 
-import useConversationStreams from './useConversationStreams';
-
-import { setLogLevel } from '..';
-
 // Set log level to max to maximize code coverage
 setLogLevel('debug')
 
@@ -234,7 +234,7 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams.length).toBe(0)
 
         const stream01 = new Stream(null, { id: 'stream-01' });
-        const streams: Array<{ stream: Stream, options?: PublishOptions } | null> = [{ stream: stream01 }];
+        //const streams: Array<{ stream: Stream, options?: PublishOptions } | null> = [{ stream: stream01 }];
 
         // Change streamsToPublish array, to [stream01]
 
@@ -244,7 +244,7 @@ describe('useConversationStreams', () => {
         const spy_publish = jest.spyOn(conversation, 'publish');
         const spy_unpublish = jest.spyOn(conversation, 'unpublish');
 
-        rerender({ conversation, streamsToPublish: streams })
+        rerender({ conversation, streamsToPublish: [{ stream: stream01 }] })
 
         expect(spy_isPublishedStream).toHaveBeenCalledTimes(1)
 
@@ -261,9 +261,9 @@ describe('useConversationStreams', () => {
         //
         const stream02 = new Stream(null, { id: 'stream-02' });
         const stream03 = new Stream(null, { id: 'stream-03' });
-        streams[0] = { stream: stream02 };
-        streams.push({ stream: stream03 })
-        rerender({ conversation, streamsToPublish: streams })
+        // streams[0] = { stream: stream02 };
+        // streams.push({ stream: stream03 })
+        rerender({ conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }] })
 
         expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).not.toHaveBeenCalled()
@@ -281,8 +281,8 @@ describe('useConversationStreams', () => {
 
         // Nullify first stream, in same array
         // [stream02, stream03] => [null, stream03]
-        streams[0] = null;
-        rerender({ conversation, streamsToPublish: streams })
+        //streams[0] = null;
+        rerender({ conversation, streamsToPublish: [null, { stream: stream03 }] })
 
         expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)
         expect(spy_unpublish).toHaveBeenCalledTimes(1)
@@ -654,7 +654,7 @@ describe('useConversationStreams', () => {
 
         const stream01 = new Stream(null, { id: 'stream-01', publishFail: true });
 
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result } = renderHook(
             (props: { conversation: Conversation, streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | null> }) => useConversationStreams(
                 props.conversation, props.streamsToPublish),
             { initialProps: { conversation, streamsToPublish: [{ stream: stream01 }] } });
@@ -888,7 +888,7 @@ describe('useConversationStreams', () => {
         const conversation = new Conversation('whatever', {});
         (conversation as any).joined = false;
 
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        renderHook(
             (props: { conversation: Conversation }) => useConversationStreams(props.conversation),
             { initialProps: { conversation } });
 
@@ -911,7 +911,7 @@ describe('useConversationStreams', () => {
 
         const stream01 = new Stream(null, { id: 'stream-01' });
 
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result } = renderHook(
             (props: { conversation: Conversation }) => useConversationStreams(props.conversation),
             { initialProps: { conversation } });
 
@@ -959,7 +959,7 @@ describe('useConversationStreams', () => {
 
         const stream01 = new Stream(null, { id: 's01' });
 
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result, rerender } = renderHook(
             (props: { conversation: Conversation }) => useConversationStreams(props.conversation),
             { initialProps: { conversation } });
 
@@ -988,7 +988,7 @@ describe('useConversationStreams', () => {
 
         const stream01 = new Stream(null, { id: 's01' });
 
-        const { result, rerender, waitForNextUpdate } = renderHook(
+        const { result } = renderHook(
             (props: { conversation: Conversation, }) => useConversationStreams(props.conversation),
             { initialProps: { conversation } });
 

@@ -20,16 +20,17 @@ export default function useConversationModeration(
                     console.info(`${HOOK_NAME}|on:contactJoinedWaitingRoom`, contact)
                 }
                 // A candidate joined the waiting room.
-                candidates.add(contact)
-                setCandidates(new Set(candidates))
+                setCandidates((prev) => new Set(prev.add(contact)))
             };
             const on_contactLeftWaitingRoom = (contact: Contact) => {
                 if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
                     console.info(`${HOOK_NAME}|on:contactLeftWaitingRoom`, contact)
                 }
                 // A candidate left the waiting room.
-                candidates.delete(contact)
-                setCandidates(new Set(candidates))
+                setCandidates((prev) => {
+                    prev.delete(contact)
+                    return new Set(prev)
+                })
             };
             // TODO make apirtc.d.ts update to replace 'any'
             const on_participantEjected = (data: any) => {
@@ -67,7 +68,7 @@ export default function useConversationModeration(
                 setCandidates(new Set())
             }
         }
-    }, [conversation])
+    }, [conversation, onEjected, onEjectedSelf])
 
     return {
         candidates

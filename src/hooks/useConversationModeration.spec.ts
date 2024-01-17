@@ -4,6 +4,9 @@ import './getDisplayMedia.mock';
 
 import { Contact, Conversation } from '@apirtc/apirtc';
 
+import useConversationModeration from './useConversationModeration';
+
+import { setLogLevel } from '..';
 
 let contactJoinedWaitingRoomFn: Function | undefined = undefined;
 let contactLeftWaitingRoomFn: Function | undefined = undefined;
@@ -49,10 +52,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import useConversationModeration from './useConversationModeration';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

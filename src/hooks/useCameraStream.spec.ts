@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { CreateStreamOptions, Session, UserAgent, UserAgentOptions } from '@apirtc/apirtc';
 
+import { useCameraStream } from './useCameraStream';
+
+import { setLogLevel } from '..';
+
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
@@ -16,7 +20,7 @@ jest.mock('@apirtc/apirtc', () => {
             return {
                 createStream: (createStreamOptions: CreateStreamOptions) => {
                     return new Promise<any>((resolve, reject) => {
-                        if (options.uri && options.uri === 'fail') {
+                        if (options && options.uri && options.uri === 'fail') {
                             reject('fail')
                         } else {
                             resolve({
@@ -37,10 +41,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import { useCameraStream } from './useCameraStream';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')
@@ -63,11 +63,12 @@ describe('useCameraStream', () => {
     })
 
     test(`With a Session, fail to create stream`, async () => {
-        const init_userAgent = new UserAgent({ uri: "fail" })
-        const init_session = new Session(init_userAgent)
-        const { result, waitForNextUpdate } = renderHook(() => useCameraStream(init_session, undefined,(error: any) => {
+        const init_userAgent = new UserAgent({ uri: "fail" });
+        const init_session = new Session(init_userAgent);
+        const errorCb = (error: any) => {
             expect(error).toBe('fail')
-        }))
+        };
+        const { result, waitForNextUpdate } = renderHook(() => useCameraStream(init_session, undefined, errorCb))
         expect(result.current.stream?.getId()).toBe(undefined)
         expect(result.current.grabbing).toBeTruthy()
         await waitForNextUpdate()

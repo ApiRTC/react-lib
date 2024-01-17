@@ -1,6 +1,6 @@
 {
   "name": "@apirtc/react-lib",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "react library for ApiRTC",
   "main": "dist/esm/index.js",
   "module": "dist/esm/index.js",
@@ -34,6 +34,8 @@
     "@testing-library/react-hooks": "^8.0.0",
     "@types/jest": "^27.5.0",
     "@types/react": "^17",
+    "eslint-config-react-app": "^7.0.1",
+    "eslint-plugin-react-hooks": "^4.6.0",
     "jest": "^28.1.0",
     "jest-environment-jsdom": "^28.1.0",
     "react-dom": "^17",

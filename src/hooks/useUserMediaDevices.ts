@@ -30,9 +30,9 @@ export function useUserMediaDevices(
     session: Session | undefined,
     storageKeyPrefix?: string
 ) {
-    const AUDIO_INPUT_KEY = `${storageKeyPrefix}.audioIn`;
-    const AUDIO_OUTPUT_KEY = `${storageKeyPrefix}.audioOut`;
-    const VIDEO_INPUT_KEY = `${storageKeyPrefix}.videoIn`;
+    const AUDIO_INPUT_KEY = useMemo(() => `${storageKeyPrefix}.audioIn`, [storageKeyPrefix]);
+    const AUDIO_OUTPUT_KEY = useMemo(() => `${storageKeyPrefix}.audioOut`, [storageKeyPrefix]);
+    const VIDEO_INPUT_KEY = useMemo(() => `${storageKeyPrefix}.videoIn`, [storageKeyPrefix]);
 
     const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
     const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
@@ -95,7 +95,7 @@ export function useUserMediaDevices(
                 setUserMediaDevices(default_list)
             }
         }
-    }, [session])
+    }, [AUDIO_INPUT_KEY, AUDIO_OUTPUT_KEY, VIDEO_INPUT_KEY, default_list, session, storageKeyPrefix])
 
     useEffect(() => {
         if (selectedAudioIn && storageKeyPrefix) {
@@ -106,7 +106,7 @@ export function useUserMediaDevices(
                 id: selectedAudioIn.getId(), type: selectedAudioIn.getType(), label: selectedAudioIn.getLabel()
             }))
         }
-    }, [selectedAudioIn?.getId()])
+    }, [AUDIO_INPUT_KEY, selectedAudioIn, storageKeyPrefix]) //selectedAudioIn?.getId()
 
     useEffect(() => {
         if (selectedAudioOut && storageKeyPrefix) {
@@ -117,7 +117,7 @@ export function useUserMediaDevices(
                 id: selectedAudioOut.getId(), type: selectedAudioOut.getType(), label: selectedAudioOut.getLabel()
             }))
         }
-    }, [selectedAudioOut?.getId()])
+    }, [AUDIO_OUTPUT_KEY, selectedAudioOut, storageKeyPrefix]) //selectedAudioOut?.getId()
 
     useEffect(() => {
         if (selectedVideoIn && storageKeyPrefix) {
@@ -128,7 +128,7 @@ export function useUserMediaDevices(
                 id: selectedVideoIn.getId(), type: selectedVideoIn.getType(), label: selectedVideoIn.getLabel()
             }))
         }
-    }, [selectedVideoIn?.getId()])
+    }, [VIDEO_INPUT_KEY, selectedVideoIn, storageKeyPrefix]) //selectedVideoIn?.getId()
 
     return {
         userMediaDevices,

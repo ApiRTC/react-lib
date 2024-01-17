@@ -25,7 +25,8 @@ function isInstanceOfToken(object: any): object is Token {
 export type Credentials = LoginPassword | ApiKey | Token;
 
 const HOOK_NAME = "useSession";
-export default function useSession(credentials?: Credentials, options?: RegisterInformation,
+export default function useSession(credentials?: Credentials,
+    options?: RegisterInformation,
     errorCallback?: (error: any) => void) {
 
     const [session, setSession] = useState<Session | undefined>();
@@ -59,7 +60,7 @@ export default function useSession(credentials?: Credentials, options?: Register
                 setConnecting(false)
             }
         }
-    }, [JSON.stringify(credentials), JSON.stringify(options)])
+    }, [credentials, options, errorCallback]) // JSON.stringify(credentials), JSON.stringify(options)
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {

@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Contact, Conversation } from '@apirtc/apirtc';
 
+import useConversationContacts from './useConversationContacts';
+
+import { setLogLevel } from '..';
+
 let contactJoined: Function | undefined = undefined;
 let contactLeft: Function | undefined = undefined;
 
@@ -38,10 +42,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import useConversationContacts from './useConversationContacts';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

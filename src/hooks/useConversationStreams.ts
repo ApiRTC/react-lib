@@ -10,11 +10,13 @@ function notEmpty<T>(value: T | null | undefined): value is T {
   return value !== null && value !== undefined;
 }
 
+const EMPTY: any[] = [];
+
 const HOOK_NAME = "useConversationStreams";
 export default function useConversationStreams(
   conversation: Conversation | undefined,
   /** fully managed list of Stream(s) to publish, with associated publish options */
-  streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | undefined | null> = [],
+  streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | undefined | null> = EMPTY,
   // TODO: streamIdsToSubscribeTo subscribe to all streams if undefined (default),
   // or subscribe only to the streamIds in the list. Subscribe to none if list is empty.
   // Note : the consumer will need to subscribe first to know the ids at least once,
@@ -169,6 +171,7 @@ export default function useConversationStreams(
               // unpublish and republish if options also change
               if (JSON.stringify(previous.options) === JSON.stringify(next.options)) {
                 replacePublishedStream(previous.stream, next.stream)
+                  // eslint-disable-next-line no-loop-func
                   .catch((error: Error) => {
                     // Note that publishedStreamsCache is updated asynchronously here (catch)
                     // Hence why publishedStreamsCache must always be the same array instance
@@ -208,49 +211,49 @@ export default function useConversationStreams(
 
   }, [conversation,
     //streamsToPublish, change is captured by JSON.stringify below
-    JSON.stringify(streamsToPublish.map(l_s => `${l_s?.stream.getId()}-${JSON.stringify(l_s?.options)}`)),
+    // JSON.stringify(streamsToPublish.map(l_s => `${l_s?.stream.getId()}-${JSON.stringify(l_s?.options)}`)),
+    streamsToPublish,
     //publishedStreamsCache, // no need to put in dependency array as the instance shall never change
-    publish, unpublish, replacePublishedStream]);
+    publish, unpublish, replacePublishedStream,
+    errorCallback]);
 
-  const m_unpublishAll = (i_conversation: Conversation) => {
-    // Clear output arrays with new array so that parent gets notified of a change.
-    setPublishedStreams((l_streams) => {
-      // unpublish all published streams
-      l_streams.forEach(stream => {
-        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(`${HOOK_NAME}|unpublish|${i_conversation.getName()}`, stream)
-        }
-        i_conversation.unpublish(stream)
+  const unpublishAll = useCallback(() => {
+    if (conversation) {
+      // Clear output arrays with new array so that parent gets notified of a change.
+      setPublishedStreams((l_streams) => {
+        // unpublish all published streams
+        l_streams.forEach(stream => {
+          if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(`${HOOK_NAME}|unpublish|${conversation.getName()}`, stream)
+          }
+          conversation.unpublish(stream)
+        })
+        return []
       })
-      return new Array()
-    })
+    }
     // Clear cache
     publishedStreamsCache.current.length = 0;
-  };
-
-  const m_unsubscribeAll = (i_conversation: Conversation) => {
-    setSubscribedStreams((l_streams) => {
-      // make sure to unsubscribe to subscribed streams
-      l_streams.forEach(stream => {
-        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(`${HOOK_NAME}|unsubscribeToStream|${i_conversation.getName()}`, stream)
-        }
-        i_conversation.unsubscribeToStream(stream.getId())
-      })
-      return new Array()
-    })
-  };
-
-  const m_unpublishAndUnsubscribeAll = (i_conversation: Conversation) => {
-    m_unpublishAll(i_conversation)
-    m_unsubscribeAll(i_conversation)
-  };
+  }, [conversation]);
 
   const unsubscribeAll = useCallback(() => {
     if (conversation) {
-      m_unsubscribeAll(conversation)
+      setSubscribedStreams((l_streams) => {
+        // make sure to unsubscribe to subscribed streams
+        l_streams.forEach(stream => {
+          if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+            console.debug(`${HOOK_NAME}|unsubscribeToStream|${conversation.getName()}`, stream)
+          }
+          conversation.unsubscribeToStream(stream.getId())
+        })
+        return []
+      })
     }
   }, [conversation]);
+
+  const unpublishAndUnsubscribeAll = useCallback(() => {
+    unpublishAll()
+    unsubscribeAll()
+  }, [unpublishAll, unsubscribeAll]);
 
   // --------------------------------------------------------------------------
   // useEffect(s) - Order is important
@@ -295,20 +298,20 @@ export default function useConversationStreams(
         conversation.removeListener('streamRemoved', on_streamRemoved)
         conversation.removeListener('streamAdded', on_streamAdded)
 
-        m_unpublishAndUnsubscribeAll(conversation)
+        unpublishAndUnsubscribeAll()
       }
     }
-  }, [conversation])
+  }, [conversation, unpublishAndUnsubscribeAll])
 
   useEffect(() => {
     if (conversation) {
       if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(`${HOOK_NAME}|useEffect doHandlePublication|${conversation.getName()}`)
+        console.debug(`${HOOK_NAME}|useEffect doHandlePublication|${conversation.getName()}`, streamsToPublish)
       }
 
       const on_joined = () => {
         if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-          console.info(`${HOOK_NAME}|on_joined|${conversation.getName()}`, streamsToPublish)
+          console.info(`${HOOK_NAME}|on_joined|${conversation.getName()}`)
         }
         doHandlePublication()
       };
@@ -317,7 +320,7 @@ export default function useConversationStreams(
           console.info(`${HOOK_NAME}|on_left|${conversation.getName()}`)
         }
         // Forcing unpublish will allow to republish if joining again
-        m_unpublishAndUnsubscribeAll(conversation)
+        unpublishAndUnsubscribeAll()
       };
 
       conversation.on('joined', on_joined)
@@ -332,7 +335,7 @@ export default function useConversationStreams(
         conversation.removeListener('left', on_left)
       }
     }
-  }, [doHandlePublication]) // Don't add 'conversation' in here because
+  }, [conversation, streamsToPublish, doHandlePublication, unpublishAndUnsubscribeAll]) // Don't add 'conversation' in here because
   // doHandlePublication already changes on conversation change
 
   return {

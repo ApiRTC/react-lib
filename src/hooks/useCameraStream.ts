@@ -1,10 +1,12 @@
 import { CreateStreamOptions, Session, Stream, UserAgent } from '@apirtc/apirtc';
 import { useEffect, useState } from 'react';
 
+const EMPTY = {};
+
 const HOOK_NAME = "useCameraStream";
 export function useCameraStream(
     session: Session | undefined,
-    options: CreateStreamOptions = {},
+    options: CreateStreamOptions = EMPTY, // used to be = {} but this triggers infinite loop with useEffect
     errorCallback?: (error: any) => void
 ) {
     const [stream, setStream] = useState<Stream>();
@@ -39,7 +41,7 @@ export function useCameraStream(
         } else {
             setStream(undefined)
         }
-    }, [session, JSON.stringify(options)])
+    }, [session, options, errorCallback])
 
     useEffect(() => {
         const l_stream = stream;

@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Conversation, Session, UserAgent, UserAgentOptions } from '@apirtc/apirtc';
 
+import useConversation from './useConversation';
+
+import { setLogLevel } from '..';
+
 let simulateStatusJoined = false;
 let simulateDestroyed = false;
 
@@ -63,10 +67,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import useConversation from './useConversation';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

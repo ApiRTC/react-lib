@@ -17,10 +17,13 @@ export default function usePresence(session: Session | undefined, groups: Array<
 
     useEffect(() => {
         if (session) {
+            const l_groupsCache = m_groupsCache.current;
+            const l_contactsByGroup = m_contactsByGroup.current;
             return () => {
-                m_contactsByGroup.current.clear()
-                setContactsByGroup(new Map(m_contactsByGroup.current))
-                m_groupsCache.current.clear()
+                l_groupsCache.clear()
+                l_contactsByGroup.clear()
+                //setContactsByGroup(new Map(m_contactsByGroup.current))
+                setContactsByGroup(new Map())
             }
         }
     }, [session])
@@ -127,7 +130,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 }
             }
         }
-    }, [session, JSON.stringify(groups)])
+    }, [session, groups]) //JSON.stringify(groups)
 
     return {
         contactsByGroup

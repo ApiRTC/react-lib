@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Stream } from '@apirtc/apirtc';
 
+import useStreamApplyVideoProcessor from './useStreamApplyVideoProcessor';
+
+import { setLogLevel } from '..';
+
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
@@ -44,10 +48,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import useStreamApplyVideoProcessor from './useStreamApplyVideoProcessor';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

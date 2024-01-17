@@ -81,13 +81,13 @@ export default function useConversation(
     useEffect(() => {
         if (session && name) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                console.debug(`${HOOK_NAME}|getOrCreateConversation`, name, options, join)
+                console.debug(`${HOOK_NAME}|getOrCreateConversation`, name, options)
             }
             const l_conversation = session.getOrCreateConversation(name, options);
             setConversation(l_conversation)
             return () => {
                 if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                    console.debug(`${HOOK_NAME}|useEffect cleanup`, name, options, join)
+                    console.debug(`${HOOK_NAME}|useEffect cleanup`, name, options)
                 }
                 if (l_conversation.isJoined()) {
                     l_conversation.leave()
@@ -115,7 +115,7 @@ export default function useConversation(
                 setJoined(false)
             }
         }
-    }, [session, name, JSON.stringify(options)])
+    }, [session, name, options])
 
     useEffect(() => {
         if (conversation && join) {
@@ -154,7 +154,7 @@ export default function useConversation(
                 }
             }
         }
-    }, [conversation, join, JSON.stringify(joinOptions)])
+    }, [conversation, options, join, joinOptions])
 
     return {
         conversation,

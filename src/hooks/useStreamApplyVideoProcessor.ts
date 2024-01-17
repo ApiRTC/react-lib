@@ -48,7 +48,7 @@ export default function useStreamApplyVideoProcessor(
             setOutStream(stream)
             setApplied('none')
         }
-    }, [stream, videoProcessorType, JSON.stringify(options)])
+    }, [stream, videoProcessorType, options, errorCallback])
 
     return {
         stream: outStream,

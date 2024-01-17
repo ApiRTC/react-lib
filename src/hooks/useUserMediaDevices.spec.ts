@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Session, UserAgent, UserAgentOptions, MediaDevice } from '@apirtc/apirtc';
 
+import { useUserMediaDevices } from './useUserMediaDevices';
+
+import { setLogLevel } from '..';
+
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
@@ -52,10 +56,6 @@ jest.mock('@apirtc/apirtc', () => {
         })
     }
 })
-
-import { useUserMediaDevices } from './useUserMediaDevices';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')
@@ -123,15 +123,6 @@ describe('useUserMediaDevices', () => {
         const userAgent = new UserAgent({});
         const session = new Session(userAgent, {});
 
-        const toString = (mediaDevice: MediaDevice) => {
-            return JSON.stringify({ id: mediaDevice.getId(), type: mediaDevice.getType(), label: mediaDevice.getLabel() })
-        }
-
-        const idA01 = new MediaDevice('idA01', 'audioinput', 'mic1');
-        const idV01 = new MediaDevice('idV01', 'videoinput', 'cam1');
-        // localStorage.setItem(localStoragePrefix + '.audioIn', toString(idA01))
-        // localStorage.setItem(localStoragePrefix + '.videoIn', toString(idV01))
-
         const { result } = renderHook(() => useUserMediaDevices(session, undefined));
         expect(result.current.userMediaDevices.audioinput).toStrictEqual({})
         expect(result.current.userMediaDevices.audiooutput).toStrictEqual({})
@@ -163,6 +154,8 @@ describe('useUserMediaDevices', () => {
         }
 
         const localStoragePrefix = 'apirtc';
+
+        const idA01 = new MediaDevice('idA01', 'audioinput', 'mic1');
 
         const idA02 = new MediaDevice('idA02', 'audioinput', 'mic1');
         const notExisting = new MediaDevice('id-not-existing', 'audioinput', 'mic-not-existing');
@@ -204,7 +197,7 @@ describe('useUserMediaDevices', () => {
 
         // use setSelected*
         act(() => {
-            result.current.setSelectedAudioIn(result.current.userMediaDevices.audioinput['idA01'])
+            result.current.setSelectedAudioIn(idA01)//result.current.userMediaDevices.audioinput['idA01'])
             result.current.setSelectedAudioOut(new MediaDevice('test-a1', 'type', 'label'))
             result.current.setSelectedVideoIn(new MediaDevice('test-v1', 'type', 'label'))
         })

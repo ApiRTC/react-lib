@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Contact, Session, UserAgent, UserAgentOptions } from '@apirtc/apirtc';
 
+import usePresence from './usePresence';
+
+import { setLogLevel } from '..';
+
 let contactListUpdateFn: Function | undefined;
 const subscribedGroups: Set<string> = new Set();
 
@@ -46,10 +50,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import usePresence from './usePresence';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

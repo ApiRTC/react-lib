@@ -20,7 +20,8 @@ Get a stateful session:
 
 ```ts
 import { useSession } from "@apirtc/react-lib";
-const { session } = useSession({ apiKey: "your_api_key" });
+const [credentials] = useState({ apiKey: "your_api_key" });
+const { session } = useSession(credentials);
 ```
 
 ### useUserMediaDevices
@@ -54,7 +55,8 @@ Get a stateful map of contacts by group:
 
 ```ts
 import { usePresence } from "@apirtc/react-lib";
-const { contactsByGroup } = usePresence(session, ["groupName1", "groupName2"]);
+const [groups] = useState(["groupName1", "groupName2"]);
+const { contactsByGroup } = usePresence(session, groups);
 ```
 
 ### useConversation
@@ -98,9 +100,13 @@ Control **Stream**s to publish, and get stateful arrays of published and subscri
 
 ```ts
 import { useConversationStreams } from "@apirtc/react-lib";
+const streamsToPublish = useMemo(
+  () => (stream ? [{ stream: stream }] : []),
+  [stream]
+);
 const { publishedStreams, subscribedStreams } = useConversationStreams(
   conversation,
-  stream ? [{ stream: stream }] : []
+  streamsToPublish
 );
 ```
 

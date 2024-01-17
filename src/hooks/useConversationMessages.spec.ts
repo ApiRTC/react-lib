@@ -4,6 +4,10 @@ import './getDisplayMedia.mock';
 
 import { Contact, Conversation } from '@apirtc/apirtc';
 
+import useConversationMessages from './useConversationMessages';
+
+import { setLogLevel } from '..';
+
 let messageFn: Function | undefined = undefined;
 
 // Partial mocking @apirtc/apirtc module
@@ -40,10 +44,6 @@ jest.mock('@apirtc/apirtc', () => {
         }),
     }
 })
-
-import useConversationMessages from './useConversationMessages';
-
-import { setLogLevel } from '..';
 
 // Set log level to max to maximize code coverage
 setLogLevel('debug')

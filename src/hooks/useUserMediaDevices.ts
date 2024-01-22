@@ -1,4 +1,5 @@
 import { MediaDevice, MediaDeviceList, Session, UserAgent } from '@apirtc/apirtc';
+
 import { useEffect, useMemo, useState } from 'react';
 
 const HOOK_NAME = "useUserMediaDevices";
@@ -22,37 +23,36 @@ const setLocalStorage = (key: string, value: string) => {
 
 /**
  * useUserMediaDevices hook
- * @param session a valid ApiRTC Session
- * @param storageKeyPrefix do not set or set to undefined to NOT use local storage to get nor store devices ids.
- * @returns {userMediaDevices, selectedAudioIn, setSelectedAudioIn, selectedAudioOut, setSelectedAudioOut, selectedVideoIn, setSelectedVideoIn}
+ * @param session - a valid ApiRTC Session
+ * @param storageKeyPrefix - do not set or set to undefined to NOT use local storage to get nor store devices ids.
+ * @returns userMediaDevices,
+ *  selectedAudioIn, selectedAudioInId, setSelectedAudioIn,
+ *  selectedAudioOut, selectedAudioInId, setSelectedAudioOut,
+ *  selectedVideoIn, selectedVideoInId, setSelectedVideoIn
  */
-export function useUserMediaDevices(
+export default function useUserMediaDevices(
     session: Session | undefined,
     storageKeyPrefix?: string
 ) {
-    const AUDIO_INPUT_KEY = useMemo(() => `${storageKeyPrefix}.audioIn`, [storageKeyPrefix]);
-    const AUDIO_OUTPUT_KEY = useMemo(() => `${storageKeyPrefix}.audioOut`, [storageKeyPrefix]);
-    const VIDEO_INPUT_KEY = useMemo(() => `${storageKeyPrefix}.videoIn`, [storageKeyPrefix]);
+    const AUDIO_INPUT_KEY = useMemo(() => storageKeyPrefix ? `${storageKeyPrefix}.audioIn` : undefined, [storageKeyPrefix]);
+    const AUDIO_OUTPUT_KEY = useMemo(() => storageKeyPrefix ? `${storageKeyPrefix}.audioOut` : undefined, [storageKeyPrefix]);
+    const VIDEO_INPUT_KEY = useMemo(() => storageKeyPrefix ? `${storageKeyPrefix}.videoIn` : undefined, [storageKeyPrefix]);
 
-    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
-    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
-    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(storageKeyPrefix ? getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY) : undefined);
+    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(AUDIO_INPUT_KEY ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
+    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(AUDIO_OUTPUT_KEY ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
+    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(VIDEO_INPUT_KEY ? getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY) : undefined);
 
-    const default_list = useMemo(() => {
-        return {
-            audioinput: selectedAudioIn ? {
-                [selectedAudioIn.getId()]: selectedAudioIn
-            } : {},
-            audiooutput: selectedAudioOut ? {
-                [selectedAudioOut.getId()]: selectedAudioOut
-            } : {},
-            videoinput: selectedVideoIn ? {
-                [selectedVideoIn.getId()]: selectedVideoIn
-            } : {}
-        }
-    }, [selectedAudioIn, selectedAudioOut, selectedVideoIn])
-
-    const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>(default_list);
+    const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>({
+        audioinput: selectedAudioIn ? {
+            [selectedAudioIn.getId()]: selectedAudioIn
+        } : {},
+        audiooutput: selectedAudioOut ? {
+            [selectedAudioOut.getId()]: selectedAudioOut
+        } : {},
+        videoinput: selectedVideoIn ? {
+            [selectedVideoIn.getId()]: selectedVideoIn
+        } : {}
+    });
 
     useEffect(() => {
         if (session) {
@@ -61,44 +61,25 @@ export function useUserMediaDevices(
             const on_mediaDeviceChanged = () => {
                 const mediaDevices: MediaDeviceList = userAgent.getUserMediaDevices();
 
-                if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-                    console.info(`${HOOK_NAME}|mediaDeviceChanged`, mediaDevices)
+                if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+                    console.debug(`${HOOK_NAME}|mediaDeviceChanged`, mediaDevices)
                 }
 
                 setUserMediaDevices(mediaDevices)
-
-                if (storageKeyPrefix) {
-                    const audioInStoredMediaDevice = getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY);
-                    if (audioInStoredMediaDevice) {
-                        setSelectedAudioIn(mediaDevices.audioinput[audioInStoredMediaDevice.getId()])
-                    }
-
-                    const audioOutStoredMediaDevice = getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY);
-                    if (audioOutStoredMediaDevice) {
-                        setSelectedAudioOut(mediaDevices.audiooutput[audioOutStoredMediaDevice.getId()])
-                    }
-
-                    const videoInStoredMediaDevice = getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY);
-                    if (videoInStoredMediaDevice) {
-                        setSelectedVideoIn(mediaDevices.videoinput[videoInStoredMediaDevice.getId()])
-                    }
-
-                    if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-                        console.debug(`${HOOK_NAME}|userMediaDevices, audioIn, audioOut, videoIn`, mediaDevices, audioInStoredMediaDevice?.getId(), audioOutStoredMediaDevice?.getId(), videoInStoredMediaDevice?.getId())
-                    }
-                }
+                setSelectedAudioIn((prev) => prev ? mediaDevices.audioinput[prev.getId()] : undefined)
+                setSelectedAudioOut((prev) => prev ? mediaDevices.audiooutput[prev.getId()] : undefined)
+                setSelectedVideoIn((prev) => prev ? mediaDevices.videoinput[prev.getId()] : undefined)
             };
             userAgent.on('mediaDeviceChanged', on_mediaDeviceChanged)
 
             return () => {
                 userAgent.removeListener('mediaDeviceChanged', on_mediaDeviceChanged)
-                setUserMediaDevices(default_list)
             }
         }
-    }, [AUDIO_INPUT_KEY, AUDIO_OUTPUT_KEY, VIDEO_INPUT_KEY, default_list, session, storageKeyPrefix])
+    }, [session])
 
     useEffect(() => {
-        if (selectedAudioIn && storageKeyPrefix) {
+        if (selectedAudioIn && AUDIO_INPUT_KEY) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(`${HOOK_NAME}|Storing audioIn`, selectedAudioIn)
             }
@@ -106,10 +87,10 @@ export function useUserMediaDevices(
                 id: selectedAudioIn.getId(), type: selectedAudioIn.getType(), label: selectedAudioIn.getLabel()
             }))
         }
-    }, [AUDIO_INPUT_KEY, selectedAudioIn, storageKeyPrefix]) //selectedAudioIn?.getId()
+    }, [AUDIO_INPUT_KEY, selectedAudioIn])
 
     useEffect(() => {
-        if (selectedAudioOut && storageKeyPrefix) {
+        if (selectedAudioOut && AUDIO_OUTPUT_KEY) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(`${HOOK_NAME}|Storing audioOut`, selectedAudioOut)
             }
@@ -117,10 +98,10 @@ export function useUserMediaDevices(
                 id: selectedAudioOut.getId(), type: selectedAudioOut.getType(), label: selectedAudioOut.getLabel()
             }))
         }
-    }, [AUDIO_OUTPUT_KEY, selectedAudioOut, storageKeyPrefix]) //selectedAudioOut?.getId()
+    }, [AUDIO_OUTPUT_KEY, selectedAudioOut])
 
     useEffect(() => {
-        if (selectedVideoIn && storageKeyPrefix) {
+        if (selectedVideoIn && VIDEO_INPUT_KEY) {
             if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
                 console.debug(`${HOOK_NAME}|Storing videoIn`, selectedVideoIn)
             }
@@ -128,12 +109,12 @@ export function useUserMediaDevices(
                 id: selectedVideoIn.getId(), type: selectedVideoIn.getType(), label: selectedVideoIn.getLabel()
             }))
         }
-    }, [VIDEO_INPUT_KEY, selectedVideoIn, storageKeyPrefix]) //selectedVideoIn?.getId()
+    }, [VIDEO_INPUT_KEY, selectedVideoIn])
 
     return {
         userMediaDevices,
-        selectedAudioIn, setSelectedAudioIn,
-        selectedAudioOut, setSelectedAudioOut,
-        selectedVideoIn, setSelectedVideoIn
+        selectedAudioIn, selectedAudioInId: selectedAudioIn?.getId(), setSelectedAudioIn,
+        selectedAudioOut, selectedAudioOutId: selectedAudioOut?.getId(), setSelectedAudioOut,
+        selectedVideoIn, selectedVideoInId: selectedVideoIn?.getId(), setSelectedVideoIn
     }
 }

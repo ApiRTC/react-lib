@@ -257,12 +257,10 @@ describe('useConversationStreams', () => {
         expect(result.current.publishedStreams).toContain(stream01)
         expect(conversation.isPublishedStream(stream01)).toBeTruthy()
 
-        // Go from [stream01] to [stream02, stream03] in same array
+        // Go from [stream01] to [stream02, stream03]
         //
         const stream02 = new Stream(null, { id: 'stream-02' });
         const stream03 = new Stream(null, { id: 'stream-03' });
-        // streams[0] = { stream: stream02 };
-        // streams.push({ stream: stream03 })
         rerender({ conversation, streamsToPublish: [{ stream: stream02 }, { stream: stream03 }] })
 
         expect(spy_replacePublishedStream).toHaveBeenCalledTimes(1)

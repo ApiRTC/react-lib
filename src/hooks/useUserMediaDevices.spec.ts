@@ -4,7 +4,7 @@ import './getDisplayMedia.mock';
 
 import { Session, UserAgent, UserAgentOptions, MediaDevice } from '@apirtc/apirtc';
 
-import { useUserMediaDevices } from './useUserMediaDevices';
+import useUserMediaDevices from './useUserMediaDevices';
 
 import { setLogLevel } from '..';
 

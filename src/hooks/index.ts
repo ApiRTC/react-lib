@@ -9,4 +9,4 @@ export { ApiKey, Credentials, default as useSession, LoginPassword, Token } from
 export { default as useStreamApplyVideoProcessor } from './useStreamApplyVideoProcessor'
 // deprecated useStreamBlur, replaced by more generic useStreamApplyVideoProcessor
 //export { default as useStreamBlur } from "./useStreamBlur"
-export { useUserMediaDevices } from "./useUserMediaDevices"
+export { default as useUserMediaDevices } from "./useUserMediaDevices"

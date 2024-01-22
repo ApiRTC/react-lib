@@ -33,6 +33,8 @@ import { useUserMediaDevices } from "@apirtc/react-lib";
 const { userMediaDevices } = useUserMediaDevices(session);
 ```
 
+This hook can also manage devices selection.
+
 ### useCameraStream
 
 Get a stateful value for the camera stream:

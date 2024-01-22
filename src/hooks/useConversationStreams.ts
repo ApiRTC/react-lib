@@ -260,6 +260,10 @@ export default function useConversationStreams(
   //
   useEffect(() => {
     if (conversation) {
+
+      // make sure publishedStreamsCache is reinitialized empty
+      publishedStreamsCache.current.length = 0;
+
       const on_streamAdded = (stream: Stream) => {
         if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
           console.info(`${HOOK_NAME}|on_streamAdded|${conversation.getName()}`, stream)

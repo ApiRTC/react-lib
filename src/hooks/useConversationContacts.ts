@@ -7,9 +7,7 @@ export default function useConversationContacts(
     contactJoined?: (contact: Contact) => void,
     contactLeft?: (contact: Contact) => void
 ) {
-    // Use an internal array which will always be the same object as far as React knows
-    // This will avoid the need for adding it as a dependency for each callback
-    const [contacts, setContacts] = useState<Array<Contact>>(new Array<Contact>());
+    const [contacts, setContacts] = useState<Array<Contact>>([]);
 
     useEffect(() => {
         if (conversation) {

@@ -38,9 +38,10 @@ export default function useUserMediaDevices(
     const AUDIO_OUTPUT_KEY = useMemo(() => storageKeyPrefix ? `${storageKeyPrefix}.audioOut` : undefined, [storageKeyPrefix]);
     const VIDEO_INPUT_KEY = useMemo(() => storageKeyPrefix ? `${storageKeyPrefix}.videoIn` : undefined, [storageKeyPrefix]);
 
-    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(AUDIO_INPUT_KEY ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
-    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(AUDIO_OUTPUT_KEY ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
-    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(VIDEO_INPUT_KEY ? getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY) : undefined);
+    // Use lazy initialized useState to avoid calling getMediaDeviceFromLocalStorage (which is IO operation) at every render
+    const [selectedAudioIn, setSelectedAudioIn] = useState<MediaDevice | undefined>(() => AUDIO_INPUT_KEY ? getMediaDeviceFromLocalStorage(AUDIO_INPUT_KEY) : undefined);
+    const [selectedAudioOut, setSelectedAudioOut] = useState<MediaDevice | undefined>(() => AUDIO_OUTPUT_KEY ? getMediaDeviceFromLocalStorage(AUDIO_OUTPUT_KEY) : undefined);
+    const [selectedVideoIn, setSelectedVideoIn] = useState<MediaDevice | undefined>(() => VIDEO_INPUT_KEY ? getMediaDeviceFromLocalStorage(VIDEO_INPUT_KEY) : undefined);
 
     const [userMediaDevices, setUserMediaDevices] = useState<MediaDeviceList>({
         audioinput: selectedAudioIn ? {

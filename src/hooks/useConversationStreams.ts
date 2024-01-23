@@ -339,8 +339,7 @@ export default function useConversationStreams(
         conversation.removeListener('left', on_left)
       }
     }
-  }, [conversation, streamsToPublish, doHandlePublication, unpublishAndUnsubscribeAll]) // Don't add 'conversation' in here because
-  // doHandlePublication already changes on conversation change
+  }, [conversation, streamsToPublish, doHandlePublication, unpublishAndUnsubscribeAll])
 
   return {
     publishedStreams,

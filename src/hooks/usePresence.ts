@@ -22,7 +22,6 @@ export default function usePresence(session: Session | undefined, groups: Array<
             return () => {
                 l_groupsCache.clear()
                 l_contactsByGroup.clear()
-                //setContactsByGroup(new Map(m_contactsByGroup.current))
                 setContactsByGroup(new Map())
             }
         }
@@ -130,7 +129,7 @@ export default function usePresence(session: Session | undefined, groups: Array<
                 }
             }
         }
-    }, [session, groups]) //JSON.stringify(groups)
+    }, [session, groups])
 
     return {
         contactsByGroup

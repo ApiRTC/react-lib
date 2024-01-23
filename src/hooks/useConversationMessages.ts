@@ -10,7 +10,7 @@ const HOOK_NAME = "useConversationMessages";
 export default function useConversationMessages(
     conversation: Conversation | undefined,
 ) {
-    const [messages, setMessages] = useState<Array<ConversationMessage>>(new Array<ConversationMessage>());
+    const [messages, setMessages] = useState<Array<ConversationMessage>>([]);
 
     useEffect(() => {
         if (conversation) {

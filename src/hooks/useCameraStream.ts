@@ -12,6 +12,8 @@ export function useCameraStream(
     const [stream, setStream] = useState<Stream>();
     const [grabbing, setGrabbing] = useState<boolean>(false);
 
+    const [error, setError] = useState<any>();
+
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(`${HOOK_NAME}|useEffect`, session, options)
@@ -24,12 +26,14 @@ export function useCameraStream(
                     console.info(`${HOOK_NAME}|createStream`, options, localStream)
                 }
                 setStream(localStream)
+                setError(undefined)
             }).catch((error: any) => {
                 console.error(`${HOOK_NAME}|createStream error`, options, error)
                 setStream(undefined)
                 if (errorCallback) {
                     errorCallback(error)
                 }
+                setError(error)
             }).finally(() => {
                 setGrabbing(false)
             })
@@ -40,6 +44,7 @@ export function useCameraStream(
             // return () => { setStream(undefined) } // DON'T
         } else {
             setStream(undefined)
+            setError(undefined)
         }
     }, [session, options, errorCallback])
 
@@ -57,6 +62,7 @@ export function useCameraStream(
 
     return {
         stream,
-        grabbing
+        grabbing,
+        error
     }
 }

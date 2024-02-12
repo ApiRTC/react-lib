@@ -1,5 +1,5 @@
 import { Stream, VideoProcessorOptions } from '@apirtc/apirtc';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const HOOK_NAME = "useStreamApplyVideoProcessor";
 /**
@@ -11,15 +11,16 @@ const HOOK_NAME = "useStreamApplyVideoProcessor";
  * The hook never releases the input stream.
  * 
  * @param stream
- * @param videoProcessorType
+ * @param processorType
  * @param {VideoProcessorOptions} options
  * @returns new stream with video processor applied (or original stream if no processor applied)
  */
 export default function useStreamApplyVideoProcessor(
     stream: Stream | undefined,
-    videoProcessorType: 'none' | 'blur' | 'backgroundImage', options?: VideoProcessorOptions,
+    processorType: 'none' | 'blur' | 'backgroundImage', options?: VideoProcessorOptions,
     errorCallback?: (error: any) => void) {
     //
+    const appliedProcessor = useRef('none');
     const [outStream, setOutStream] = useState(stream);
     const [applying, setApplying] = useState(false);
     const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>(stream ? (stream as any).videoAppliedFilter : 'none');
@@ -28,13 +29,14 @@ export default function useStreamApplyVideoProcessor(
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(`${HOOK_NAME}|useEffect`, stream, videoProcessorType, options)
+            console.debug(`${HOOK_NAME}|useEffect`, stream, processorType, options)
         }
-        if (stream) {
+        if (stream && processorType !== appliedProcessor.current) {
             setApplying(true)
-            stream.applyVideoProcessor(videoProcessorType, options).then(l_stream => {
+            stream.applyVideoProcessor(processorType, options).then(l_stream => {
                 setOutStream(l_stream)
-                setApplied(videoProcessorType)
+                setApplied(processorType)
+                appliedProcessor.current = processorType;
                 setError(undefined)
             }).catch(error => {
                 setOutStream(stream)
@@ -43,7 +45,7 @@ export default function useStreamApplyVideoProcessor(
                 if (errorCallback) {
                     errorCallback(error)
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                    console.warn(`${HOOK_NAME}|useEffect`, stream, videoProcessorType, options, error)
+                    console.warn(`${HOOK_NAME}|useEffect`, stream, processorType, options, error)
                 }
             }).finally(() => {
                 setApplying(false)
@@ -55,7 +57,7 @@ export default function useStreamApplyVideoProcessor(
         } else {
             setOutStream(stream)
         }
-    }, [stream, videoProcessorType, options, errorCallback])
+    }, [stream, processorType, options, errorCallback])
 
     return {
         stream: outStream,

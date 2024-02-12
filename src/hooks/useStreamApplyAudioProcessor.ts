@@ -1,5 +1,5 @@
 import { Stream } from '@apirtc/apirtc';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 const HOOK_NAME = "useStreamApplyAudioProcessor";
 /**
@@ -16,9 +16,10 @@ const HOOK_NAME = "useStreamApplyAudioProcessor";
  */
 export default function useStreamApplyAudioProcessor(
     stream: Stream | undefined,
-    audioProcessorType: 'none' | 'noiseReduction',
+    processorType: 'none' | 'noiseReduction',
     errorCallback?: (error: any) => void) {
     //
+    const appliedProcessor = useRef('none');
     const [outStream, setOutStream] = useState(stream);
     const [applying, setApplying] = useState(false);
     const [applied, setApplied] = useState<'none' | 'noiseReduction'>(stream ? (stream as any).audioAppliedFilter : 'none');
@@ -27,13 +28,15 @@ export default function useStreamApplyAudioProcessor(
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(`${HOOK_NAME}|useEffect`, stream, audioProcessorType)
+            console.debug(`${HOOK_NAME}|useEffect`, stream, processorType)
         }
-        if (stream) {
+
+        if (stream && processorType !== appliedProcessor.current) {
             setApplying(true)
-            stream.applyAudioProcessor(audioProcessorType).then(l_stream => {
+            stream.applyAudioProcessor(processorType).then(l_stream => {
                 setOutStream(l_stream)
-                setApplied(audioProcessorType)
+                setApplied(processorType)
+                appliedProcessor.current = processorType;
                 setError(undefined)
             }).catch(error => {
                 setOutStream(stream)
@@ -42,7 +45,7 @@ export default function useStreamApplyAudioProcessor(
                 if (errorCallback) {
                     errorCallback(error)
                 } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                    console.warn(`${HOOK_NAME}|useEffect`, stream, audioProcessorType, error)
+                    console.warn(`${HOOK_NAME}|useEffect`, stream, processorType, error)
                 }
             }).finally(() => {
                 setApplying(false)
@@ -55,7 +58,7 @@ export default function useStreamApplyAudioProcessor(
         } else {
             setOutStream(stream)
         }
-    }, [stream, audioProcessorType, errorCallback])
+    }, [stream, processorType, errorCallback])
 
     return {
         stream: outStream,

@@ -74,16 +74,16 @@ describe('useStreamApplyVideoProcessor', () => {
 
     test(`With a Stream, no effect`, async () => {
         const initStream = new Stream(null, {})
-        const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'none'))
+        const { result } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'none'))
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
-        expect(result.current.applying).toBeTruthy()
-        expect(result.current.error).toBeUndefined()
-
-        await waitForNextUpdate()
         expect(result.current.applying).toBeFalsy()
         expect(result.current.error).toBeUndefined()
-        expect(result.current.applied).toBe('none')
+
+        // await waitForNextUpdate()
+        // expect(result.current.applying).toBeFalsy()
+        // expect(result.current.error).toBeUndefined()
+        // expect(result.current.applied).toBe('none')
 
         expect((result.current.stream as any).releaseCalled).toBe(false)
     })

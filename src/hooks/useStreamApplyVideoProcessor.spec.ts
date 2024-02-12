@@ -20,29 +20,27 @@ jest.mock('@apirtc/apirtc', () => {
             const initial = {
                 releaseCalled: false,
                 videoAppliedFilter: 'none',
-                getId: () => { return 'id' },
+                getId: () => { return 'id'; },
                 applyVideoProcessor: (type: string) => {
                     return new Promise<any>((resolve, reject) => {
                         if (opts.fail) {
                             reject('fail')
                         } else {
                             if (type === 'none') {
-                                resolve(initial);
+                                resolve(initial)
                             } else {
-                                //initial.videoAppliedFilter = type;
                                 const streamWithEffect = {
                                     releaseCalled: false,
                                     videoAppliedFilter: type,
                                     getId: () => { return 'id-' + type },
                                     release: function () { this.releaseCalled = true }
                                 };
-                                //(initial as any).children = [streamWithEffect];
                                 resolve(streamWithEffect)
                             }
                         }
                     })
                 },
-                release: function () { this.releaseCalled = true }
+                release: function () { this.releaseCalled = true; }
             };
             return initial
         }),
@@ -57,26 +55,21 @@ describe('useStreamApplyVideoProcessor', () => {
         const { result } = renderHook(() => useStreamApplyVideoProcessor(undefined, 'blur'))
         expect(result.current.stream).toBe(undefined)
         expect(result.current.applied).toBe('none')
-        // act(() => {
-        //     result.current.toggle()
-        // })
-
-        //await waitForNextUpdate()
-
-        // expect(result.current.stream).toBe(undefined)
-        // expect(result.current.blurred).toBe(false)
+        expect(result.current.error).toBeUndefined()
     })
 
     test(`undefined stream, no effect`, () => {
         const { result } = renderHook(() => useStreamApplyVideoProcessor(undefined, 'none'))
         expect(result.current.stream).toBe(undefined)
         expect(result.current.applied).toBe('none')
+        expect(result.current.error).toBeUndefined()
     })
 
     test(`undefined stream, blur effect`, () => {
         const { result } = renderHook(() => useStreamApplyVideoProcessor(undefined, 'blur'))
         expect(result.current.stream).toBe(undefined)
         expect(result.current.applied).toBe('none')
+        expect(result.current.error).toBeUndefined()
     })
 
     test(`With a Stream, no effect`, async () => {
@@ -85,10 +78,12 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
         expect(result.current.applying).toBeTruthy()
+        expect(result.current.error).toBeUndefined()
 
         await waitForNextUpdate()
         expect(result.current.applying).toBeFalsy()
-        //expect(result.current.applied).toBe('none')
+        expect(result.current.error).toBeUndefined()
+        expect(result.current.applied).toBe('none')
 
         expect((result.current.stream as any).releaseCalled).toBe(false)
     })
@@ -131,30 +126,12 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
         expect(result.current.applying).toBeTruthy()
+        expect(result.current.error).toBeUndefined()
 
         await waitForNextUpdate()
         expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeDefined()
     })
-
-    // test(`With a Stream, to be blurred, blur fails, with callback`, (done: any) => {
-    //     // As this is  almost same test as above, try with different logs level config to complete code coverage
-    //     setLogLevel('error')
-    //     const initStream = new Stream(null, { fail: true })
-    //     const { result, waitForNextUpdate } = renderHook(() => useStreamApplyVideoProcessor(initStream, 'blur', undefined, (error) => {
-    //         console.log("ERROR", error)
-    //         try {
-    //             expect(result.current.applying).toBeFalsy()
-    //             expect(error).toBe('fail')
-    //             done()
-    //         } catch (err) {
-    //             done(err);
-    //         }
-    //     }))
-    //     // the values don't change, so no need to wait for next update
-    //     //await waitForNextUpdate()
-    //     expect(result.current.stream?.getId()).toBe('id')
-    //     expect(result.current.applied).toBe('none') 
-    // })
 
     test(`With a Stream, to be blurred, blur fails, with callback`, async () => {
         // As this is  almost same test as above, try with different logs level config to complete code coverage
@@ -177,9 +154,11 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.stream?.getId()).toBe('id')
         expect(result.current.applied).toBe('none')
         expect(result.current.applying).toBeTruthy()
+        expect(result.current.error).toBeUndefined()
 
         await waitForNextUpdate();
         expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeDefined()
         expect(tested).toBe(true)
     })
 })

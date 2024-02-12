@@ -44,6 +44,16 @@ import { useCameraStream } from "@apirtc/react-lib";
 const { stream } = useCameraStream(session);
 ```
 
+### useStreamApplyAudioProcessor
+
+```ts
+import { useStreamApplyAudioProcessor } from "@apirtc/react-lib";
+const { stream: noiseReductionStream } = useStreamApplyAudioProcessor(
+  stream,
+  "noiseReduction"
+);
+```
+
 ### useStreamApplyVideoProcessor
 
 ```ts

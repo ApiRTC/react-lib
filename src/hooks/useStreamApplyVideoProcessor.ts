@@ -26,9 +26,17 @@ export default function useStreamApplyVideoProcessor(
     const [error, setError] = useState<any>();
 
     useEffect(() => {
+        // Reset appliedProcessor.current when stream changes
+        return () => {
+            appliedProcessor.current = undefined;
+        }
+    }, [stream])
+
+    useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(`${HOOK_NAME}|useEffect`, stream, processorType, options)
         }
+        setOutStream(stream)
         const applied = appliedProcessor.current || (stream as any)?.videoAppliedFilter || 'none';
         if (stream && processorType !== applied) {
             setApplying(true)
@@ -37,7 +45,6 @@ export default function useStreamApplyVideoProcessor(
                 appliedProcessor.current = processorType;
                 setError(undefined)
             }).catch(error => {
-                setOutStream(stream)
                 setError(error)
                 if (errorCallback) {
                     errorCallback(error)
@@ -47,11 +54,9 @@ export default function useStreamApplyVideoProcessor(
             }).finally(() => {
                 setApplying(false)
             })
-            return () => {
-                setError(undefined)
-            }
-        } else {
-            setOutStream(stream)
+        }
+        return () => {
+            setError(undefined)
         }
     }, [stream, processorType, options, errorCallback])
 

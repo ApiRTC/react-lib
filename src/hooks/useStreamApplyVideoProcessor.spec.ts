@@ -208,14 +208,57 @@ describe('useStreamApplyVideoProcessor', () => {
         rerender({ stream: aStream, type: 'none' })
         expect(result.current.applying).toBeTruthy()
         expect(result.current.applied).toBe('blur')
-        expect(result.current.stream).toBeUndefined()
+        expect(result.current.stream).toBe(aStream)
         expect(result.current.error).toBeUndefined()
 
         await waitForNextUpdate()
         expect(result.current.applying).toBeFalsy()
         expect(result.current.applied).toBe('none')
+        expect(result.current.stream).not.toBe(aStream)
         expect(result.current.stream?.getId()).toBe('id-none')
         expect(result.current.error).toBeUndefined()
+    })
+
+    test(`Changing streams`, async () => {
+
+        const { result, waitForNextUpdate, rerender } = renderHook(
+            ({ stream, type }) => useStreamApplyVideoProcessor(stream, type),
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'blur' } });
+
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        const stream01 = new Stream(null, { _initialVideoAppliedProcessor: 'none' });
+
+        // Then make stream defined
+        rerender({ stream: stream01, type: 'blur' })
+        expect(result.current.applying).toBeTruthy()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.stream).toBe(stream01)
+        expect(result.current.error).toBeUndefined()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.applied).toBe('blur')
+        expect(result.current.stream?.getId()).toBe('id-blur')
+        expect(result.current.error).toBeUndefined()
+
+        // Change stream
+        const stream02 = new Stream(null, { _initialVideoAppliedProcessor: 'none' });
+        rerender({ stream: stream02, type: 'blur' })
+        expect(result.current.applying).toBeTruthy()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.stream).toBe(stream02)
+        expect(result.current.error).toBeUndefined()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.applied).toBe('blur')
+        expect(result.current.stream?.getId()).toBe('id-blur')
+        expect(result.current.error).toBeUndefined()
+
     })
 
 })

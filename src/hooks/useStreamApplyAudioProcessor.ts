@@ -25,10 +25,17 @@ export default function useStreamApplyAudioProcessor(
     const [error, setError] = useState<any>();
 
     useEffect(() => {
+        // Reset appliedProcessor.current when stream changes
+        return () => {
+            appliedProcessor.current = undefined;
+        }
+    }, [stream])
+
+    useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(`${HOOK_NAME}|useEffect`, stream, processorType)
         }
-
+        setOutStream(stream)
         const applied = appliedProcessor.current || (stream as any)?.audioAppliedFilter || 'none';
         if (stream && processorType !== applied) {
             setApplying(true)
@@ -47,11 +54,9 @@ export default function useStreamApplyAudioProcessor(
             }).finally(() => {
                 setApplying(false)
             })
-            return () => {
-                setError(undefined)
-            }
-        } else {
-            setOutStream(stream)
+        }
+        return () => {
+            setError(undefined)
         }
     }, [stream, processorType, errorCallback])
 

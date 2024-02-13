@@ -20,27 +20,24 @@ export default function useStreamApplyVideoProcessor(
     processorType: 'none' | 'blur' | 'backgroundImage', options?: VideoProcessorOptions,
     errorCallback?: (error: any) => void) {
     //
-    const appliedProcessor = useRef('none');
+    const appliedProcessor = useRef<'none' | 'blur' | 'backgroundImage'>();
     const [outStream, setOutStream] = useState(stream);
     const [applying, setApplying] = useState(false);
-    const [applied, setApplied] = useState<'none' | 'blur' | 'backgroundImage'>(stream ? (stream as any).videoAppliedFilter : 'none');
-
     const [error, setError] = useState<any>();
 
     useEffect(() => {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
             console.debug(`${HOOK_NAME}|useEffect`, stream, processorType, options)
         }
-        if (stream && processorType !== appliedProcessor.current) {
+        const applied = appliedProcessor.current || (stream as any)?.videoAppliedFilter || 'none';
+        if (stream && processorType !== applied) {
             setApplying(true)
             stream.applyVideoProcessor(processorType, options).then(l_stream => {
                 setOutStream(l_stream)
-                setApplied(processorType)
                 appliedProcessor.current = processorType;
                 setError(undefined)
             }).catch(error => {
                 setOutStream(stream)
-                setApplied((stream as any).videoAppliedFilter)
                 setError(error)
                 if (errorCallback) {
                     errorCallback(error)
@@ -51,7 +48,6 @@ export default function useStreamApplyVideoProcessor(
                 setApplying(false)
             })
             return () => {
-                setApplied('none')
                 setError(undefined)
             }
         } else {
@@ -62,7 +58,7 @@ export default function useStreamApplyVideoProcessor(
     return {
         stream: outStream,
         applying,
-        applied,
+        applied: appliedProcessor.current || (stream as any)?.videoAppliedFilter || 'none',
         error
     }
 }

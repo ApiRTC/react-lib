@@ -8,6 +8,8 @@ import useStreamApplyVideoProcessor from './useStreamApplyVideoProcessor';
 
 import { setLogLevel } from '..';
 
+// const initRelease = jest.fn();
+
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
@@ -18,29 +20,22 @@ jest.mock('@apirtc/apirtc', () => {
         ...originalModule,
         Stream: jest.fn().mockImplementation((data: MediaStream | null, opts: any) => {
             const initial = {
-                releaseCalled: false,
-                videoAppliedFilter: 'none',
+                videoAppliedFilter: opts._initialVideoAppliedProcessor || 'none',
                 getId: () => { return 'id'; },
                 applyVideoProcessor: (type: string) => {
                     return new Promise<any>((resolve, reject) => {
                         if (opts.fail) {
                             reject('fail')
                         } else {
-                            if (type === 'none') {
-                                resolve(initial)
-                            } else {
-                                const streamWithEffect = {
-                                    releaseCalled: false,
-                                    videoAppliedFilter: type,
-                                    getId: () => { return 'id-' + type },
-                                    release: function () { this.releaseCalled = true }
-                                };
-                                resolve(streamWithEffect)
-                            }
+                            const streamWithEffect = {
+                                videoAppliedFilter: type,
+                                getId: () => { return 'id-' + type }
+                            };
+                            resolve(streamWithEffect)
                         }
                     })
                 },
-                release: function () { this.releaseCalled = true; }
+                //release: initRelease
             };
             return initial
         }),
@@ -79,13 +74,6 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.applied).toBe('none')
         expect(result.current.applying).toBeFalsy()
         expect(result.current.error).toBeUndefined()
-
-        // await waitForNextUpdate()
-        // expect(result.current.applying).toBeFalsy()
-        // expect(result.current.error).toBeUndefined()
-        // expect(result.current.applied).toBe('none')
-
-        expect((result.current.stream as any).releaseCalled).toBe(false)
     })
 
     test(`With a Stream, to be blurred`, async () => {
@@ -101,7 +89,6 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.stream).not.toBe(initStream)
         const blurredStream = result.current.stream;
         expect(blurredStream?.getId()).toBe('id-blur')
-        expect((blurredStream as any).releaseCalled).toBe(false)
         expect(result.current.applied).toBe('blur')
 
         // Reset to no effect
@@ -110,12 +97,10 @@ describe('useStreamApplyVideoProcessor', () => {
 
         await waitForNextUpdate()
         expect(result.current.applying).toBeFalsy()
-        expect(result.current.stream?.getId()).toBe('id')
+        expect(result.current.stream?.getId()).toBe('id-none')
         expect(result.current.applied).toBe('none')
-        // the blurred stream shall be released
-        expect((blurredStream as any).releaseCalled).toBe(false)
         // the out stream shall now be the initial stream
-        expect(result.current.stream).toBe(initStream)
+        // expect(result.current.stream).toBe(initStream)
     })
 
     test(`With a Stream, to be blurred, blur fails`, async () => {
@@ -161,4 +146,76 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.error).toBeDefined()
         expect(tested).toBe(true)
     })
+
+    test(`With a Stream already blurred, to be left blurred`, async () => {
+        const initStream = new Stream(null, { _initialVideoAppliedProcessor: 'blur' })
+        const { result, waitForNextUpdate, rerender } = renderHook(
+            (type: 'none' | 'blur') => useStreamApplyVideoProcessor(initStream, type),
+            { initialProps: 'blur' });
+
+        expect(result.current.stream).toBe(initStream)
+        expect(result.current.applied).toBe('blur')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        // Then set remove effect
+        rerender('none')
+        expect(result.current.applying).toBeTruthy()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.stream?.getId()).toBe('id-none')
+        expect(result.current.applied).toBe('none')
+        // the out stream shall now be the initial stream
+        //expect(result.current.stream).toBe(initStream)
+    })
+
+    test(`Init with no stream, then add a Stream already blurred, to be left blurred`, async () => {
+
+        const { result, rerender } = renderHook(
+            ({ stream, type }) => useStreamApplyVideoProcessor(stream, type),
+            { initialProps: { stream: undefined as unknown as Stream, type: 'blur' as 'none' | 'blur' } });
+
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        const aStream = new Stream(null, { _initialVideoAppliedProcessor: 'blur' });
+
+        // Then make stream defined
+        rerender({ stream: aStream, type: 'blur' })
+        expect(result.current.applied).toBe('blur')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.stream).toBe(aStream)
+        expect(result.current.error).toBeUndefined()
+    })
+
+    test(`Init with no stream, then add a Stream already blurred, to be un-blurred`, async () => {
+
+        const { result, waitForNextUpdate, rerender } = renderHook(
+            ({ stream, type }) => useStreamApplyVideoProcessor(stream, type),
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'blur' } });
+
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        const aStream = new Stream(null, { _initialVideoAppliedProcessor: 'blur' });
+
+        // Then make stream defined
+        rerender({ stream: aStream, type: 'none' })
+        expect(result.current.applying).toBeTruthy()
+        expect(result.current.applied).toBe('blur')
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.error).toBeUndefined()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.stream?.getId()).toBe('id-none')
+        expect(result.current.error).toBeUndefined()
+    })
+
 })

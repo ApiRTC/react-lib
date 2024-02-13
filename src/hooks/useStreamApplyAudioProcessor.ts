@@ -19,11 +19,9 @@ export default function useStreamApplyAudioProcessor(
     processorType: 'none' | 'noiseReduction',
     errorCallback?: (error: any) => void) {
     //
-    const appliedProcessor = useRef('none');
+    const appliedProcessor = useRef<'none' | 'noiseReduction'>();
     const [outStream, setOutStream] = useState(stream);
     const [applying, setApplying] = useState(false);
-    const [applied, setApplied] = useState<'none' | 'noiseReduction'>(stream ? (stream as any).audioAppliedFilter : 'none');
-
     const [error, setError] = useState<any>();
 
     useEffect(() => {
@@ -31,16 +29,15 @@ export default function useStreamApplyAudioProcessor(
             console.debug(`${HOOK_NAME}|useEffect`, stream, processorType)
         }
 
-        if (stream && processorType !== appliedProcessor.current) {
+        const applied = appliedProcessor.current || (stream as any)?.audioAppliedFilter || 'none';
+        if (stream && processorType !== applied) {
             setApplying(true)
             stream.applyAudioProcessor(processorType).then(l_stream => {
                 setOutStream(l_stream)
-                setApplied(processorType)
                 appliedProcessor.current = processorType;
                 setError(undefined)
             }).catch(error => {
                 setOutStream(stream)
-                setApplied((stream as any).audioAppliedFilter)
                 setError(error)
                 if (errorCallback) {
                     errorCallback(error)
@@ -50,9 +47,7 @@ export default function useStreamApplyAudioProcessor(
             }).finally(() => {
                 setApplying(false)
             })
-
             return () => {
-                setApplied('none')
                 setError(undefined)
             }
         } else {
@@ -63,7 +58,7 @@ export default function useStreamApplyAudioProcessor(
     return {
         stream: outStream,
         applying,
-        applied,
+        applied: appliedProcessor.current || (stream as any)?.audioAppliedFilter || 'none',
         error
     }
 }

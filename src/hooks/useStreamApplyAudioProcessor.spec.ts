@@ -18,29 +18,21 @@ jest.mock('@apirtc/apirtc', () => {
         ...originalModule,
         Stream: jest.fn().mockImplementation((data: MediaStream | null, opts: any) => {
             const initial = {
-                releaseCalled: false,
-                audioAppliedFilter: 'none',
+                audioAppliedFilter: opts._initialAudioAppliedProcessor || 'none',
                 getId: () => { return 'id'; },
                 applyAudioProcessor: (type: string) => {
                     return new Promise<any>((resolve, reject) => {
                         if (opts.fail) {
                             reject('fail')
                         } else {
-                            if (type === 'none') {
-                                resolve(initial)
-                            } else {
-                                const streamWithEffect = {
-                                    releaseCalled: false,
-                                    audioAppliedFilter: type,
-                                    getId: () => { return 'id-' + type },
-                                    release: function () { this.releaseCalled = true }
-                                };
-                                resolve(streamWithEffect)
-                            }
+                            const streamWithEffect = {
+                                audioAppliedFilter: type,
+                                getId: () => { return 'id-' + type }
+                            };
+                            resolve(streamWithEffect)
                         }
                     })
-                },
-                release: function () { this.releaseCalled = true; }
+                }
             };
             return initial
         }),
@@ -79,13 +71,6 @@ describe('useStreamApplyAudioProcessor', () => {
         expect(result.current.applied).toBe('none')
         expect(result.current.applying).toBeFalsy()
         expect(result.current.error).toBeUndefined()
-
-        // await waitForNextUpdate()
-        // expect(result.current.applying).toBeFalsy()
-        // expect(result.current.error).toBeUndefined()
-        // expect(result.current.applied).toBe('none')
-
-        expect((result.current.stream as any).releaseCalled).toBe(false)
     })
 
     test(`With a Stream, effect to be applied`, async () => {
@@ -101,7 +86,6 @@ describe('useStreamApplyAudioProcessor', () => {
         expect(result.current.stream).not.toBe(initStream)
         const appliedStream = result.current.stream;
         expect(appliedStream?.getId()).toBe('id-noiseReduction')
-        expect((appliedStream as any).releaseCalled).toBe(false)
         expect(result.current.applied).toBe('noiseReduction')
 
         // Reset to no effect
@@ -110,12 +94,8 @@ describe('useStreamApplyAudioProcessor', () => {
 
         await waitForNextUpdate()
         expect(result.current.applying).toBeFalsy()
-        expect(result.current.stream?.getId()).toBe('id')
+        expect(result.current.stream?.getId()).toBe('id-none')
         expect(result.current.applied).toBe('none')
-        // the stream with effect shall be released
-        expect((appliedStream as any).releaseCalled).toBe(false)
-        // the out stream shall now be the initial stream
-        expect(result.current.stream).toBe(initStream)
     })
 
     test(`With a Stream, effect to be applied, effect fails`, async () => {
@@ -160,5 +140,76 @@ describe('useStreamApplyAudioProcessor', () => {
         expect(result.current.applying).toBeFalsy()
         expect(result.current.error).toBeDefined()
         expect(tested).toBe(true)
+    })
+
+    test(`With a Stream already with effect, to be left with effect`, async () => {
+        const initStream = new Stream(null, { _initialAudioAppliedProcessor: 'noiseReduction' })
+        const { result, waitForNextUpdate, rerender } = renderHook(
+            (type: 'none' | 'noiseReduction') => useStreamApplyAudioProcessor(initStream, type),
+            { initialProps: 'noiseReduction' });
+
+        expect(result.current.stream).toBe(initStream)
+        expect(result.current.applied).toBe('noiseReduction')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        // Then set remove effect
+        rerender('none')
+        expect(result.current.applying).toBeTruthy()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.stream?.getId()).toBe('id-none')
+        expect(result.current.applied).toBe('none')
+        // the out stream shall now be the initial stream
+        //expect(result.current.stream).toBe(initStream)
+    })
+
+    test(`Init with no stream, then add a Stream already with effect, to be left with effect`, async () => {
+
+        const { result, rerender } = renderHook(
+            ({ stream, type }) => useStreamApplyAudioProcessor(stream, type),
+            { initialProps: { stream: undefined as unknown as Stream, type: 'noiseReduction' as 'none' | 'noiseReduction' } });
+
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        const aStream = new Stream(null, { _initialAudioAppliedProcessor: 'noiseReduction' });
+
+        // Then make stream defined
+        rerender({ stream: aStream, type: 'noiseReduction' })
+        expect(result.current.applied).toBe('noiseReduction')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.stream).toBe(aStream)
+        expect(result.current.error).toBeUndefined()
+    })
+
+    test(`Init with no stream, then add a Stream already with effect, to be un-effect`, async () => {
+
+        const { result, waitForNextUpdate, rerender } = renderHook(
+            ({ stream, type }) => useStreamApplyAudioProcessor(stream, type),
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'noiseReduction' } });
+
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.error).toBeUndefined()
+
+        const aStream = new Stream(null, { _initialAudioAppliedProcessor: 'noiseReduction' });
+
+        // Then make stream defined
+        rerender({ stream: aStream, type: 'none' })
+        expect(result.current.applying).toBeTruthy()
+        expect(result.current.applied).toBe('noiseReduction')
+        expect(result.current.stream).toBeUndefined()
+        expect(result.current.error).toBeUndefined()
+
+        await waitForNextUpdate()
+        expect(result.current.applying).toBeFalsy()
+        expect(result.current.applied).toBe('none')
+        expect(result.current.stream?.getId()).toBe('id-none')
+        expect(result.current.error).toBeUndefined()
     })
 })

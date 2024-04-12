@@ -1,4 +1,4 @@
-import { Stream } from '@apirtc/apirtc';
+import { AudioProcessorType, Stream } from '@apirtc/apirtc';
 import { useEffect, useRef, useState } from 'react';
 
 const HOOK_NAME = "useStreamApplyAudioProcessor";
@@ -16,10 +16,10 @@ const HOOK_NAME = "useStreamApplyAudioProcessor";
  */
 export default function useStreamApplyAudioProcessor(
     stream: Stream | undefined,
-    processorType: 'none' | 'noiseReduction',
+    processorType: AudioProcessorType,
     errorCallback?: (error: any) => void) {
     //
-    const appliedProcessor = useRef<'none' | 'noiseReduction'>();
+    const appliedProcessor = useRef<AudioProcessorType>();
     const [outStream, setOutStream] = useState(stream);
     const [applying, setApplying] = useState(false);
     const [error, setError] = useState<any>();
@@ -36,7 +36,7 @@ export default function useStreamApplyAudioProcessor(
             console.debug(`${HOOK_NAME}|useEffect`, stream, processorType)
         }
         setOutStream(stream)
-        const applied = appliedProcessor.current || (stream as any)?.audioAppliedFilter || 'none';
+        const applied = appliedProcessor.current || stream?.audioAppliedFilter || 'none';
         if (stream && processorType !== applied) {
             setApplying(true)
             stream.applyAudioProcessor(processorType).then(l_stream => {
@@ -44,7 +44,6 @@ export default function useStreamApplyAudioProcessor(
                 appliedProcessor.current = processorType;
                 setError(undefined)
             }).catch(error => {
-                setOutStream(stream)
                 setError(error)
                 if (errorCallback) {
                     errorCallback(error)

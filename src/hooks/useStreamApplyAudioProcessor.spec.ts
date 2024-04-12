@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react-hooks';
 
 import './getDisplayMedia.mock';
 
-import { Stream } from '@apirtc/apirtc';
+import { AudioProcessorType, Stream } from '@apirtc/apirtc';
 
 import useStreamApplyAudioProcessor from './useStreamApplyAudioProcessor';
 
@@ -76,7 +76,7 @@ describe('useStreamApplyAudioProcessor', () => {
     test(`With a Stream, effect to be applied`, async () => {
         const initStream = new Stream(null, {})
         const { result, waitForNextUpdate, rerender } = renderHook(
-            (type: 'none' | 'noiseReduction') => useStreamApplyAudioProcessor(initStream, type),
+            (type: AudioProcessorType) => useStreamApplyAudioProcessor(initStream, type),
             { initialProps: 'noiseReduction' });
         expect(result.current.applying).toBeTruthy()
 
@@ -145,7 +145,7 @@ describe('useStreamApplyAudioProcessor', () => {
     test(`With a Stream already with effect, to be left with effect`, async () => {
         const initStream = new Stream(null, { _initialAudioAppliedProcessor: 'noiseReduction' })
         const { result, waitForNextUpdate, rerender } = renderHook(
-            (type: 'none' | 'noiseReduction') => useStreamApplyAudioProcessor(initStream, type),
+            (type: AudioProcessorType) => useStreamApplyAudioProcessor(initStream, type),
             { initialProps: 'noiseReduction' });
 
         expect(result.current.stream).toBe(initStream)
@@ -169,7 +169,7 @@ describe('useStreamApplyAudioProcessor', () => {
 
         const { result, rerender } = renderHook(
             ({ stream, type }) => useStreamApplyAudioProcessor(stream, type),
-            { initialProps: { stream: undefined as unknown as Stream, type: 'noiseReduction' as 'none' | 'noiseReduction' } });
+            { initialProps: { stream: undefined as unknown as Stream, type: 'noiseReduction' as AudioProcessorType } });
 
         expect(result.current.stream).toBeUndefined()
         expect(result.current.applied).toBe('none')
@@ -190,7 +190,7 @@ describe('useStreamApplyAudioProcessor', () => {
 
         const { result, waitForNextUpdate, rerender } = renderHook(
             ({ stream, type }) => useStreamApplyAudioProcessor(stream, type),
-            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'noiseReduction' } });
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as AudioProcessorType } });
 
         expect(result.current.stream).toBeUndefined()
         expect(result.current.applied).toBe('none')
@@ -217,7 +217,7 @@ describe('useStreamApplyAudioProcessor', () => {
 
         const { result, waitForNextUpdate, rerender } = renderHook(
             ({ stream, type }) => useStreamApplyAudioProcessor(stream, type),
-            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'noiseReduction' } });
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as AudioProcessorType } });
 
         expect(result.current.stream).toBeUndefined()
         expect(result.current.applied).toBe('none')

@@ -2,7 +2,7 @@ import { renderHook } from '@testing-library/react-hooks';
 
 import './getDisplayMedia.mock';
 
-import { Stream } from '@apirtc/apirtc';
+import { Stream, VideoProcessorType } from '@apirtc/apirtc';
 
 import useStreamApplyVideoProcessor from './useStreamApplyVideoProcessor';
 
@@ -79,7 +79,7 @@ describe('useStreamApplyVideoProcessor', () => {
     test(`With a Stream, to be blurred`, async () => {
         const initStream = new Stream(null, {})
         const { result, waitForNextUpdate, rerender } = renderHook(
-            (type: 'none' | 'blur') => useStreamApplyVideoProcessor(initStream, type),
+            (type: VideoProcessorType) => useStreamApplyVideoProcessor(initStream, type),
             { initialProps: 'blur' });
         expect(result.current.applying).toBeTruthy()
 
@@ -92,7 +92,7 @@ describe('useStreamApplyVideoProcessor', () => {
         expect(result.current.applied).toBe('blur')
 
         // Reset to no effect
-        rerender('none')
+        rerender('none' as VideoProcessorType)
         expect(result.current.applying).toBeTruthy()
 
         await waitForNextUpdate()
@@ -150,7 +150,7 @@ describe('useStreamApplyVideoProcessor', () => {
     test(`With a Stream already blurred, to be left blurred`, async () => {
         const initStream = new Stream(null, { _initialVideoAppliedProcessor: 'blur' })
         const { result, waitForNextUpdate, rerender } = renderHook(
-            (type: 'none' | 'blur') => useStreamApplyVideoProcessor(initStream, type),
+            (type: VideoProcessorType) => useStreamApplyVideoProcessor(initStream, type),
             { initialProps: 'blur' });
 
         expect(result.current.stream).toBe(initStream)
@@ -174,7 +174,7 @@ describe('useStreamApplyVideoProcessor', () => {
 
         const { result, rerender } = renderHook(
             ({ stream, type }) => useStreamApplyVideoProcessor(stream, type),
-            { initialProps: { stream: undefined as unknown as Stream, type: 'blur' as 'none' | 'blur' } });
+            { initialProps: { stream: undefined as unknown as Stream, type: 'blur' as VideoProcessorType } });
 
         expect(result.current.stream).toBeUndefined()
         expect(result.current.applied).toBe('none')
@@ -195,7 +195,7 @@ describe('useStreamApplyVideoProcessor', () => {
 
         const { result, waitForNextUpdate, rerender } = renderHook(
             ({ stream, type }) => useStreamApplyVideoProcessor(stream, type),
-            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'blur' } });
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as VideoProcessorType } });
 
         expect(result.current.stream).toBeUndefined()
         expect(result.current.applied).toBe('none')
@@ -223,7 +223,7 @@ describe('useStreamApplyVideoProcessor', () => {
 
         const { result, waitForNextUpdate, rerender } = renderHook(
             ({ stream, type }) => useStreamApplyVideoProcessor(stream, type),
-            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as 'none' | 'blur' } });
+            { initialProps: { stream: undefined as unknown as Stream, type: 'none' as VideoProcessorType } });
 
         expect(result.current.stream).toBeUndefined()
         expect(result.current.applied).toBe('none')

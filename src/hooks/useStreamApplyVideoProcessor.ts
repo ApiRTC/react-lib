@@ -1,4 +1,4 @@
-import { Stream, VideoProcessorOptions } from '@apirtc/apirtc';
+import { Stream, VideoProcessorOptions, VideoProcessorType } from '@apirtc/apirtc';
 import { useEffect, useRef, useState } from 'react';
 
 const HOOK_NAME = "useStreamApplyVideoProcessor";
@@ -17,10 +17,10 @@ const HOOK_NAME = "useStreamApplyVideoProcessor";
  */
 export default function useStreamApplyVideoProcessor(
     stream: Stream | undefined,
-    processorType: 'none' | 'blur' | 'backgroundImage', options?: VideoProcessorOptions,
+    processorType: VideoProcessorType, options?: VideoProcessorOptions,
     errorCallback?: (error: any) => void) {
     //
-    const appliedProcessor = useRef<'none' | 'blur' | 'backgroundImage'>();
+    const appliedProcessor = useRef<VideoProcessorType>();
     const [outStream, setOutStream] = useState(stream);
     const [applying, setApplying] = useState(false);
     const [error, setError] = useState<any>();
@@ -37,7 +37,7 @@ export default function useStreamApplyVideoProcessor(
             console.debug(`${HOOK_NAME}|useEffect`, stream, processorType, options)
         }
         setOutStream(stream)
-        const applied = appliedProcessor.current || (stream as any)?.videoAppliedFilter || 'none';
+        const applied = appliedProcessor.current || stream?.videoAppliedFilter || 'none';
         if (stream && processorType !== applied) {
             setApplying(true)
             stream.applyVideoProcessor(processorType, options).then(l_stream => {

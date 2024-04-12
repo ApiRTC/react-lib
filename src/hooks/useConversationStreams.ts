@@ -36,22 +36,38 @@ export default function useConversationStreams(
   const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>());
   const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
 
+  //const [publishing, setPublishing] = useState(false);
+  // const working = useRef(false);
+  // const next_streamsToPublish = useRef<Array<{ stream: Stream, options?: PublishOptions } | undefined | null>>([]);
+
   const publish: (localStream: Stream, options?: PublishOptions) => Promise<Stream> =
     useCallback((localStream: Stream, options?: PublishOptions) => {
+      // setPublishing(true)
       return new Promise<Stream>((resolve, reject) => {
         if (conversation) {
           if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(`${HOOK_NAME}|publish|${conversation.getName()}`, localStream, options)
+            console.debug(`${HOOK_NAME}|${conversation.getName()}|publish stream<${localStream.getId()}>`, localStream, options)
           }
           conversation.publish(localStream, options).then((stream: Stream) => {
             if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-              console.info(`${HOOK_NAME}|published|${conversation.getName()}`, stream)
+              console.info(`${HOOK_NAME}|${conversation.getName()}|published stream<${stream.getId()}>`)
             }
-            setPublishedStreams((l_streams) => [...l_streams, stream])
+            // if (conversation.isPublishedStream(stream)) {
+            //   setPublishedStreams((l_streams) => [...l_streams, stream])
+            // } else {
+            //   if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+            //     console.warn(`${HOOK_NAME}|${conversation.getName()}|published stream<${stream.getId()}> is actually not published!`)
+            //   }
+            // }
             resolve(stream)
           }).catch((error: any) => {
+            // remove from optimistic filled publishedStreams
+            setPublishedStreams((l_streams) => l_streams.filter((item) => item !== localStream))
             reject(error)
           })
+          // .finally(() => {
+          //   setPublishing(false)
+          // })
         }
       })
     }, [conversation]);
@@ -60,22 +76,26 @@ export default function useConversationStreams(
     return new Promise<Stream>((resolve, reject) => {
       if (conversation) {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|${oldStream.getId()} -> ${newStream.getId()}`)
+          console.debug(`${HOOK_NAME}|${conversation.getName()}|replacePublishedStream ${oldStream.getId()} -> ${newStream.getId()}`)
         }
         conversation.replacePublishedStream(oldStream, newStream).then((stream: Stream) => {
           if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-            console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream)
+            console.info(`${HOOK_NAME}|${conversation.getName()}|replaced stream<${oldStream.getId()}> by stream<${stream.getId()}>`, oldStream, stream)
           }
-
-          // replace old stream by new one at same position
-          setPublishedStreams((l_streams) => {
-            const index = l_streams.indexOf(oldStream);
-            if (index >= 0) {
-              l_streams.splice(index, 1, stream)
-            }
-            return Array.from(l_streams)
-          })
-
+          // if (conversation.isPublishedStream(stream)) {
+          //   // replace old stream by new one at same position
+          //   setPublishedStreams((l_streams) => {
+          //     const index = l_streams.indexOf(oldStream);
+          //     if (index >= 0) {
+          //       l_streams.splice(index, 1, stream)
+          //     }
+          //     return Array.from(l_streams)
+          //   })
+          // } else {
+          //   if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+          //     console.warn(`${HOOK_NAME}|${conversation.getName()}|replacing stream<${stream.getId()}> is actually not published!`)
+          //   }
+          // }
           resolve(stream)
         }).catch((error: any) => {
           reject(error)
@@ -123,8 +143,22 @@ export default function useConversationStreams(
     // Prepare a set for Streams to publish, for further optimized check
     const streamsToPublishSet = new Set(streamsToPublish.filter(notEmpty).map((item) => item.stream));
 
+    // optimistic
+    setPublishedStreams(newPublishedStreamsCache.filter(notEmpty).map((item) => item.stream))
+
     const doPublish = (index: number, obj: { stream: Stream, options?: PublishOptions }) => {
       publish(obj.stream, obj.options)
+        // .then((publishedStream) => {
+        //   // Check if the published streams still needs to be published
+        //   if (!publishedStreamsCache.current.find((elt) => elt?.stream === publishedStream)) {
+        //     // Can happen in some race conditions when async publish is slower
+        //     // than other streamsToPublish state changes
+        //     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+        //       console.info(`${HOOK_NAME}|publish|un-publishing<${publishedStream.getId()}>`)
+        //     }
+        //     unpublish(publishedStream)
+        //   }
+        // })
         .catch((error: Error) => {
           // Note that publishedStreamsCache is updated asynchronously here (catch)
           // Hence why publishedStreamsCache must always be the same array instance
@@ -145,7 +179,8 @@ export default function useConversationStreams(
       if (previous && next) {
 
         const doUnpublishPublish = () => {
-          unpublish(previous.stream)
+          // unpublish(previous.stream)
+          conversation?.unpublish(previous.stream)
           doPublish(i, next)
         };
 
@@ -171,6 +206,17 @@ export default function useConversationStreams(
               // unpublish and republish if options also change
               if (JSON.stringify(previous.options) === JSON.stringify(next.options)) {
                 replacePublishedStream(previous.stream, next.stream)
+                  // .then((publishedStream) => {
+                  //   // Check if the published streams still needs to be published
+                  //   if (!publishedStreamsCache.current.find((elt) => elt?.stream === publishedStream)) {
+                  //     // Can happen in some race conditions when async publish is slower
+                  //     // than other streamsToPublish state changes
+                  //     if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
+                  //       console.info(`${HOOK_NAME}|replacePublishedStream|un-publishing<${publishedStream.getId()}>`)
+                  //     }
+                  //     unpublish(publishedStream)
+                  //   }
+                  // })
                   // eslint-disable-next-line no-loop-func
                   .catch((error: Error) => {
                     // Note that publishedStreamsCache is updated asynchronously here (catch)
@@ -181,13 +227,17 @@ export default function useConversationStreams(
                     } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
                       console.warn(`${HOOK_NAME}|replacePublishedStream|error`, error)
                     }
+
+                    // remove from optimistic filled publishedStreams
+                    setPublishedStreams((l_streams) => l_streams.filter((item) => item !== next.stream))
                   })
               } else {
                 doUnpublishPublish()
               }
             } else { // new stream is already published
               // So we shall not replace another stream by it, but we need to unpublish the previous
-              unpublish(previous.stream)
+              // unpublish(previous.stream)
+              conversation?.unpublish(previous.stream)
             }
           }
         }
@@ -195,7 +245,8 @@ export default function useConversationStreams(
         // If position in new list is now undefined(or null) while it was in cache:
         // unpublish if and only if stream to unpublish shall not be published (at other position)
         if (!streamsToPublishSet.has(previous.stream)) {
-          unpublish(previous.stream)
+          // unpublish(previous.stream)
+          conversation?.unpublish(previous.stream)
         }
       } else if (!previous && next) {
         // If position in new list is valid : publish it whatever the position in cache.
@@ -214,7 +265,8 @@ export default function useConversationStreams(
     // JSON.stringify(streamsToPublish.map(l_s => `${l_s?.stream.getId()}-${JSON.stringify(l_s?.options)}`)),
     streamsToPublish,
     //publishedStreamsCache, // no need to put in dependency array as the instance shall never change
-    publish, unpublish, replacePublishedStream,
+    publish, //unpublish,
+    replacePublishedStream,
     errorCallback]);
 
   const unpublishAll = useCallback(() => {
@@ -331,7 +383,20 @@ export default function useConversationStreams(
       conversation.on('left', on_left)
 
       if (conversation.isJoined()) {
+        // if (working.current === true) {
+        //   // (queue) streamsToPublish
+        //   next_streamsToPublish.current = streamsToPublish;
+        // } else {
+        //   working.current = true;
         doHandlePublication()
+        //   .finally(()=>{
+        //     working.current = false;
+        //     if (next_streamsToPublish.current)
+        //       {
+        //         setStreamsToPublish
+        //       }
+        //   })
+        // }
       }
 
       return () => {

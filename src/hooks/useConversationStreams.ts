@@ -347,6 +347,7 @@ export default function useConversationStreams(
     publish,
     unpublish,
     replacePublishedStream,
+    unpublishAll,
     unsubscribeAll
   }
 }

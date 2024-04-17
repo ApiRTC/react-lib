@@ -1,5 +1,5 @@
 import { Conversation, PublishOptions, Stream, StreamInfo } from '@apirtc/apirtc';
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 // TODO?: add pagination ?
 // interface Options {
@@ -17,17 +17,11 @@ export default function useConversationStreams(
   conversation: Conversation | undefined,
   /** fully managed list of Stream(s) to publish, with associated publish options */
   streamsToPublish: Array<{ stream: Stream, options?: PublishOptions } | undefined | null> = EMPTY,
-  // TODO: streamIdsToSubscribeTo subscribe to all streams if undefined (default),
-  // or subscribe only to the streamIds in the list. Subscribe to none if list is empty.
-  // Note : the consumer will need to subscribe first to know the ids at least once,
-  // => but this is not good as it would not know if those ids are no more published.. so we need to also output
-  // the list of streams info if  we go that way...
-  // streamIdsToSubscribeTo?: Array<string>,
   errorCallback?: (error: any) => void
 ) {
 
   if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-    console.debug(`${HOOK_NAME}|hook render|${conversation?.getName()}`, streamsToPublish.map((obj) => obj?.options))
+    console.debug(`${HOOK_NAME}|hook render|${conversation?.getName()}`, streamsToPublish.map((obj) => obj?.stream.getId()), streamsToPublish.map((obj) => obj?.options))
   }
 
   // A cache to handle publication differences
@@ -36,20 +30,45 @@ export default function useConversationStreams(
   const [publishedStreams, setPublishedStreams] = useState<Array<Stream>>(new Array<Stream>());
   const [subscribedStreams, setSubscribedStreams] = useState<Array<Stream>>(new Array<Stream>());
 
+  const publishingStreams = useRef<Array<{ stream: Stream, options?: PublishOptions } | undefined | null>>([]);
+  const [publishing, setPublishing] = useState(false);
+  // streamsToPublish can change rapidly.
+  // In order to prevent from to publishing a different list while still publishing,
+  // _streamsToPublish is there to keep the value while publishing.
+  // publishingStreams is a copy of it, returned while publishing.
+  // When no more publishing, the actual input value publishingStreams can be used.
+  // Either it has not changed and nothing happens, or it has and then _streamsToPublish
+  // changes and the publishing process starts again. Any other publishingStreams changes
+  // that happened in between are ignored.
+  const _streamsToPublish = useMemo(() => {
+    if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+      console.debug(`${HOOK_NAME}|useMemo|_streamsToPublish publishing=${publishing} ${publishingStreams.current.length} publishingStreams`, publishingStreams.current.map((obj) => obj?.stream.getId()))
+    }
+    if (publishing) {
+      return publishingStreams.current;
+    } else {
+      publishingStreams.current = streamsToPublish;
+      return streamsToPublish;
+    }
+  }, [streamsToPublish, publishing]);
+
   const publish: (localStream: Stream, options?: PublishOptions) => Promise<Stream> =
     useCallback((localStream: Stream, options?: PublishOptions) => {
       return new Promise<Stream>((resolve, reject) => {
         if (conversation) {
           if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(`${HOOK_NAME}|publish|${conversation.getName()}`, localStream, options)
+            console.debug(`${HOOK_NAME}|${conversation.getName()}|publish ${localStream.getId()}`, localStream, options)
           }
           conversation.publish(localStream, options).then((stream: Stream) => {
             if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-              console.info(`${HOOK_NAME}|published|${conversation.getName()}`, stream)
+              console.info(`${HOOK_NAME}|${conversation.getName()}|published ${stream.getId()}`, stream)
             }
             setPublishedStreams((l_streams) => [...l_streams, stream])
             resolve(stream)
           }).catch((error: any) => {
+            if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+              console.warn(`${HOOK_NAME}|${conversation.getName()}|publish failed ${localStream.getId()}`)
+            }
             reject(error)
           })
         }
@@ -60,11 +79,11 @@ export default function useConversationStreams(
     return new Promise<Stream>((resolve, reject) => {
       if (conversation) {
         if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-          console.debug(`${HOOK_NAME}|replacePublishedStream|${conversation.getName()}|${oldStream.getId()} -> ${newStream.getId()}`)
+          console.debug(`${HOOK_NAME}|${conversation.getName()}|replacePublishedStream ${oldStream.getId()} -> ${newStream.getId()}`)
         }
         conversation.replacePublishedStream(oldStream, newStream).then((stream: Stream) => {
           if (globalThis.apirtcReactLibLogLevel.isInfoEnabled) {
-            console.info(`${HOOK_NAME}|stream replaced|${conversation.getName()}`, oldStream, stream)
+            console.info(`${HOOK_NAME}|${conversation.getName()}|replaced stream<${oldStream.getId()}> by stream<${stream.getId()}>`, oldStream, stream)
           }
 
           // replace old stream by new one at same position
@@ -87,7 +106,7 @@ export default function useConversationStreams(
   const unpublish: (localStream: Stream) => void = useCallback((localStream: Stream) => {
     if (conversation) {
       if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(`${HOOK_NAME}|unpublish|${conversation.getName()}`, localStream.getId(), localStream)
+        console.debug(`${HOOK_NAME}|${conversation.getName()}|unpublish`, localStream.getId(), localStream)
       }
       conversation.unpublish(localStream)
       setPublishedStreams((l_streams) => l_streams.filter((l_stream) => l_stream !== localStream))
@@ -95,11 +114,11 @@ export default function useConversationStreams(
   }, [conversation]);
 
   const doHandlePublication = useCallback(() => {
-    const maxLength = Math.max(publishedStreamsCache.current.length, streamsToPublish.length);
+    const maxLength = Math.max(publishedStreamsCache.current.length, _streamsToPublish.length);
     if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-      console.debug(`${HOOK_NAME}|doHandlePublication`, streamsToPublish,
+      console.debug(`${HOOK_NAME}|doHandlePublication`, _streamsToPublish,
         JSON.stringify(publishedStreamsCache.current.map(l_s => l_s?.stream.getId())),
-        JSON.stringify(streamsToPublish.map(l_s => l_s?.stream.getId())),
+        JSON.stringify(_streamsToPublish.map(l_s => l_s?.stream.getId())),
         maxLength)
     }
 
@@ -109,7 +128,7 @@ export default function useConversationStreams(
     // Strategy for publishedStreamsCache is to initialize it as it should be
     // and remove items if publication fails.
     // Need to do a real copy of options :
-    const newPublishedStreamsCache = streamsToPublish.map(elt => {
+    const newPublishedStreamsCache = _streamsToPublish.map(elt => {
       if (elt && elt.options) {
         return { stream: elt.stream, options: { ...elt.options } }
       } else {
@@ -121,32 +140,38 @@ export default function useConversationStreams(
     publishedStreamsCache.current.push(...newPublishedStreamsCache);
 
     // Prepare a set for Streams to publish, for further optimized check
-    const streamsToPublishSet = new Set(streamsToPublish.filter(notEmpty).map((item) => item.stream));
+    const streamsToPublishSet = new Set(_streamsToPublish.filter(notEmpty).map((item) => item.stream));
 
     const doPublish = (index: number, obj: { stream: Stream, options?: PublishOptions }) => {
-      publish(obj.stream, obj.options)
-        .catch((error: Error) => {
-          // Note that publishedStreamsCache is updated asynchronously here (catch)
-          // Hence why publishedStreamsCache must always be the same array instance
-          publishedStreamsCache.current.splice(index, 1, null)
-          if (errorCallback) {
-            errorCallback(error)
-          } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-            console.warn(`${HOOK_NAME}|publish|error`, error)
-          }
-        })
+      return new Promise<void>((resolve, reject) => {
+        publish(obj.stream, obj.options)
+          .catch((error: Error) => {
+            // Note that publishedStreamsCache is updated asynchronously here (catch)
+            // Hence why publishedStreamsCache must always be the same array instance
+            publishedStreamsCache.current.splice(index, 1, null)
+            if (errorCallback) {
+              errorCallback(error)
+            } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+              console.warn(`${HOOK_NAME}|publish|error`, error)
+            }
+          }).finally(() => {
+            resolve()
+          })
+      });
     };
+
+    const promises: Array<Promise<void>> = [];
 
     // Loop on arrays index to publish new streams, or replace if necessary
     for (let i = 0; i < maxLength; i++) {
       const previous = currentPublishedStreamsCache[i];
-      const next = streamsToPublish[i];
+      const next = _streamsToPublish[i];
 
       if (previous && next) {
 
         const doUnpublishPublish = () => {
           unpublish(previous.stream)
-          doPublish(i, next)
+          promises.push(doPublish(i, next))
         };
 
         if (previous.stream === next.stream) {
@@ -163,25 +188,32 @@ export default function useConversationStreams(
             // Previous shall actually be published (at another position), so don't do anything about it
             // But then we still have to publish new stream (if not already published)
             if (conversation && !conversation.isPublishedStream(next.stream)) {
-              doPublish(i, next)
+              promises.push(doPublish(i, next))
             }
           } else {
             if (conversation && !conversation.isPublishedStream(next.stream)) {
               // replacePublishStream does not allow to change PublishOptions, so we need to
               // unpublish and republish if options also change
               if (JSON.stringify(previous.options) === JSON.stringify(next.options)) {
-                replacePublishedStream(previous.stream, next.stream)
-                  // eslint-disable-next-line no-loop-func
-                  .catch((error: Error) => {
-                    // Note that publishedStreamsCache is updated asynchronously here (catch)
-                    // Hence why publishedStreamsCache must always be the same array instance
-                    publishedStreamsCache.current.splice(i, 1, null)
-                    if (errorCallback) {
-                      errorCallback(error)
-                    } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
-                      console.warn(`${HOOK_NAME}|replacePublishedStream|error`, error)
-                    }
-                  })
+                const doReplacePublishedStream = (previous: Stream, next: Stream) => {
+                  return new Promise<void>((resolve) => {
+                    replacePublishedStream(previous, next)
+                      // eslint-disable-next-line no-loop-func
+                      .catch((error: Error) => {
+                        // Note that publishedStreamsCache is updated asynchronously here (catch)
+                        // Hence why publishedStreamsCache must always be the same array instance
+                        publishedStreamsCache.current.splice(i, 1, null)
+                        if (errorCallback) {
+                          errorCallback(error)
+                        } else if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
+                          console.warn(`${HOOK_NAME}|replacePublishedStream|error`, error)
+                        }
+                      }).finally(() => {
+                        resolve()
+                      })
+                  });
+                };
+                promises.push(doReplacePublishedStream(previous.stream, next.stream))
               } else {
                 doUnpublishPublish()
               }
@@ -204,16 +236,22 @@ export default function useConversationStreams(
         // Note that we could try to publish without checking isPublishedStream, the call would
         // reject with a console error but this would not affect the behavior.
         if (conversation && !conversation.isPublishedStream(next.stream)) {
-          doPublish(i, next)
+          promises.push(doPublish(i, next))
         }
       }
     }
 
+    if (promises.length !== 0) {
+      setPublishing(true)
+      Promise.all(promises).finally(() => {
+        if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
+          console.debug(`${HOOK_NAME}|doHandlePublication resolved ${promises.length} promises`)
+        }
+        setPublishing(false)
+      });
+    }
   }, [conversation,
-    //streamsToPublish, change is captured by JSON.stringify below
-    // JSON.stringify(streamsToPublish.map(l_s => `${l_s?.stream.getId()}-${JSON.stringify(l_s?.options)}`)),
-    streamsToPublish,
-    //publishedStreamsCache, // no need to put in dependency array as the instance shall never change
+    _streamsToPublish,
     publish, unpublish, replacePublishedStream,
     errorCallback]);
 
@@ -224,7 +262,7 @@ export default function useConversationStreams(
         // unpublish all published streams
         l_streams.forEach(stream => {
           if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-            console.debug(`${HOOK_NAME}|unpublish|${conversation.getName()}`, stream)
+            console.debug(`${HOOK_NAME}|${conversation.getName()}|unpublishAll stream<${stream.getId()}>`, stream)
           }
           conversation.unpublish(stream)
         })
@@ -310,7 +348,7 @@ export default function useConversationStreams(
   useEffect(() => {
     if (conversation) {
       if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
-        console.debug(`${HOOK_NAME}|useEffect doHandlePublication|${conversation.getName()}`, streamsToPublish)
+        console.debug(`${HOOK_NAME}|useEffect doHandlePublication|${conversation.getName()}`, _streamsToPublish.map((obj) => obj?.stream.getId()))
       }
 
       const on_joined = () => {
@@ -339,7 +377,7 @@ export default function useConversationStreams(
         conversation.removeListener('left', on_left)
       }
     }
-  }, [conversation, streamsToPublish, doHandlePublication, unpublishAndUnsubscribeAll])
+  }, [conversation, _streamsToPublish, doHandlePublication, unpublishAndUnsubscribeAll])
 
   return {
     publishedStreams,

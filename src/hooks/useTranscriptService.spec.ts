@@ -1,300 +1,347 @@
-import { renderHook, act } from "@testing-library/react-hooks"
+import { renderHook, act } from '@testing-library/react-hooks';
 
-import "./getDisplayMedia.mock"
+import './getDisplayMedia.mock';
 
-import useTranscriptService from "./useTranscriptService"
-import { setLogLevel } from ".."
-import { Conference } from "@apirtc/apirtc"
+import useTranscriptService from './useTranscriptService';
+import { setLogLevel } from '..';
+import { Conference } from '@apirtc/apirtc';
 
 jest.doMock(
-  "@apizee/ia",
-  () => {
-    class MockTranscriptService {
-      listeners: Record<string, Function[]> = {}
+	'@apizee/ia',
+	() => {
+		class MockTranscriptService {
+			listeners: Record<string, Function[]> = {};
 
-      start = jest.fn(() => Promise.resolve())
-      stop = jest.fn(() => Promise.resolve())
+			start = jest.fn(() => Promise.resolve());
+			stop = jest.fn(() => Promise.resolve());
 
-      addEventListener = (type: string, cb: Function) => {
-        this.listeners[type] = this.listeners[type] || []
-        this.listeners[type].push(cb)
-      }
+			addEventListener = (type: string, cb: Function) => {
+				this.listeners[type] = this.listeners[type] || [];
+				this.listeners[type].push(cb);
+			};
 
-      removeEventListener = (type: string, cb: Function) => {
-        this.listeners[type] = (this.listeners[type] || []).filter((l) => l !== cb)
-      }
+			removeEventListener = (type: string, cb: Function) => {
+				this.listeners[type] = (this.listeners[type] || []).filter((l) => l !== cb);
+			};
 
-      emit(type: string, event: any) {
-        ;(this.listeners[type] || []).forEach((cb) => cb(event))
-      }
-    }
+			emit(type: string, event: any) {
+				(this.listeners[type] || []).forEach((cb) => cb(event));
+			}
+		}
 
-    return {
-      __esModule: true,
-      TranscriptService: MockTranscriptService,
-      Transcript: class {},
-    }
-  },
+		return {
+			__esModule: true,
+			TranscriptService: MockTranscriptService,
+			Transcript: class {},
+		};
+	},
 
-  { virtual: true }
-)
+	{ virtual: true }
+);
 
 // Set log level to max to maximize code coverage
-setLogLevel("debug")
+setLogLevel('debug');
 
-async function waitUntilStarted(result: any, waitForNextUpdate: () => Promise<void>): Promise<void> {
-  while (!result.current.hasStarted) {
-    await waitForNextUpdate()
-  }
+async function waitUntilStarted(
+	result: any,
+	waitForNextUpdate: () => Promise<void>
+): Promise<void> {
+	while (!result.current.hasStarted) {
+		await waitForNextUpdate();
+	}
 }
 
-describe("useTranscriptService", () => {
-  const conversationMock: any = { id: "conversation-id" }
+describe('useTranscriptService', () => {
+	const conversationMock: any = { id: 'conversation-id' };
 
-  test("Default state", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(undefined, false))
+	test('Default state', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(undefined, false)
+		);
 
-    // Wait for dynamic import
-    await waitForNextUpdate()
+		// Wait for dynamic import
+		await waitForNextUpdate();
 
-    expect(result.current.transcriptService).toBeDefined()
-    expect(result.current.hasStarted).toBe(false)
-    expect(result.current.transcripts).toEqual([])
-  })
+		expect(result.current.transcriptService).toBeDefined();
+		expect(result.current.hasStarted).toBe(false);
+		expect(result.current.transcripts).toEqual([]);
+	});
 
-  test("Start aborted if conversation is undefined", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(undefined, false))
+	test('Start aborted if conversation is undefined', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(undefined, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    await act(async () => {
-      await result.current.startTranscriptService()
-    })
+		await act(async () => {
+			await result.current.startTranscriptService();
+		});
 
-    expect(result.current.hasStarted).toBe(false)
-  })
+		expect(result.current.hasStarted).toBe(false);
+	});
 
-  test("Start transcript service", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('Start transcript service', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    await act(async () => {
-      await result.current.startTranscriptService()
-    })
+		await act(async () => {
+			await result.current.startTranscriptService();
+		});
 
-    expect(result.current.hasStarted).toBe(true)
-  })
+		expect(result.current.hasStarted).toBe(true);
+	});
 
-  test("Start twice should be ignored", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('Start twice should be ignored', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    await act(async () => {
-      await result.current.startTranscriptService()
-      await result.current.startTranscriptService()
-    })
+		await act(async () => {
+			await result.current.startTranscriptService();
+			await result.current.startTranscriptService();
+		});
 
-    expect(result.current.hasStarted).toBe(true)
-  })
+		expect(result.current.hasStarted).toBe(true);
+	});
 
-  test("Stop transcript service", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('Stop transcript service', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    await act(async () => {
-      await result.current.startTranscriptService()
-    })
+		await act(async () => {
+			await result.current.startTranscriptService();
+		});
 
-    expect(result.current.hasStarted).toBe(true)
+		expect(result.current.hasStarted).toBe(true);
 
-    await act(async () => {
-      await result.current.stopTranscriptService()
-    })
+		await act(async () => {
+			await result.current.stopTranscriptService();
+		});
 
-    expect(result.current.hasStarted).toBe(false)
-  })
+		expect(result.current.hasStarted).toBe(false);
+	});
 
-  test("Stop aborted if not started", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('Stop aborted if not started', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    await act(async () => {
-      await result.current.stopTranscriptService()
-    })
+		await act(async () => {
+			await result.current.stopTranscriptService();
+		});
 
-    expect(result.current.hasStarted).toBe(false)
-  })
+		expect(result.current.hasStarted).toBe(false);
+	});
 
-  test("Auto-start when autoStart=true", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, true))
+	test('Auto-start when autoStart=true', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, true)
+		);
 
-    await waitUntilStarted(result, waitForNextUpdate)
+		await waitUntilStarted(result, waitForNextUpdate);
 
-    expect(result.current.hasStarted).toBe(true)
-  })
+		expect(result.current.hasStarted).toBe(true);
+	});
 
-  test("Receive transcript event", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('Receive transcript event', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    const service: any = result.current.transcriptService
+		const service: any = result.current.transcriptService;
 
-    const transcript = { text: "hello world" }
+		const transcript = { text: 'hello world' };
 
-    act(() => {
-      service.emit("transcript", { transcript })
-    })
+		act(() => {
+			service.emit('transcript', { transcript });
+		});
 
-    expect(result.current.transcripts).toHaveLength(1)
-    expect(result.current.transcripts[0]).toBe(transcript)
-  })
+		expect(result.current.transcripts).toHaveLength(1);
+		expect(result.current.transcripts[0]).toBe(transcript);
+	});
 
-  test("Cleanup removes event listener", async () => {
-    const { result, waitForNextUpdate, unmount } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('Cleanup removes event listener', async () => {
+		const { result, waitForNextUpdate, unmount } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    const service: any = result.current.transcriptService
-    const spy = jest.spyOn(service, "removeEventListener")
+		const service: any = result.current.transcriptService;
+		const spy = jest.spyOn(service, 'removeEventListener');
 
-    unmount()
+		unmount();
 
-    expect(spy).toHaveBeenCalledWith("transcript", expect.any(Function))
-  })
+		expect(spy).toHaveBeenCalledWith('transcript', expect.any(Function));
+	});
 
-  test("startTranscriptService failure triggers catch", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('startTranscriptService failure triggers catch', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(conversationMock, false)
+		);
 
-    await waitForNextUpdate()
+		await waitForNextUpdate();
 
-    const service: any = result.current.transcriptService
-    service.start = jest.fn(() => Promise.reject("Start failed"))
+		const service: any = result.current.transcriptService;
+		service.start = jest.fn(() => Promise.reject('Start failed'));
 
-    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+		const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    await act(async () => {
-      await result.current.startTranscriptService()
-    })
+		await act(async () => {
+			await result.current.startTranscriptService();
+		});
 
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("useTranscriptService|startTranscriptService - failed"), "Start failed")
+		expect(errorSpy).toHaveBeenCalledWith(
+			expect.stringContaining('useTranscriptService|startTranscriptService - failed'),
+			'Start failed'
+		);
 
-    errorSpy.mockRestore()
-  })
+		errorSpy.mockRestore();
+	});
 
-  test("stopTranscriptService aborted if transcriptService not initialized", async () => {
-    const { result } = renderHook(() => useTranscriptService(conversationMock, false))
+	test('stopTranscriptService aborted if transcriptService not initialized', async () => {
+		const { result } = renderHook(() => useTranscriptService(conversationMock, false));
 
-    // transcriptService not instanciated, so it's null
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {})
+		// transcriptService not instanciated, so it's null
+		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    await act(async () => {
-      await result.current.stopTranscriptService()
-    })
+		await act(async () => {
+			await result.current.stopTranscriptService();
+		});
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("useTranscriptService|stopTranscriptService aborted - transcriptService not initialized"))
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining(
+				'useTranscriptService|stopTranscriptService aborted - transcriptService not initialized'
+			)
+		);
 
-    warnSpy.mockRestore()
-  })
+		warnSpy.mockRestore();
+	});
 
-  test("stopTranscriptService aborted if conversation is undefined", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService(undefined, false))
+	test('stopTranscriptService aborted if conversation is undefined', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService(undefined, false)
+		);
 
-    await waitForNextUpdate() // wait for transcriptService to be instanciated
+		await waitForNextUpdate(); // wait for transcriptService to be instanciated
 
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {})
+		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    await act(async () => {
-      await result.current.stopTranscriptService()
-    })
+		await act(async () => {
+			await result.current.stopTranscriptService();
+		});
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("useTranscriptService|stopTranscriptService aborted - conversation not provided"))
-    expect(result.current.hasStarted).toBe(false)
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining(
+				'useTranscriptService|stopTranscriptService aborted - conversation not provided'
+			)
+		);
+		expect(result.current.hasStarted).toBe(false);
 
-    warnSpy.mockRestore()
-  })
+		warnSpy.mockRestore();
+	});
 
-  test("auto-start aborted if conversation is undefined", async () => {
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {})
+	test('auto-start aborted if conversation is undefined', async () => {
+		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    // autoStart = true, but conversation = undefined
-    renderHook(() => useTranscriptService(undefined, true))
+		// autoStart = true, but conversation = undefined
+		renderHook(() => useTranscriptService(undefined, true));
 
-    // We wait for a tick for the useEffect to be executed
-    await new Promise((resolve) => setTimeout(resolve, 0))
+		// We wait for a tick for the useEffect to be executed
+		await new Promise((resolve) => setTimeout(resolve, 0));
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("useTranscriptService|useEffect - auto start transcription not possible if conversation not provided"))
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining(
+				'useTranscriptService|useEffect - auto start transcription not possible if conversation not provided'
+			)
+		);
 
-    warnSpy.mockRestore()
-  })
+		warnSpy.mockRestore();
+	});
 
-  test("stopTranscriptService failure triggers catch", async () => {
-    const { result, waitForNextUpdate } = renderHook(() => useTranscriptService({ id: "conversation-id" } as unknown as Conference, false))
+	test('stopTranscriptService failure triggers catch', async () => {
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useTranscriptService({ id: 'conversation-id' } as unknown as Conference, false)
+		);
 
-    // Wait for service instanciation
-    await waitForNextUpdate()
+		// Wait for service instanciation
+		await waitForNextUpdate();
 
-    // Force an eror on stop
-    const service: any = result.current.transcriptService
-    service.stop = jest.fn(() => Promise.reject("Stop failed"))
+		// Force an eror on stop
+		const service: any = result.current.transcriptService;
+		service.stop = jest.fn(() => Promise.reject('Stop failed'));
 
-    // Spy sur console.error
-    const errorSpy = jest.spyOn(console, "error").mockImplementation(() => {})
+		// Spy sur console.error
+		const errorSpy = jest.spyOn(console, 'error').mockImplementation(() => {});
 
-    await act(async () => {
-      await result.current.startTranscriptService()
-    })
+		await act(async () => {
+			await result.current.startTranscriptService();
+		});
 
-    await act(async () => {
-      await result.current.stopTranscriptService()
-    })
+		await act(async () => {
+			await result.current.stopTranscriptService();
+		});
 
-    expect(errorSpy).toHaveBeenCalledWith(expect.stringContaining("useTranscriptService|stopTranscriptService - failed"), "Stop failed")
+		expect(errorSpy).toHaveBeenCalledWith(
+			expect.stringContaining('useTranscriptService|stopTranscriptService - failed'),
+			'Stop failed'
+		);
 
-    errorSpy.mockRestore()
-  })
-})
+		errorSpy.mockRestore();
+	});
+});
 
-describe("useTranscriptService deferred import", () => {
-  // Deffered import resolve mock
-  function deferred<T>() {
-    let resolve!: (value: T) => void
-    let reject!: (reason?: any) => void
+describe('useTranscriptService deferred import', () => {
+	// Deffered import resolve mock
+	function deferred<T>() {
+		let resolve!: (value: T) => void;
+		let reject!: (reason?: any) => void;
 
-    const promise = new Promise<T>((res, rej) => {
-      resolve = res
-      reject = rej
-    })
+		const promise = new Promise<T>((res, rej) => {
+			resolve = res;
+			reject = rej;
+		});
 
-    return { promise, resolve, reject }
-  }
+		return { promise, resolve, reject };
+	}
 
-  test("Instantiation aborted if component unmounts before dynamic import resolves", async () => {
-    const importDeferred = deferred<any>()
+	test('Instantiation aborted if component unmounts before dynamic import resolves', async () => {
+		const importDeferred = deferred<any>();
 
-    jest.doMock("@apizee/ia", () => importDeferred.promise)
+		jest.doMock('@apizee/ia', () => importDeferred.promise);
 
-    const warnSpy = jest.spyOn(console, "warn").mockImplementation(() => {})
+		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 
-    const { unmount } = renderHook(() => useTranscriptService(undefined, false))
+		const { unmount } = renderHook(() => useTranscriptService(undefined, false));
 
-    // Unmount BEFORE resolving the import
-    unmount()
+		// Unmount BEFORE resolving the import
+		unmount();
 
-    // Resolve AFTER unmount
-    await act(async () => {
-      importDeferred.resolve({
-        TranscriptService: class {},
-        Transcript: class {},
-      })
-    })
+		// Resolve AFTER unmount
+		await act(async () => {
+			importDeferred.resolve({
+				TranscriptService: class {},
+				Transcript: class {},
+			});
+		});
 
-    expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining("instanciation aborted - component unmounted"))
+		expect(warnSpy).toHaveBeenCalledWith(
+			expect.stringContaining('instanciation aborted - component unmounted')
+		);
 
-    warnSpy.mockRestore()
-  })
-})
+		warnSpy.mockRestore();
+	});
+});

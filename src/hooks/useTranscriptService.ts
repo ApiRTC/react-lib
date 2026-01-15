@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { Conference } from '@apirtc/apirtc';
 
-type TranscriptService = InstanceType<typeof import("@apizee/ia")["TranscriptService"]>
-type Transcript = InstanceType<typeof import("@apizee/ia")["Transcript"]>
-type EventTranscript = InstanceType<typeof import("@apizee/ia")["EventTranscript"]>
+type TranscriptService = InstanceType<(typeof import('@apizee/ia'))['TranscriptService']>;
+type Transcript = InstanceType<(typeof import('@apizee/ia'))['Transcript']>;
+type EventTranscript = InstanceType<(typeof import('@apizee/ia'))['EventTranscript']>;
 
 const HOOK_NAME = 'useTranscriptService';
 /**
@@ -55,8 +55,8 @@ export default function useTranscriptService(
 			return;
 		}
 
-    const onTranscript = (event: EventTranscript) => {
-      const { transcript } = event
+		const onTranscript = (event: EventTranscript) => {
+			const { transcript } = event;
 
 			if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
 				console.debug(`${HOOK_NAME}|onTranscript`, transcript);

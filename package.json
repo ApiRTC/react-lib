@@ -1,52 +1,55 @@
 {
-  "name": "@apirtc/react-lib",
-  "version": "1.2.0-rc.1",
-  "description": "react library for ApiRTC",
-  "main": "dist/esm/index.js",
-  "module": "dist/esm/index.js",
-  "files": [
-    "dist"
-  ],
-  "types": "dist/index.d.ts",
-  "scripts": {
-    "docs": "npx typedoc --out docs src",
-    "build": "rollup -c",
-    "postbuild": "npm run docs",
-    "test": "jest --coverage"
-  },
-  "keywords": [
-    "apirtc",
-    "react"
-  ],
-  "author": "Kevin Moyse",
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/ApiRTC/react-lib"
-  },
-  "peerDependencies": {
-    "@apirtc/apirtc": "^5.0.21-rc.0",
-    "@apizee/ia": "^1.1.5-rc.1",
-    "react": ">=17"
-  },
-  "devDependencies": {
-    "@rollup/plugin-commonjs": "^21.0.3",
-    "@rollup/plugin-node-resolve": "^13.1.3",
-    "@testing-library/react-hooks": "^8.0.0",
-    "@types/jest": "^27.5.0",
-    "@types/react": "^17",
-    "eslint-config-react-app": "^7.0.1",
-    "eslint-plugin-react-hooks": "^4.6.0",
-    "jest": "^28.1.0",
-    "jest-environment-jsdom": "^28.1.0",
-    "react-dom": "^17",
-    "rollup": "^2.70.1",
-    "rollup-plugin-dts": "^4.2.0",
-    "rollup-plugin-peer-deps-external": "^2.2.4",
-    "rollup-plugin-terser": "^7.0.2",
-    "rollup-plugin-typescript2": "^0.31.2",
-    "ts-jest": "^28.0.2",
-    "typedoc": "^0.23.24",
-    "typescript": "^4.9.4"
-  }
+	"name": "@apirtc/react-lib",
+	"version": "1.2.1-rc.1",
+	"description": "react library for ApiRTC",
+	"main": "dist/esm/index.js",
+	"module": "dist/esm/index.js",
+	"files": [
+		"dist"
+	],
+	"types": "dist/index.d.ts",
+	"scripts": {
+		"docs": "npx typedoc --out docs src",
+		"build": "rollup -c",
+		"postbuild": "npm run docs",
+		"test": "jest --coverage",
+		"format": "prettier --write .",
+		"format:check": "prettier --check ."
+	},
+	"keywords": [
+		"apirtc",
+		"react"
+	],
+	"author": "Kevin Moyse",
+	"license": "MIT",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/ApiRTC/react-lib"
+	},
+	"peerDependencies": {
+		"@apirtc/apirtc": "^5.0.21-rc.0",
+		"@apizee/ia": "^1.1.5-rc.1",
+		"react": ">=17"
+	},
+	"devDependencies": {
+		"@rollup/plugin-commonjs": "^21.0.3",
+		"@rollup/plugin-node-resolve": "^13.1.3",
+		"@testing-library/react-hooks": "^8.0.0",
+		"@types/jest": "^27.5.0",
+		"@types/react": "^17",
+		"eslint-config-react-app": "^7.0.1",
+		"eslint-plugin-react-hooks": "^4.6.0",
+		"jest": "^28.1.0",
+		"jest-environment-jsdom": "^28.1.0",
+		"prettier": "^3.7.4",
+		"react-dom": "^17",
+		"rollup": "^2.70.1",
+		"rollup-plugin-dts": "^4.2.0",
+		"rollup-plugin-peer-deps-external": "^2.2.4",
+		"rollup-plugin-terser": "^7.0.2",
+		"rollup-plugin-typescript2": "^0.31.2",
+		"ts-jest": "^28.0.2",
+		"typedoc": "^0.23.24",
+		"typescript": "^4.9.4"
+	}
 }

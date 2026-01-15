@@ -3,6 +3,7 @@ import type { Conference } from "@apirtc/apirtc"
 
 type TranscriptService = InstanceType<typeof import("@apizee/ia")["TranscriptService"]>
 type Transcript = InstanceType<typeof import("@apizee/ia")["Transcript"]>
+type EventTranscript = InstanceType<typeof import("@apizee/ia")["EventTranscript"]>
 
 const HOOK_NAME = "useTranscriptService"
 /**
@@ -49,9 +50,8 @@ export default function useTranscriptService(conversation: Conference | undefine
       return
     }
 
-    const onTranscript = (event: Event) => {
-      // Necessary cast because EventTranscript extends Event
-      const { transcript } = event as any
+    const onTranscript = (event: EventTranscript) => {
+      const { transcript } = event
 
       if (globalThis.apirtcReactLibLogLevel.isDebugEnabled) {
         console.debug(`${HOOK_NAME}|onTranscript`, transcript)

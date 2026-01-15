@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from "react"
-import type { Conference } from "@apirtc/apirtc"
+import type { Conversation } from "@apirtc/apirtc"
 
-type TranscriptService = InstanceType<typeof import("@apizee/ia")["TranscriptService"]>
-type Transcript = InstanceType<typeof import("@apizee/ia")["Transcript"]>
-type EventTranscript = InstanceType<typeof import("@apizee/ia")["EventTranscript"]>
+type TranscriptService = InstanceType<(typeof import("@apizee/ia"))["TranscriptService"]>
+type Transcript = InstanceType<(typeof import("@apizee/ia"))["Transcript"]>
+type EventTranscript = InstanceType<(typeof import("@apizee/ia"))["EventTranscript"]>
 
 const HOOK_NAME = "useTranscriptService"
 /**
@@ -11,7 +11,7 @@ const HOOK_NAME = "useTranscriptService"
  * @param conversation an ApiRTC conversation
  * @param autoStart boolean to automatically start transcription
  */
-export default function useTranscriptService(conversation: Conference | undefined, autoStart: boolean | undefined) {
+export default function useTranscriptService(conversation: Conversation | undefined, autoStart: boolean | undefined) {
   const [transcriptService, setTranscriptService] = useState<TranscriptService | null>(null)
   const [hasStarted, setHasStarted] = useState<boolean>(false)
 

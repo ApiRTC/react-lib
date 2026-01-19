@@ -17,325 +17,363 @@ let simulateLeaveFail = false;
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
-    const originalModule = jest.requireActual('@apirtc/apirtc');
+	const originalModule = jest.requireActual('@apirtc/apirtc');
 
-    return {
-        __esModule: true,
-        ...originalModule,
-        //session: { apiCCWebRTCClient: { webRTCClient: { MCUClient: { sessionMCUs: [] } } } },
-        UserAgent: jest.fn().mockImplementation((options: UserAgentOptions) => {
-            return {}
-        }),
-        Session: jest.fn().mockImplementation((ua: UserAgent, options: any) => {
-            return {
-                getUserAgent: () => { return ua },
-                getOrCreateConversation: (name: string, options: any) => {
-                    return new Conversation(name, options)
-                },
-                //
-            }
-        }),
-        Conversation: jest.fn().mockImplementation((name: string, options?: any) => {
-            return {
-                getName: () => { return name },
-                isJoined: () => { return simulateStatusJoined },
-                join: () => {
-                    const self = this;
-                    return new Promise<void>((resolve, reject) => {
-                        if (simulateJoinFail) {
-                            reject('fail')
-                        } else {
-                            simulateStatusJoined = true;
-                            resolve()
-                        }
-                    })
-                },
-                leave: () => {
-                    return new Promise<void>((resolve, reject) => {
-                        if (simulateLeaveFail) {
-                            reject('fail')
-                        } else {
-                            resolve()
-                            simulateStatusJoined = false;
-                        }
-                    })
-                },
-                destroy: () => {
-                    simulateDestroyed = true;
-                }
-            }
-        }),
-    }
-})
+	return {
+		__esModule: true,
+		...originalModule,
+		//session: { apiCCWebRTCClient: { webRTCClient: { MCUClient: { sessionMCUs: [] } } } },
+		UserAgent: jest.fn().mockImplementation((options: UserAgentOptions) => {
+			return {};
+		}),
+		Session: jest.fn().mockImplementation((ua: UserAgent, options: any) => {
+			return {
+				getUserAgent: () => {
+					return ua;
+				},
+				getOrCreateConversation: (name: string, options: any) => {
+					return new Conversation(name, options);
+				},
+				//
+			};
+		}),
+		Conversation: jest.fn().mockImplementation((name: string, options?: any) => {
+			return {
+				getName: () => {
+					return name;
+				},
+				isJoined: () => {
+					return simulateStatusJoined;
+				},
+				join: () => {
+					const self = this;
+					return new Promise<void>((resolve, reject) => {
+						if (simulateJoinFail) {
+							reject('fail');
+						} else {
+							simulateStatusJoined = true;
+							resolve();
+						}
+					});
+				},
+				leave: () => {
+					return new Promise<void>((resolve, reject) => {
+						if (simulateLeaveFail) {
+							reject('fail');
+						} else {
+							resolve();
+							simulateStatusJoined = false;
+						}
+					});
+				},
+				destroy: () => {
+					simulateDestroyed = true;
+				},
+			};
+		}),
+	};
+});
 
 // Set log level to max to maximize code coverage
-setLogLevel('debug')
+setLogLevel('debug');
 
 // Testing guide
 // https://www.toptal.com/react/testing-react-hooks-tutorial
 
 describe('useConversation', () => {
-    test(`If session is undefined, conversation is undefined`, () => {
-        const { result } = renderHook(() => useConversation(undefined, 'foo'));
-        expect(result.current.conversation).toBeUndefined();
-    })
+	test(`If session is undefined, conversation is undefined`, () => {
+		const { result } = renderHook(() => useConversation(undefined, 'foo'));
+		expect(result.current.conversation).toBeUndefined();
+	});
 
-    test(`If name is undefined, conversation is undefined`, () => {
-        const userAgent = new UserAgent({});
-        const session = new Session(userAgent);
-        const { result } = renderHook(() => useConversation(session, undefined));
-        expect(result.current.conversation).toBeUndefined();
+	test(`If name is undefined, conversation is undefined`, () => {
+		const userAgent = new UserAgent({});
+		const session = new Session(userAgent);
+		const { result } = renderHook(() => useConversation(session, undefined));
+		expect(result.current.conversation).toBeUndefined();
 
-        result.current.join()?.then(() => {
-            fail('it should not reach here');
-        }).catch((error) => {
-            expect(error).toEqual("useConversation|join|conversation not defined")
-            expect(result.current.joined).toEqual(false)
-        })
+		result.current
+			.join()
+			?.then(() => {
+				fail('it should not reach here');
+			})
+			.catch((error) => {
+				expect(error).toEqual('useConversation|join|conversation not defined');
+				expect(result.current.joined).toEqual(false);
+			});
 
-        result.current.leave()?.then(() => {
-            fail('it should not reach here');
-        }).catch((error) => {
-            expect(error).toEqual("useConversation|leave|conversation not defined")
-            expect(result.current.joined).toEqual(false)
-        })
+		result.current
+			.leave()
+			?.then(() => {
+				fail('it should not reach here');
+			})
+			.catch((error) => {
+				expect(error).toEqual('useConversation|leave|conversation not defined');
+				expect(result.current.joined).toEqual(false);
+			});
+	});
 
-    })
+	test(`Test join/leave functions`, async () => {
+		simulateStatusJoined = false;
 
-    test(`Test join/leave functions`, async () => {
+		const userAgent = new UserAgent({});
+		const session = new Session(userAgent);
 
-        simulateStatusJoined = false;
+		const { result, waitForNextUpdate } = renderHook(() =>
+			useConversation(session, 'foo', undefined, false)
+		);
+		expect(result.current.conversation?.getName()).toEqual('foo');
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.joined).toEqual(false);
+		expect(result.current.join).toBeDefined();
+		expect(result.current.leave).toBeDefined();
 
-        const userAgent = new UserAgent({});
-        const session = new Session(userAgent);
+		// Simulate join failure
+		//
+		simulateJoinFail = true;
 
-        const { result, waitForNextUpdate } = renderHook(() => useConversation(session, 'foo', undefined, false));
-        expect(result.current.conversation?.getName()).toEqual('foo')
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.joined).toEqual(false)
-        expect(result.current.join).toBeDefined()
-        expect(result.current.leave).toBeDefined()
+		act(() => {
+			// act required for the setJoining(true)
+			result.current
+				.join()
+				?.then(() => {
+					throw new Error('it should not reach here');
+				})
+				.catch((error) => {
+					expect(error).toBe('fail');
+				});
+		});
 
-        // Simulate join failure
-        //
-        simulateJoinFail = true;
+		expect(result.current.joining).toEqual(true);
 
-        act(() => { // act required for the setJoining(true)
-            result.current.join()?.then(() => {
-                throw new Error('it should not reach here');
-            }).catch((error) => {
-                expect(error).toBe('fail')
-            })
-        })
+		await waitForNextUpdate();
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.joined).toEqual(false);
 
-        expect(result.current.joining).toEqual(true)
+		// Simulate join success
+		//
+		simulateJoinFail = false;
 
-        await waitForNextUpdate()
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.joined).toEqual(false)
+		act(() => {
+			// act required for the setJoining(true)
+			result.current
+				.join()
+				?.then(() => {})
+				.catch((error) => {
+					throw new Error('it should not reach here:' + error);
+				});
+		});
 
-        // Simulate join success
-        //
-        simulateJoinFail = false;
+		await waitForNextUpdate();
+		expect(result.current.joined).toEqual(true);
+		expect(simulateStatusJoined).toBeTruthy();
 
-        act(() => { // act required for the setJoining(true)
-            result.current.join()?.then(() => {
-            }).catch((error) => {
-                throw new Error('it should not reach here:' + error);
-            })
-        })
+		// Try to join while already joined
+		result.current
+			.join()
+			?.then(() => {
+				throw new Error('it should not reach here');
+			})
+			.catch((error) => {
+				expect(error).toBe('useConversation|join|conversation already joined');
+			});
 
-        await waitForNextUpdate()
-        expect(result.current.joined).toEqual(true)
-        expect(simulateStatusJoined).toBeTruthy()
+		// Simulate leave failure
+		//
+		simulateLeaveFail = true;
 
-        // Try to join while already joined
-        result.current.join()?.then(() => {
-            throw new Error('it should not reach here');
-        }).catch((error) => {
-            expect(error).toBe('useConversation|join|conversation already joined')
-        })
+		result.current
+			.leave()
+			?.then(() => {
+				throw new Error('it should not reach here');
+			})
+			.catch((error) => {
+				expect(error).toBe('fail');
+			});
 
-        // Simulate leave failure
-        //
-        simulateLeaveFail = true;
+		// Simulate leave success
+		//
+		simulateLeaveFail = false;
 
-        result.current.leave()?.then(() => {
-            throw new Error('it should not reach here');
-        }).catch((error) => {
-            expect(error).toBe('fail')
-        })
+		result.current
+			.leave()
+			?.then(() => {})
+			.catch((error) => {
+				console.error(error);
+				//fail('it should not reach here');
+				throw new Error(error);
+			});
 
-        // Simulate leave success
-        //
-        simulateLeaveFail = false;
+		await waitForNextUpdate();
+		expect(result.current.joined).toEqual(false);
+		expect(simulateStatusJoined).toBeFalsy();
 
-        result.current.leave()?.then(() => {
-        }).catch((error) => {
-            console.error(error);
-            //fail('it should not reach here');
-            throw new Error(error);
-        })
+		// Try to leave while already left
+		result.current
+			.leave()
+			?.then(() => {
+				throw new Error('it should not reach here');
+			})
+			.catch((error) => {
+				expect(error).toBe('useConversation|leave|conversation is not joined');
+			});
+	});
 
-        await waitForNextUpdate()
-        expect(result.current.joined).toEqual(false)
-        expect(simulateStatusJoined).toBeFalsy()
+	test(`rerender-name`, () => {
+		const userAgent = new UserAgent({});
+		const session = new Session(userAgent);
 
-        // Try to leave while already left
-        result.current.leave()?.then(() => {
-            throw new Error('it should not reach here');
-        }).catch((error) => {
-            expect(error).toBe('useConversation|leave|conversation is not joined')
-        })
-    })
+		simulateStatusJoined = false;
+		simulateDestroyed = false;
 
-    test(`rerender-name`, () => {
-        const userAgent = new UserAgent({});
-        const session = new Session(userAgent);
+		simulateJoinFail = false;
 
-        simulateStatusJoined = false;
-        simulateDestroyed = false;
+		const { result, rerender } = renderHook(
+			(props: { name: string }) => useConversation(session, props.name, undefined, false),
+			{ initialProps: { name: 'foo' } }
+		);
+		expect(result.current.conversation?.getName()).toEqual('foo');
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.joined).toEqual(false);
 
-        simulateJoinFail = false;
+		// now change name, the conversation shall change
+		const l_conversation = result.current.conversation;
+		rerender({ name: 'bar' });
 
-        const { result, rerender } = renderHook(
-            (props: { name: string }) => useConversation(session, props.name, undefined, false),
-            { initialProps: { name: 'foo' } });
-        expect(result.current.conversation?.getName()).toEqual('foo')
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.joined).toEqual(false)
+		expect(result.current.conversation).not.toBe(l_conversation);
+		expect(result.current.conversation?.getName()).toEqual('bar');
+		expect(result.current.joined).toEqual(false);
+		expect(simulateDestroyed).toBeTruthy();
 
-        // now change name, the conversation shall change
-        const l_conversation = result.current.conversation;
-        rerender({ name: 'bar' })
+		// now rerender with undefined name, the conversation shall be destroyed
+		simulateDestroyed = false;
+		rerender({ name: undefined } as any);
 
-        expect(result.current.conversation).not.toBe(l_conversation)
-        expect(result.current.conversation?.getName()).toEqual('bar')
-        expect(result.current.joined).toEqual(false)
-        expect(simulateDestroyed).toBeTruthy()
+		expect(result.current.joined).toEqual(false);
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.conversation).toBeUndefined();
+		expect(simulateStatusJoined).toBeFalsy();
+		expect(simulateDestroyed).toBeTruthy();
+	});
 
-        // now rerender with undefined name, the conversation shall be destroyed
-        simulateDestroyed = false;
-        rerender({ name: undefined } as any)
+	test(`auto-join`, async () => {
+		const userAgent = new UserAgent({});
+		const session = new Session(userAgent);
 
-        expect(result.current.joined).toEqual(false)
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.conversation).toBeUndefined()
-        expect(simulateStatusJoined).toBeFalsy()
-        expect(simulateDestroyed).toBeTruthy()
-    })
+		simulateStatusJoined = false;
+		simulateDestroyed = false;
 
-    test(`auto-join`, async () => {
-        const userAgent = new UserAgent({});
-        const session = new Session(userAgent);
+		simulateJoinFail = false;
 
-        simulateStatusJoined = false;
-        simulateDestroyed = false;
+		const { result, rerender, waitForNextUpdate } = renderHook(
+			(props: { name: string; join: boolean }) =>
+				useConversation(session, props.name, undefined, props.join),
+			{ initialProps: { name: 'foo', join: true } }
+		);
+		expect(result.current.conversation?.getName()).toEqual('foo');
+		expect(result.current.joining).toEqual(true);
+		expect(result.current.joined).toEqual(false);
 
-        simulateJoinFail = false;
+		await waitForNextUpdate();
 
-        const { result, rerender, waitForNextUpdate } = renderHook(
-            (props: { name: string; join: boolean }) => useConversation(session, props.name, undefined, props.join),
-            { initialProps: { name: 'foo', join: true } });
-        expect(result.current.conversation?.getName()).toEqual('foo')
-        expect(result.current.joining).toEqual(true)
-        expect(result.current.joined).toEqual(false)
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.joined).toEqual(true);
+		expect(simulateStatusJoined).toBeTruthy();
+		expect(simulateDestroyed).toBeFalsy();
 
-        await waitForNextUpdate()
+		// Changing 'join' to false does a simple leave
+		const l_conversation = result.current.conversation;
+		rerender({ name: 'foo', join: false });
 
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.joined).toEqual(true)
-        expect(simulateStatusJoined).toBeTruthy()
-        expect(simulateDestroyed).toBeFalsy()
+		await waitForNextUpdate();
+		// .then(() => {
+		//     throw new Error('it should not reach here');
+		// }).catch(() => {
+		//     // expected
+		//     console.log("Expected: there should not be update")
+		// })
+		expect(result.current.joined).toEqual(false);
+		expect(result.current.conversation).toBe(l_conversation);
+		expect(simulateStatusJoined).toBeFalsy();
+		expect(simulateDestroyed).toBeFalsy();
 
-        // Changing 'join' to false does a simple leave
-        const l_conversation = result.current.conversation;
-        rerender({ name: 'foo', join: false })
+		// Changing 'join' to true does a simple join
+		rerender({ name: 'foo', join: true });
+		expect(result.current.joining).toEqual(true);
+		await waitForNextUpdate();
+		expect(result.current.joined).toEqual(true);
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.conversation).toBe(l_conversation);
+		expect(simulateStatusJoined).toBeTruthy();
+		expect(simulateDestroyed).toBeFalsy();
 
-        await waitForNextUpdate()
-        // .then(() => {
-        //     throw new Error('it should not reach here');
-        // }).catch(() => {
-        //     // expected
-        //     console.log("Expected: there should not be update")
-        // })
-        expect(result.current.joined).toEqual(false)
-        expect(result.current.conversation).toBe(l_conversation)
-        expect(simulateStatusJoined).toBeFalsy()
-        expect(simulateDestroyed).toBeFalsy()
+		const spy_destroy = jest.spyOn(result.current.conversation as any, 'destroy');
 
-        // Changing 'join' to true does a simple join
-        rerender({ name: 'foo', join: true })
-        expect(result.current.joining).toEqual(true)
-        await waitForNextUpdate()
-        expect(result.current.joined).toEqual(true)
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.conversation).toBe(l_conversation)
-        expect(simulateStatusJoined).toBeTruthy()
-        expect(simulateDestroyed).toBeFalsy()
+		// now rerender with undefined name, the conversation shall be left destroyed
+		rerender({ name: undefined, join: true } as any);
 
-        const spy_destroy = jest.spyOn(result.current.conversation as any, 'destroy');
+		//await waitForNextUpdate()
+		expect(result.current.joined).toEqual(false);
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.conversation).toBeUndefined();
+		expect(simulateStatusJoined).toBeFalsy();
 
-        // now rerender with undefined name, the conversation shall be left destroyed
-        rerender({ name: undefined, join: true } as any)
+		// Wait for the destroy call in finally clause
+		await new Promise((r) => setTimeout(r, 100));
+		expect(spy_destroy).toHaveBeenCalledTimes(1);
+		expect(simulateDestroyed).toBeTruthy();
+	});
 
-        //await waitForNextUpdate()
-        expect(result.current.joined).toEqual(false)
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.conversation).toBeUndefined()
-        expect(simulateStatusJoined).toBeFalsy()
+	test(`auto-join-error`, async () => {
+		const userAgent = new UserAgent({});
+		const session = new Session(userAgent);
 
-        // Wait for the destroy call in finally clause
-        await new Promise((r) => setTimeout(r, 100))
-        expect(spy_destroy).toHaveBeenCalledTimes(1)
-        expect(simulateDestroyed).toBeTruthy()
-    })
+		simulateStatusJoined = false;
+		simulateDestroyed = false;
 
-    test(`auto-join-error`, async () => {
-        const userAgent = new UserAgent({});
-        const session = new Session(userAgent);
+		simulateJoinFail = true;
 
-        simulateStatusJoined = false;
-        simulateDestroyed = false;
+		const { result, rerender, waitForNextUpdate } = renderHook(
+			(props: { session: Session }) => useConversation(props.session, 'foo', undefined, true),
+			{ initialProps: { session } }
+		);
+		expect(result.current.conversation?.getName()).toEqual('foo');
+		expect(result.current.joining).toEqual(true);
+		expect(result.current.joined).toEqual(false);
 
-        simulateJoinFail = true;
+		await waitForNextUpdate();
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.joined).toEqual(false);
 
-        const { result, rerender, waitForNextUpdate } = renderHook((props: { session: Session }) => useConversation(props.session, 'foo', undefined, true),
-            { initialProps: { session } });
-        expect(result.current.conversation?.getName()).toEqual('foo')
-        expect(result.current.joining).toEqual(true)
-        expect(result.current.joined).toEqual(false)
+		simulateJoinFail = false;
 
-        await waitForNextUpdate()
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.joined).toEqual(false)
+		act(() => {
+			// act required for the setJoining(true)
+			result.current
+				.join()
+				?.then(() => {})
+				.catch((error) => {
+					throw new Error('it should not reach here:' + error);
+				});
+		});
 
-        simulateJoinFail = false;
+		await waitForNextUpdate();
+		expect(result.current.joining).toEqual(false);
+		expect(result.current.joined).toEqual(true);
+		expect(simulateDestroyed).toBeFalsy();
 
-        act(() => { // act required for the setJoining(true)
-            result.current.join()?.then(() => {
-            }).catch((error) => {
-                throw new Error('it should not reach here:' + error);
-            })
-        })
+		simulateLeaveFail = true;
 
-        await waitForNextUpdate()
-        expect(result.current.joining).toEqual(false)
-        expect(result.current.joined).toEqual(true)
-        expect(simulateDestroyed).toBeFalsy()
+		const joined_conversation = result.current.conversation;
+		const spy_destroy = jest.spyOn(joined_conversation as any, 'destroy');
 
-        simulateLeaveFail = true;
+		rerender({ session: undefined } as any);
 
-        const joined_conversation = result.current.conversation;
-        const spy_destroy = jest.spyOn(joined_conversation as any, 'destroy');
+		expect(result.current.conversation).toBeUndefined();
 
-        rerender({ session: undefined } as any)
-
-        expect(result.current.conversation).toBeUndefined()
-
-        // Wait for the destroy call in finally clause
-        await new Promise((r) => setTimeout(r, 100))
-        expect(spy_destroy).toHaveBeenCalledTimes(1)
-        expect(simulateDestroyed).toBeTruthy()
-    })
-})
+		// Wait for the destroy call in finally clause
+		await new Promise((r) => setTimeout(r, 100));
+		expect(spy_destroy).toHaveBeenCalledTimes(1);
+		expect(simulateDestroyed).toBeTruthy();
+	});
+});

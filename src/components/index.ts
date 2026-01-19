@@ -1,1 +1,1 @@
-export { default as VideoStream, VideoStreamProps } from "./VideoStream"
+export { default as VideoStream, VideoStreamProps } from './VideoStream';

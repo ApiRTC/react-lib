@@ -19,9 +19,9 @@ Visit this [codesandbox](https://codesandbox.io/s/apirtc-react-lib-demo-nrmcrn) 
 Get a stateful session:
 
 ```ts
-import { useSession } from "@apirtc/react-lib";
-const [credentials] = useState({ apiKey: "your_api_key" });
-const { session } = useSession(credentials);
+import { useSession } from "@apirtc/react-lib"
+const [credentials] = useState({ apiKey: "your_api_key" })
+const { session } = useSession(credentials)
 ```
 
 ### useUserMediaDevices
@@ -29,8 +29,8 @@ const { session } = useSession(credentials);
 Get a stateful list of available media devices:
 
 ```ts
-import { useUserMediaDevices } from "@apirtc/react-lib";
-const { userMediaDevices } = useUserMediaDevices(session);
+import { useUserMediaDevices } from "@apirtc/react-lib"
+const { userMediaDevices } = useUserMediaDevices(session)
 ```
 
 This hook can also manage devices selection.
@@ -40,25 +40,22 @@ This hook can also manage devices selection.
 Get a stateful value for the camera stream:
 
 ```ts
-import { useCameraStream } from "@apirtc/react-lib";
-const { stream } = useCameraStream(session);
+import { useCameraStream } from "@apirtc/react-lib"
+const { stream } = useCameraStream(session)
 ```
 
 ### useStreamApplyAudioProcessor
 
 ```ts
-import { useStreamApplyAudioProcessor } from "@apirtc/react-lib";
-const { stream: noiseReductionStream } = useStreamApplyAudioProcessor(
-  stream,
-  "noiseReduction"
-);
+import { useStreamApplyAudioProcessor } from "@apirtc/react-lib"
+const { stream: noiseReductionStream } = useStreamApplyAudioProcessor(stream, "noiseReduction")
 ```
 
 ### useStreamApplyVideoProcessor
 
 ```ts
-import { useStreamApplyVideoProcessor } from "@apirtc/react-lib";
-const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, "blur");
+import { useStreamApplyVideoProcessor } from "@apirtc/react-lib"
+const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, "blur")
 ```
 
 ### usePresence
@@ -66,9 +63,9 @@ const { stream: blurredStream } = useStreamApplyVideoProcessor(stream, "blur");
 Get a stateful map of contacts by group:
 
 ```ts
-import { usePresence } from "@apirtc/react-lib";
-const [groups] = useState(["groupName1", "groupName2"]);
-const { contactsByGroup } = usePresence(session, groups);
+import { usePresence } from "@apirtc/react-lib"
+const [groups] = useState(["groupName1", "groupName2"])
+const { contactsByGroup } = usePresence(session, groups)
 ```
 
 ### useConversation
@@ -76,8 +73,8 @@ const { contactsByGroup } = usePresence(session, groups);
 Get a stateful **Conversation**:
 
 ```ts
-import { useConversation } from "@apirtc/react-lib";
-const { conversation } = useConversation(session, "conversationName");
+import { useConversation } from "@apirtc/react-lib"
+const { conversation } = useConversation(session, "conversationName")
 ```
 
 ### useConversationContacts
@@ -85,8 +82,8 @@ const { conversation } = useConversation(session, "conversationName");
 Get **Conversation** **Contact**s in your state:
 
 ```ts
-import { useConversationContacts } from "@apirtc/react-lib";
-const { contacts } = useConversationContacts(conversation);
+import { useConversationContacts } from "@apirtc/react-lib"
+const { contacts } = useConversationContacts(conversation)
 ```
 
 ### useConversationModeration
@@ -94,16 +91,15 @@ const { contacts } = useConversationContacts(conversation);
 Get a set of candidates **Contacts**, and get notified of ejection:
 
 ```ts
-import { useConversationModeration } from "@apirtc/react-lib";
-const { candidates, onEjected, onEjectedSelf } =
-  useConversationModeration(conversation);
+import { useConversationModeration } from "@apirtc/react-lib"
+const { candidates, onEjected, onEjectedSelf } = useConversationModeration(conversation)
 ```
 
 ### useConversationMessages
 
 ```ts
-import { useConversationMessages } from "@apirtc/react-lib";
-const { messages, sendMessage } = useConversationMessages(conversation);
+import { useConversationMessages } from "@apirtc/react-lib"
+const { messages, sendMessage } = useConversationMessages(conversation)
 ```
 
 ### useConversationStreams
@@ -111,15 +107,19 @@ const { messages, sendMessage } = useConversationMessages(conversation);
 Control **Stream**s to publish, and get stateful arrays of published and subscribed **Stream**s:
 
 ```ts
-import { useConversationStreams } from "@apirtc/react-lib";
-const streamsToPublish = useMemo(
-  () => (stream ? [{ stream: stream }] : []),
-  [stream]
-);
-const { publishedStreams, subscribedStreams } = useConversationStreams(
-  conversation,
-  streamsToPublish
-);
+import { useConversationStreams } from "@apirtc/react-lib"
+const streamsToPublish = useMemo(() => (stream ? [{ stream: stream }] : []), [stream])
+const { publishedStreams, subscribedStreams } = useConversationStreams(conversation, streamsToPublish)
+```
+
+### useTranscriptService
+
+Start, stop, and get messages from a TranscriptService in a conversation.
+
+```ts
+import { useTranscriptService } from "@apirtc/react-lib"
+
+const { transcriptService, hasStarted, transcripts, startTranscriptService, stopTranscriptService } = useTranscriptService(conversation, true)
 ```
 
 ## Components
@@ -129,9 +129,8 @@ const { publishedStreams, subscribedStreams } = useConversationStreams(
 Use it to display any **ApiRTC** **Stream**.
 
 ```tsx
-import { VideoStream } from "@apirtc/react-lib";
-
-<VideoStream stream={stream} muted={false}></VideoStream>;
+import { VideoStream } from "@apirtc/react-lib"
+;<VideoStream stream={stream} muted={false}></VideoStream>
 ```
 
 Note: For more comprehensive set of UI components, please have a look at [@apirtc/mui-react-lib](https://github.com/ApiRTC/mui-react-lib)
@@ -148,15 +147,15 @@ Available log levels:
 from web app code:
 
 ```ts
-import { setLogLevel } from "@apirtc/react-lib";
+import { setLogLevel } from "@apirtc/react-lib"
 
-setLogLevel("warn");
+setLogLevel("warn")
 ```
 
 from console:
 
 ```js
-setApirtcReactLibLogLevel("debug");
+setApirtcReactLibLogLevel("debug")
 ```
 
 ## Contribute
@@ -167,18 +166,28 @@ The 'developers' team has access.
 
 Then work on a branch and submit merge requests to main branch.
 
+## Code Formatting
+
+This project uses Prettier for code formatting.
+
+Most editors can format automatically using the provided configuration.
+If not, you can manually run:
+
+```bash
+npm run format
+
 ## Release a new version
 
-  - run `npm run test`, making sure tests passed, and code coverage is fully 100%.
+- run `npm run test`, making sure tests passed, and code coverage is fully 100%.
 
-  - Update README documentation section if relevant.
+- Update README documentation section if relevant.
 
-  - Update [codesandbox](https://codesandbox.io/s/apirtc-react-lib-demo-nrmcrn) mentioned above if necessary.
+- Update [codesandbox](https://codesandbox.io/s/apirtc-react-lib-demo-nrmcrn) mentioned above if necessary.
 
-  - Update package.json version number.
+- Update package.json version number.
 
-  - Update CHANGELOG accordingly.
+- Update CHANGELOG accordingly.
 
-  - run `npm run build`
+- run `npm run build`
 
-  - run `npm publish --access public`
+- run `npm publish --access public`

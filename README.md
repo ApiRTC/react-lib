@@ -166,6 +166,16 @@ The 'developers' team has access.
 
 Then work on a branch and submit merge requests to main branch.
 
+## Code Formatting
+
+This project uses Prettier for code formatting.
+
+Most editors can format automatically using the provided configuration.
+If not, you can manually run:
+
+```bash
+npm run format
+
 ## Release a new version
 
 - run `npm run test`, making sure tests passed, and code coverage is fully 100%.

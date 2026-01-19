@@ -15,152 +15,161 @@ let participantEjectedFn: Function | undefined = undefined;
 // Partial mocking @apirtc/apirtc module
 // see https://jestjs.io/docs/mock-functions
 jest.mock('@apirtc/apirtc', () => {
-    const originalModule = jest.requireActual('@apirtc/apirtc');
+	const originalModule = jest.requireActual('@apirtc/apirtc');
 
-    return {
-        __esModule: true,
-        ...originalModule,
-        Conversation: jest.fn().mockImplementation((name: string, options?: any) => {
-            const instance = {
-                getName: () => { return name },
-                on: (event: string, fn: Function) => {
-                    if (event === 'contactJoinedWaitingRoom') {
-                        contactJoinedWaitingRoomFn = fn;
-                    }
-                    if (event === 'contactLeftWaitingRoom') {
-                        contactLeftWaitingRoomFn = fn;
-                    }
-                    if (event === 'participantEjected') {
-                        participantEjectedFn = fn;
-                    }
-                    return instance
-                },
-                removeListener: (event: string, fn: Function) => {
-                    if (event === 'contactJoinedWaitingRoom' && contactJoinedWaitingRoomFn === fn) {
-                        contactJoinedWaitingRoomFn = undefined;
-                    }
-                    if (event === 'contactLeftWaitingRoom' && contactLeftWaitingRoomFn === fn) {
-                        contactLeftWaitingRoomFn = undefined;
-                    }
-                    if (event === 'participantEjected' && participantEjectedFn === fn) {
-                        participantEjectedFn = undefined;
-                    }
-                    return instance
-                }
-            }
-            return instance
-        }),
-    }
-})
+	return {
+		__esModule: true,
+		...originalModule,
+		Conversation: jest.fn().mockImplementation((name: string, options?: any) => {
+			const instance = {
+				getName: () => {
+					return name;
+				},
+				on: (event: string, fn: Function) => {
+					if (event === 'contactJoinedWaitingRoom') {
+						contactJoinedWaitingRoomFn = fn;
+					}
+					if (event === 'contactLeftWaitingRoom') {
+						contactLeftWaitingRoomFn = fn;
+					}
+					if (event === 'participantEjected') {
+						participantEjectedFn = fn;
+					}
+					return instance;
+				},
+				removeListener: (event: string, fn: Function) => {
+					if (event === 'contactJoinedWaitingRoom' && contactJoinedWaitingRoomFn === fn) {
+						contactJoinedWaitingRoomFn = undefined;
+					}
+					if (event === 'contactLeftWaitingRoom' && contactLeftWaitingRoomFn === fn) {
+						contactLeftWaitingRoomFn = undefined;
+					}
+					if (event === 'participantEjected' && participantEjectedFn === fn) {
+						participantEjectedFn = undefined;
+					}
+					return instance;
+				},
+			};
+			return instance;
+		}),
+	};
+});
 
 // Set log level to max to maximize code coverage
-setLogLevel('debug')
+setLogLevel('debug');
 
 // Testing guide
 // https://www.toptal.com/react/testing-react-hooks-tutorial
 
 describe('useConversationModeration', () => {
-    test(`If conversation is undefined, messages is empty, no listener`, () => {
-        // Init
-        contactJoinedWaitingRoomFn = undefined;
-        contactLeftWaitingRoomFn = undefined;
-        participantEjectedFn = undefined;
+	test(`If conversation is undefined, messages is empty, no listener`, () => {
+		// Init
+		contactJoinedWaitingRoomFn = undefined;
+		contactLeftWaitingRoomFn = undefined;
+		participantEjectedFn = undefined;
 
-        const { result } = renderHook(() => useConversationModeration(undefined));
-        expect(result.current.candidates).toBeDefined()
-        expect(result.current.candidates.size).toBe(0)
+		const { result } = renderHook(() => useConversationModeration(undefined));
+		expect(result.current.candidates).toBeDefined();
+		expect(result.current.candidates.size).toBe(0);
 
-        expect(contactJoinedWaitingRoomFn).toBeUndefined()
-        expect(contactLeftWaitingRoomFn).toBeUndefined()
-        expect(participantEjectedFn).toBeUndefined()
-    })
+		expect(contactJoinedWaitingRoomFn).toBeUndefined();
+		expect(contactLeftWaitingRoomFn).toBeUndefined();
+		expect(participantEjectedFn).toBeUndefined();
+	});
 
-    test(`moderation`, () => {
-        // Init
-        contactJoinedWaitingRoomFn = undefined;
-        contactLeftWaitingRoomFn = undefined;
-        participantEjectedFn = undefined;
+	test(`moderation`, () => {
+		// Init
+		contactJoinedWaitingRoomFn = undefined;
+		contactLeftWaitingRoomFn = undefined;
+		participantEjectedFn = undefined;
 
-        const conversation = new Conversation('foo', {});
+		const conversation = new Conversation('foo', {});
 
-        const { result, rerender } = renderHook((props: { conversation: Conversation }) => useConversationModeration(props.conversation), {
-            initialProps: { conversation }
-        });
-        expect(result.current.candidates).toBeDefined()
-        expect(result.current.candidates.size).toBe(0)
+		const { result, rerender } = renderHook(
+			(props: { conversation: Conversation }) =>
+				useConversationModeration(props.conversation),
+			{
+				initialProps: { conversation },
+			}
+		);
+		expect(result.current.candidates).toBeDefined();
+		expect(result.current.candidates.size).toBe(0);
 
-        expect(contactJoinedWaitingRoomFn).toBeDefined()
-        expect(contactLeftWaitingRoomFn).toBeDefined()
-        expect(participantEjectedFn).toBeDefined()
+		expect(contactJoinedWaitingRoomFn).toBeDefined();
+		expect(contactLeftWaitingRoomFn).toBeDefined();
+		expect(participantEjectedFn).toBeDefined();
 
+		const contact01 = new Contact('id01', {});
 
-        const contact01 = new Contact('id01', {})
+		// Test WaitingRoom
+		//
+		act(() => {
+			contactJoinedWaitingRoomFn?.call(this, contact01);
+		});
 
-        // Test WaitingRoom
-        //
-        act(() => {
-            contactJoinedWaitingRoomFn?.call(this, contact01)
-        })
+		expect(result.current.candidates).toContain(contact01);
 
-        expect(result.current.candidates).toContain(contact01)
+		act(() => {
+			contactLeftWaitingRoomFn?.call(this, contact01);
+		});
 
+		expect(result.current.candidates.size).toBe(0);
 
-        act(() => {
-            contactLeftWaitingRoomFn?.call(this, contact01)
-        })
+		// Rerender with new conversation shall reinitialize array
+		const l_candidates = result.current.candidates;
+		rerender({ conversation: new Conversation('bar', {}) } as any);
 
-        expect(result.current.candidates.size).toBe(0)
+		expect(result.current.candidates.size).toBe(0);
+		expect(result.current.candidates).not.toBe(l_candidates);
+	});
 
-        // Rerender with new conversation shall reinitialize array
-        const l_candidates = result.current.candidates;
-        rerender({ conversation: new Conversation('bar', {}) } as any)
+	test(`ejected`, () => {
+		// Init
+		contactJoinedWaitingRoomFn = undefined;
+		contactLeftWaitingRoomFn = undefined;
+		participantEjectedFn = undefined;
 
-        expect(result.current.candidates.size).toBe(0)
-        expect(result.current.candidates).not.toBe(l_candidates)
-    })
+		const conversation = new Conversation('foo', {});
 
-    test(`ejected`, () => {
-        // Init
-        contactJoinedWaitingRoomFn = undefined;
-        contactLeftWaitingRoomFn = undefined;
-        participantEjectedFn = undefined;
+		const l_ejected = new Set<Contact>();
 
-        const conversation = new Conversation('foo', {});
+		let ejectedSelf = false;
 
-        const l_ejected = new Set<Contact>()
+		const onEjected = (contact: Contact) => {
+			l_ejected.add(contact);
+		};
+		const onEjectedSelf = () => {
+			ejectedSelf = true;
+		};
 
-        let ejectedSelf = false;
+		renderHook(
+			(props: { conversation: Conversation }) =>
+				useConversationModeration(props.conversation, onEjected, onEjectedSelf),
+			{ initialProps: { conversation } }
+		);
 
-        const onEjected = (contact: Contact) => { l_ejected.add(contact) }
-        const onEjectedSelf = () => { ejectedSelf = true; }
+		expect(contactJoinedWaitingRoomFn).toBeDefined();
+		expect(contactLeftWaitingRoomFn).toBeDefined();
+		expect(participantEjectedFn).toBeDefined();
 
-        renderHook(
-            (props: { conversation: Conversation }) => useConversationModeration(props.conversation, onEjected, onEjectedSelf),
-            { initialProps: { conversation } });
+		const contact01 = new Contact('id01', {});
 
-        expect(contactJoinedWaitingRoomFn).toBeDefined()
-        expect(contactLeftWaitingRoomFn).toBeDefined()
-        expect(participantEjectedFn).toBeDefined()
+		// Test participant ejected
+		//
+		act(() => {
+			participantEjectedFn?.call(this, { contact: contact01 });
+		});
 
-        const contact01 = new Contact('id01', {});
+		expect(l_ejected.size).toBe(1);
+		expect(l_ejected).toContain(contact01);
+		expect(ejectedSelf).toBeFalsy();
 
-        // Test participant ejected
-        //
-        act(() => {
-            participantEjectedFn?.call(this, { contact: contact01 })
-        })
+		act(() => {
+			participantEjectedFn?.call(this, { self: true });
+		});
 
-        expect(l_ejected.size).toBe(1)
-        expect(l_ejected).toContain(contact01)
-        expect(ejectedSelf).toBeFalsy()
-
-        act(() => {
-            participantEjectedFn?.call(this, { self: true })
-        })
-
-        expect(l_ejected.size).toBe(1)
-        expect(l_ejected).toContain(contact01)
-        expect(ejectedSelf).toBeTruthy()
-    })
-
-})
+		expect(l_ejected.size).toBe(1);
+		expect(l_ejected).toContain(contact01);
+		expect(ejectedSelf).toBeTruthy();
+	});
+});

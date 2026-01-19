@@ -175,6 +175,7 @@ If not, you can manually run:
 
 ```bash
 npm run format
+```
 
 ## Release a new version
 

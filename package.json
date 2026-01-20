@@ -1,6 +1,6 @@
 {
 	"name": "@apirtc/react-lib",
-	"version": "1.2.1-rc.1",
+	"version": "1.2.1",
 	"description": "react library for ApiRTC",
 	"main": "dist/esm/index.js",
 	"module": "dist/esm/index.js",
@@ -28,7 +28,7 @@
 	},
 	"peerDependencies": {
 		"@apirtc/apirtc": "^5.0.21-rc.0",
-		"@apizee/ia": "^1.1.5-rc.1",
+		"@apirtc/ia": "^1.2.1",
 		"react": ">=17"
 	},
 	"devDependencies": {

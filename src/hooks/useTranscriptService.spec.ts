@@ -7,7 +7,7 @@ import { setLogLevel } from '..';
 import { Conference } from '@apirtc/apirtc';
 
 jest.doMock(
-	'@apizee/ia',
+	'@apirtc/ia',
 	() => {
 		class MockTranscriptService {
 			listeners: Record<string, Function[]> = {};
@@ -321,7 +321,7 @@ describe('useTranscriptService deferred import', () => {
 	test('Instantiation aborted if component unmounts before dynamic import resolves', async () => {
 		const importDeferred = deferred<any>();
 
-		jest.doMock('@apizee/ia', () => importDeferred.promise);
+		jest.doMock('@apirtc/ia', () => importDeferred.promise);
 
 		const warnSpy = jest.spyOn(console, 'warn').mockImplementation(() => {});
 

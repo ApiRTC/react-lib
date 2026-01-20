@@ -1,9 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
 import type { Conversation } from '@apirtc/apirtc';
 
-type TranscriptService = InstanceType<(typeof import('@apizee/ia'))['TranscriptService']>;
-type Transcript = InstanceType<(typeof import('@apizee/ia'))['Transcript']>;
-type EventTranscript = InstanceType<(typeof import('@apizee/ia'))['EventTranscript']>;
+type TranscriptService = InstanceType<(typeof import('@apirtc/ia'))['TranscriptService']>;
+type Transcript = InstanceType<(typeof import('@apirtc/ia'))['Transcript']>;
+type EventTranscript = InstanceType<(typeof import('@apirtc/ia'))['EventTranscript']>;
 
 const HOOK_NAME = 'useTranscriptService';
 /**
@@ -26,8 +26,8 @@ export default function useTranscriptService(
 
 		let mounted = true;
 
-		// Dynamic import @apizee/ia
-		import('@apizee/ia').then(({ TranscriptService }) => {
+		// Dynamic import @apirtc/ia
+		import('@apirtc/ia').then(({ TranscriptService }) => {
 			if (!mounted) {
 				if (globalThis.apirtcReactLibLogLevel.isWarnEnabled) {
 					console.warn(`${HOOK_NAME}|instanciation aborted - component unmounted`);
